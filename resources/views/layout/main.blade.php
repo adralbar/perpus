@@ -179,17 +179,20 @@
                     </a>
                 </li>
                 {{-- logout navbar --}}
-                <li class="nav-item menu-open btn btn-danger">
-                    <form action="{{ route('logout') }}" method="POST">
+                <li class="nav-item"
+                    style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                    <form action="{{ route('logout') }}" method="POST"
+                        style="display: flex; justify-content: center; align-items: center; border: none; background: none;">
                         @csrf
-                        <button type="submit" class="nav-link" style="font-size: 100%; border-radius: 0rem;">
-                            <i class="text-light"></i>
-                            <p class="text-light">
-                                logout
+                        <button type="submit" class="nav-link"
+                            style="display: flex; justify-content: center; align-items: center; border: none; background: none;">
+                            <p class="text-light btn btn-danger" style="margin: 0;">
+                                Logout
                             </p>
                         </button>
                     </form>
                 </li>
+
 
 
 
@@ -210,33 +213,33 @@
 
             <div class="text-center">
                 <img src="dist/img/LogoApi.png" alt="Api Logo" class="logo-api rounded" class=img-fluid ">
-            </div>
+    </div>
 
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <!-- Sidebar user panel (optional) -->
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Sidebar user panel (optional) -->
 
-                <!-- SidebarSearch Form -->
-                <div class="form-inline">
-                    <div class="input-group" data-widget="sidebar-search">
-                        <input class="form-control form-control-sidebar" type="search" placeholder="Search"
-                            aria-label="Search">
-                        <div class="input-group-append">
-                            <button class="btn btn-sidebar">
-                                <i class="fas fa-search fa-fw"></i>
-                            </button>
-                        </div>
-                    </div>
+        <!-- SidebarSearch Form -->
+        <div class="form-inline">
+            <div class="input-group" data-widget="sidebar-search">
+                <input class="form-control form-control-sidebar" type="search" placeholder="Search"
+                    aria-label="Search">
+                <div class="input-group-append">
+                    <button class="btn btn-sidebar">
+                        <i class="fas fa-search fa-fw"></i>
+                    </button>
                 </div>
+            </div>
+        </div>
 
-                <!-- Sidebar Menu -->
+        <!-- Sidebar Menu -->
 
-                <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
-                        data-accordion="false">
-                        <!-- Add icons to the links using the .nav-icon class
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
+                data-accordion="false">
+                <!-- Add icons to the links using the .nav-icon class
                    with font-awesome or any other icon font library -->
-                   <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
+                <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                     <a href="{{ url('/') }}" class="nav-link {{ Request::is('/') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-users"></i>
                         <p>
@@ -245,7 +248,7 @@
                         </p>
                     </a>
                 </li>
-                
+
                 <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                     <a href="{{ url('/rekap') }}" class="nav-link {{ Request::is('rekap') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-users"></i>
@@ -255,7 +258,7 @@
                         </p>
                     </a>
                 </li>
-                     
+
                 <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                     <a href="{{ url('/performa') }}" class="nav-link {{ Request::is('performa') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-users"></i>
@@ -266,34 +269,34 @@
                     </a>
                 </li>
 
-               
-                
-                
-                
-                    </ul>
-                </nav>
-                <!-- /.sidebar-menu -->
-            </div>
-            <!-- /.sidebar -->
-        </aside>
 
 
-        <!-- Content Wrapper. Contains page content -->
-        @yield('content')
-        <!-- /.content-wrapper -->
-        <footer class="main-footer">
-            <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong>
-            All rights reserved.
-            <div class="float-right d-none d-sm-inline-block">
-                <b>Version</b> 3.2.0
-            </div>
-        </footer>
 
-        <!-- Control Sidebar -->
-        <aside class="control-sidebar control-sidebar-dark">
-            <!-- Control sidebar content goes here -->
-        </aside>
-        <!-- /.control-sidebar -->
+
+            </ul>
+        </nav>
+        <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+    </aside>
+
+
+    <!-- Content Wrapper. Contains page content -->
+    @yield('content')
+    <!-- /.content-wrapper -->
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong>
+        All rights reserved.
+        <div class="float-right d-none d-sm-inline-block">
+            <b>Version</b> 3.2.0
+        </div>
+    </footer>
+
+    <!-- Control Sidebar -->
+    <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+    </aside>
+    <!-- /.control-sidebar -->
     </div>
     <!-- ./wrapper -->
 
@@ -335,10 +338,10 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
     <script src="plugins/chart.js/Chart.min.js"></script>
-<!-- AdminLTE for demo purposes -->
-{{-- <script src="dist/js/demo.js"></script> --}}
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="dist/js/pages/dashboard3.js"></script>
+    <!-- AdminLTE for demo purposes -->
+    {{-- <script src="dist/js/demo.js"></script> --}}
+    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+    <script src="dist/js/pages/dashboard3.js"></script>
 </body>
 
 </html>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>API LOGIN</title>
+    <title>API REGIST</title>
 
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -22,13 +22,12 @@
 
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
-                <a href="/login" class="h1"><b>LOGIN</b></a>
+                <a href="/login" class="h1"><b>REGISTER</b></a>
             </div>
             <div class="card-body">
                 <img src="dist/img/LogoApi.png" alt="Api Logo" class="logo-api rounded img-fluid w-50"
                     style="display: block; margin: 0 auto;"></img>
-
-                <form action="{{ route('login') }}" method="post">
+                <form action="{{ route('register') }}" method="post">
                     @csrf
 
                     @if ($errors->any())
@@ -42,8 +41,8 @@
                     @endif
 
                     <div class="input-group mb-3">
-                        <input type="username" name="username" class="form-control" placeholder="Username"
-                            value="{{ Session::get('username') }}">
+                        <input type="text" name="username" class="form-control" placeholder="Username"
+                            value="{{ old('username') }}">
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="bi bi-person-fill"></span>
@@ -60,24 +59,24 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-8">
-                            <div class="icheck-primary">
-                                <input type="checkbox" id="remember">
-                                <label for="remember">
-                                    Remember Me
-                                </label>
+                    <div class="input-group mb-3">
+                        <input type="password" name="password_confirmation" class="form-control"
+                            placeholder="Confirm Password">
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="fas fa-lock"></span>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-8">
+                        </div>
                         <div class="col-4">
-                            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                            <button type="submit" class="btn btn-primary btn-block">Register</button>
                         </div>
                     </div>
                 </form>
-
-
-
-
             </div>
 
         </div>

@@ -26,7 +26,7 @@
                                     <th>NPK</th>
                                     <th>Bulan</th>
                                     <th>Total Keterlambatan</th>
-
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -35,171 +35,31 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- Tabel 2 -->
-                {{-- <div class="">
-                    <div style="background-color: white; padding: 15px;">
-                        <table id="table2" class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Nama</th>
-                                    <th>NPK</th>
-                                    <th>Tanggal</th>
-                                    <th>Keterlambatan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data akan diisi melalui AJAX -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div> --}}
             </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Modal untuk detail keterlambatan -->
+        <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailModalLabel">Detail Keterlambatan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Nama :</strong> <span id="detailNama"></span></p>
+                        <p><strong>NPK :</strong> <span id="detailNpk"></span></p>
+                        <p><strong>Total Keterlambatan :</strong> <span id="detailTotal"></span> kali</p>
+                        <div id="detailTanggalWaktu"></div> <!-- Tempat untuk menampilkan tanggal dan waktu -->
+                        <div id="detailKeterlambatan"></div> <!-- Tempat untuk menampilkan tanggal dan waktu -->
+                    </div>
 
-    <script>
-        // Map dari nama bulan ke format YYYY-MM
-        const monthMap = {
-            'Jan': '2024-01',
-            'Feb': '2024-02',
-            'Mar': '2024-03',
-            'Apr': '2024-04',
-            'May': '2024-05',
-            'Jun': '2024-06',
-            'Jul': '2024-07',
-            'Aug': '2024-08',
-            'Sep': '2024-09',
-            'Oct': '2024-10',
-            'Nov': '2024-11',
-            'Dec': '2024-12'
-        };
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        // Inisialisasi Chart.js
-        const ctx = document.getElementById('myChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: @json($labels),
-                datasets: [{
-                    label: 'Total keterlambatan',
-                    backgroundColor: '#007bff',
-                    data: @json($totals),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        grid: {
-                            display: false,
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 200,
-                        grid: {
-                            drawBorder: false,
-                            borderDash: [5, 5],
-                        }
-                    }
-                },
-                onClick: function(event, elements) {
-                    if (elements.length > 0) {
-                        console.log('Chart clicked, elements:', elements);
-                        var index = elements[0].index;
-                        var selectedMonthName = this.data.labels[index];
-                        var selectedMonth = monthMap[selectedMonthName] || ''; // Ambil format bulan
-
-                        var url1 = '{{ route('data.table1') }}' + '?bulan=' + encodeURIComponent(selectedMonth);
-                        // var url2 = '{{ route('data.table2') }}' + '?bulan=' + encodeURIComponent(selectedMonth);
-
-                        console.log('Updated URL for table1:', url1);
-                        // console.log('Updated URL for table2:', url2);
-
-                        // Update URL dan refresh data untuk table1
-                        table1.ajax.url(url1).load(function(json) {
-                            console.log('Data for table1 loaded:', json);
-
-
-                        });
-                    } else {
-                        console.log('No element clicked.');
-                    }
-                }
-
-
-            }
-        });
-
-        // Inisialisasi DataTable
-        var table1 = $('#table1').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: '{{ route('data.table1') }}',
-                type: 'GET',
-
-            },
-            columns: [{
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'nama'
-                },
-                {
-                    data: 'npk'
-                },
-                {
-                    data: 'bulan'
-                },
-                {
-                    data: 'total_keterlambatan'
-                }
-            ]
-        });
-
-
-        // var table2 = $('#table2').DataTable({
-        //     processing: true,
-        //     serverSide: true,
-        //     ajax: {
-        //         url: '{{ route('data.table2') }}',
-        //         type: 'GET',
-        //     },
-        //     columns: [{
-        //             data: 'DT_RowIndex',
-        //             name: 'DT_RowIndex',
-        //             orderable: false,
-        //             searchable: false
-        //         },
-        //         {
-        //             data: 'nama'
-        //         },
-        //         {
-        //             data: 'npk'
-        //         },
-        //         {
-        //             data: 'bulan'
-        //         },
-        //         {
-        //             data: 'total_keterlambatan'
-        //         },
-        //         {
-        //             data: 'total_keterlambatan_menit'
-        //         }
-        //     ]
-        // });
-    </script>
-@endsection
+        @include('dashboard.script ')
+    @endsection

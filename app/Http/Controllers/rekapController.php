@@ -160,39 +160,4 @@ class rekapController extends Controller
 
         return response()->json(['success' => 'Check-in berhasil ditambahkan!']);
     }
-
-    public function getTable1Data(Request $request)
-    {
-        $bulan = $request->query('bulan');
-
-        Log::info('Received bulan parameter:', ['bulan' => $bulan]);
-
-        $query = DB::table('absensici as a')
-            ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici WHERE waktuci > "07:00:00" GROUP BY npk, tanggal) as first_checkin'), function ($join) {
-                $join->on('a.npk', '=', 'first_checkin.npk')
-                    ->on('a.tanggal', '=', 'first_checkin.tanggal')
-                    ->on('a.waktuci', '=', 'first_checkin.waktuci');
-            })
-            ->select(
-                'a.nama',
-                'a.npk',
-                DB::raw('DATE_FORMAT(a.tanggal, "%Y-%m") as bulan'),
-                DB::raw('TIMESTAMPDIFF(MINUTE, "07:00:00", a.waktuci) as keterlambatan_menit'),
-                DB::raw('SUM(TIMESTAMPDIFF(MINUTE, "07:00:00", a.waktuci)) as total_keterlambatan')
-            );
-
-        if ($bulan) {
-            $query->where(DB::raw('DATE_FORMAT(a.tanggal, "%Y-%m")'), $bulan);
-        }
-
-        $data = $query->groupBy('a.nama', 'a.npk', DB::raw('DATE_FORMAT(a.tanggal, "%Y-%m")'))
-            ->orderByDesc('total_keterlambatan')
-            ->get();
-
-        Log::info('Query results:', ['data' => $data]);
-
-        return DataTables::of($data)
-            ->addIndexColumn()
-            ->make(true);
-    }
 }
