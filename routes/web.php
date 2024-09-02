@@ -31,6 +31,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [loginController::class, 'logout'])->name('logout');
     Route::get('/performa', [performaController::class, 'index'])->name('performa.index');
     Route::get('/data-table1/details', [dashboardController::class, 'getTable1Details'])->name('data.table1.details');
+    Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard');
+    Route::get('/data/chart', [dashboardController::class, 'getChartData'])->name('data.chart');
+    // Route::get('/data/table1', [dashboardController::class, 'getTable1Data'])->name('data.table1');
+    Route::get('/performa/get-data', [performaController::class, 'getData'])->name('performa.getData');
+
+    Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/getChartData', [dashboardController::class, 'getChartData'])->name('getChartData');
+    Route::get('data/table1', [dashboardController::class, 'getTable1bData'])->name('data.table1b');
 });
 Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 

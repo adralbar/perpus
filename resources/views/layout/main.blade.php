@@ -36,11 +36,12 @@
     <link rel="stylesheet"href="{{ asset('lte/plugins/daterangepicker/daterangepicker.css') }}">
     <!-- summernote -->
     <link rel="stylesheet"href="{{ asset('lte/plugins/summernote/summernote-bs4.min.css') }}">
-    <link rel="stylesheet" href="//cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.dataTables.css" />
+
+    <link rel="stylesheet" href="{{ asset('dist/css/plugins/dataTables.dataTables.min.css') }}">
+
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed">
+<body class="hold-transition dark-mode sidebar-mini layout-fixed  layout-footer-fixed">
     <div class="wrapper">
 
         <!-- Preloader -->
@@ -50,7 +51,7 @@
         </div>
 
         <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <nav class="main-header navbar navbar-expand navbar-dark">
             <!-- Left navbar links -->
             <ul class="navbar-nav">
                 <li class="nav-item">
@@ -201,7 +202,7 @@
         <!-- /.navbar -->
 
         <!-- Main Sidebar Container -->
-        <aside class="main-sidebar sidebar-light-primary elevation-4">
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             {{-- <a href="index3.html" class="brand-link">
                 <img src="dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"

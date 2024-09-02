@@ -1,26 +1,24 @@
 @extends('layout/main')
-
+<link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
+<link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
 @section('content')
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
-
-
     <div class="content-wrapper">
         <div class="p-3"> <!-- Menambahkan padding untuk menggeser isi ke dalam -->
             <p class="pl-3 pb-3 font-weight-bold h3">Data Absensi Karyawan</p>
 
             <!-- Tombol Tambah Check-in dan Check-out -->
-
-
-            <div class="p-3 ml-3 text-black bg-white"> <!-- Menambahkan padding dan margin -->
-                <table id="myTable" class="table table-striped">
-                    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#checkinModal">
+            <div class="p-3 ml-3 text-black card"> <!-- Menambahkan padding dan margin -->
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
+                        data-bs-target="#checkinModal">
                         Tambah Check-in
                     </button>
-                    <button type="button" class="btn btn-secondary mb-3 ml-3" data-toggle="modal"
-                        data-target="#checkoutModal">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#checkoutModal">
                         Tambah Check-out
                     </button>
+                </div>
+                <table id="myTable" class="table table-dark table-striped">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -42,9 +40,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="checkinModalLabel">Tambah Check-in</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="checkinForm">
@@ -77,10 +73,8 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="checkoutModalLabel">Tambah Check-out</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h5 class="modal-title fw-bold" id="checkoutModalLabel">Tambah Check-out</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="checkoutForm">

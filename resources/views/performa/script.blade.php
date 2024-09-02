@@ -1,6 +1,6 @@
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
+<script src="{{ asset('dist/js/plugins/query.dataTables.min.js') }}"></script>
+<script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
 
 <script>
     $(document).ready(function() {
@@ -8,7 +8,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('rekap.getData') }}",
+                url: "{{ route('performa.getData') }}",
                 type: 'GET'
             },
             columns: [{
@@ -18,8 +18,8 @@
                     searchable: false
                 },
                 {
-                    data: 'nama',
-                    name: 'nama'
+                    data: 'name',
+                    name: 'name'
                 },
                 {
                     data: 'npk',
@@ -30,19 +30,14 @@
                     name: 'tanggal'
                 },
                 {
-                    data: 'waktuci',
-                    name: 'waktuci'
+                    data: 'waktuci_checkin',
+                    name: 'waktuci_checkin'
                 },
                 {
-                    data: 'waktuco',
-                    name: 'waktuco'
+                    data: 'waktu_login_dashboard',
+                    name: 'waktu_login_dashboard'
                 }
-
             ]
         });
-
-
-        // Submit data Check-in
-
     });
 </script>
