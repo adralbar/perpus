@@ -30,7 +30,7 @@ class performaController extends Controller
                     ->on('absensici.waktuci', '=', 'first_checkin.waktuci');
             })
             ->select(
-                'pcd_master_users.name',
+                'pcd_master_users.nama',
                 'pcd_master_users.npk',
                 DB::raw('DATE(pcd_login_logs.created_at) AS tanggal'),
                 'absensici.waktuci AS waktuci_checkin',
