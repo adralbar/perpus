@@ -39,6 +39,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/getChartData', [dashboardController::class, 'getChartData'])->name('getChartData');
     Route::get('data/table1', [dashboardController::class, 'getTable1bData'])->name('data.table1b');
+    Route::post('/performa/storelog', [performaController::class, 'storeLogs'])->name('performa.storeLogs');
+    Route::post('/performa/storeuserid', [performaController::class, 'storeUserId'])->name('performa.storeUserId');
 });
 Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 

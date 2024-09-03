@@ -14,7 +14,8 @@ class PcdMasterUser extends Model
 
     // Kolom yang dapat diisi secara massal
     protected $fillable = [
-        'name',
-        'npk',
+        'id',
+        'nama',
+        'npk'
     ];
 }

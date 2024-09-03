@@ -3,11 +3,9 @@
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
 @section('content')
     <div class="content-wrapper">
-        <div class="p-3"> <!-- Menambahkan padding untuk menggeser isi ke dalam -->
+        <div class="p-3">
             <p class="pl-3 pb-3 font-weight-bold h3">Data Absensi Karyawan</p>
-
-            <!-- Tombol Tambah Check-in dan Check-out -->
-            <div class="p-3 ml-3 text-black card"> <!-- Menambahkan padding dan margin -->
+            <div class="p-3 ml-3 text-black card">
                 <div class="mb-3">
                     <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
                         data-bs-target="#checkinModal">

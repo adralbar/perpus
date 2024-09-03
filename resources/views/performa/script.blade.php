@@ -36,8 +36,46 @@
                 {
                     data: 'waktu_login_dashboard',
                     name: 'waktu_login_dashboard'
+                },
+                {
+                    data: 'selisih_waktu',
+                    name: 'selisih_waktu'
                 }
             ]
+        });
+    });
+
+    $('#logForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: "{{ route('performa.storeLogs') }}",
+            method: "POST",
+            data: $(this).serialize(),
+            success: function(response) {
+                console.log(response);
+                $('#logModal').modal('hide');
+                $('#myTable').DataTable().ajax.reload();
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+            }
+        });
+    });
+
+    $('#userIdForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: "{{ route('performa.storeUserId') }}",
+            method: "POST",
+            data: $(this).serialize(),
+            success: function(response) {
+                console.log(response);
+                $('#userIdModal').modal('hide');
+                $('#myTable').DataTable().ajax.reload();
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+            }
         });
     });
 </script>
