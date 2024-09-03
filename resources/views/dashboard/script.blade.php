@@ -6,21 +6,19 @@
 
 <script>
     const monthMap = {
-        'January': '2025-01',
-        'February': '2025-02',
-        'March': '2025-03',
-        'April': '2025-04',
-        'May': '2025-05',
-        'June': '2025-06',
-        'July': '2025-07',
-        'August': '2025-08',
-        'September': '2025-09',
-        'October': '2025-10',
-        'November': '2025-11',
-        'December': '2025-12'
+        'Jan': '2024-01',
+        'Feb': '2024-02',
+        'Mar': '2024-03',
+        'Apr': '2024-04',
+        'May': '2024-05',
+        'Jun': '2024-06',
+        'Jul': '2024-07',
+        'Aug': '2024-08',
+        'Sep': '2024-09',
+        'Oct': '2024-10',
+        'Nov': '2024-11',
+        'Dec': '2024-12'
     };
-
-
     document.getElementById('filterYear').addEventListener('change', function() {
         const selectedYear = this.value;
         if (selectedYear) {
@@ -71,7 +69,7 @@
                 },
                 y: {
                     beginAtZero: true,
-                    max: 200,
+                    max: 10,
                     grid: {
                         drawBorder: false,
                         borderDash: [5, 5]
@@ -81,23 +79,26 @@
             onClick: function(event, elements) {
                 if (elements.length > 0) {
                     var index = elements[0].index;
-                    var selectedMonthName = this.data.labels[index];
-                    var selectedMonth = monthMap[selectedMonthName] || '';
+                    var selectedMonthName = this.data.labels[index]; // Ambil nama bulan
+                    var selectedMonth = monthMap[selectedMonthName] ||
+                        ''; // Konversi nama bulan menjadi nomor bulan (01, 02, dll)
                     var year = $('#filterYear').val(); // Ambil tahun yang dipilih
 
-                    console.log('Selected Month:', selectedMonth); // Debugging selected month
-                    console.log('Selected Year:', year); // Debugging selected year
+                    var formattedMonth = selectedMonth; // Format menjadi YEAR-MONTH
 
-                    var url1 = '{{ route('data.table1') }}' +
-                        '?bulan=' + encodeURIComponent(selectedMonth) +
+                    var url1 = '{{ route('data.table1b') }}' +
+                        '?bulan=' + encodeURIComponent(formattedMonth) +
                         '&tahun=' + encodeURIComponent(year);
 
-                    console.log('URL API:', url1); // Debugging URL
+                    console.log('Selected Month Name:', selectedMonthName);
+                    console.log('Selected Month:', selectedMonth);
+                    console.log('Formatted Month:', formattedMonth);
+                    console.log('Year:', year);
+                    console.log('Request URL:', url1);
 
-                    table1.ajax.url(url1).load();
+                    table1.ajax.url(url1).load(); // Memuat ulang DataTables dengan URL baru
                 }
             }
-
 
         }
     });

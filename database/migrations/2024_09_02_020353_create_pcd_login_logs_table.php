@@ -17,7 +17,7 @@ class CreatePcdLoginLogsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('station_id')->nullable();
-            $table->string('status');
+            $table->string('status')->nullable();
             $table->timestamps();
 
             // Jika Anda menggunakan foreign key constraints
