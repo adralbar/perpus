@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('absensico', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
+
             $table->string('npk');
             $table->date('tanggal');
-
             $table->time('waktuco');
             $table->timestamps();
         });

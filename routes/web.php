@@ -8,6 +8,8 @@ use App\Http\Controllers\rekapController;
 use App\Http\Controllers\loginController;
 use App\Http\Controllers\performaController;
 use App\Http\Controllers\registController;
+use App\Http\Controllers\shiftController;
+use App\Http\Controllers\uploadController;
 // Route::get('/', function () {
 //     return view('welcome');
 // });
@@ -41,6 +43,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('data/table1', [dashboardController::class, 'getTable1bData'])->name('data.table1b');
     Route::post('/performa/storelog', [performaController::class, 'storeLogs'])->name('performa.storeLogs');
     Route::post('/performa/storeuserid', [performaController::class, 'storeUserId'])->name('performa.storeUserId');
+    Route::get('/shift', [shiftController::class, 'index'])->name('shift');
+    Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
+
+
+    Route::post('/store', [ShiftController::class, 'store'])->name('shift.store');
+    Route::get('/edit/{id}', [ShiftController::class, 'edit'])->name('shift.edit');
+    Route::put('/update/{id}', [ShiftController::class, 'update'])->name('shift.update');
+    Route::delete('/destroy/{id}', [ShiftController::class, 'destroy'])->name('shift.destroy');
+    Route::post('/fileupload', [ShiftController::class, 'importProcess'])->name('shift.import');
+    Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
 });
 Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 

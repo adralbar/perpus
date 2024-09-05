@@ -40,38 +40,43 @@ class dashboardController extends Controller
         Log::info('Received parameters:', ['tahun' => $tahun]);
 
         $data = DB::table('absensici')
-            ->select(
-                'npk',
-                'nama',
-                DB::raw('YEAR(tanggal) as tahun'),
-                DB::raw('COUNT(*) as total_keterlambatan'),
-                DB::raw('GROUP_CONCAT(tanggal) as tanggal'), // Menyimpan semua tanggal dalam satu kolom
-                DB::raw('GROUP_CONCAT(waktuci) as waktu') // Menyimpan semua waktu dalam satu kolom
-            )
-            ->whereRaw('TIME(waktuci) > "07:00:00"')
-            ->when($tahun, function ($query) use ($tahun) {
-                $query->whereYear('tanggal', $tahun);
+            ->join('kategorishift', function ($join) {
+                $join->on('absensici.npk', '=', 'kategorishift.npk')
+                    ->on('absensici.tanggal', '=', 'kategorishift.tanggal');
             })
-            ->groupBy('npk', 'nama', DB::raw('YEAR(tanggal)'))
-            ->orderBy(DB::raw('YEAR(tanggal)'), 'desc')
+            ->select(
+                'absensici.npk',
+                'kategorishift.nama as nama',
+                DB::raw('YEAR(absensici.tanggal) as tahun'),
+                DB::raw('COUNT(*) as total_keterlambatan'),
+                DB::raw('GROUP_CONCAT(absensici.tanggal) as tanggal'), // Menyimpan semua tanggal dalam satu kolom
+                DB::raw('GROUP_CONCAT(absensici.waktuci) as waktu') // Menyimpan semua waktu dalam satu kolom
+            )
+            ->whereRaw('TIME(absensici.waktuci) > "07:00:00"')
+            ->when($tahun, function ($query) use ($tahun) {
+                $query->whereYear('absensici.tanggal', $tahun);
+            })
+            ->groupBy('absensici.npk', 'kategorishift.nama', DB::raw('YEAR(absensici.tanggal)'))
+            ->orderBy(DB::raw('YEAR(absensici.tanggal)'), 'desc')
             ->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('aksi', function ($row) {
                 $btn = '<button class="btn btn-primary btn-sm btnDetail"
-                data-nama="' . $row->nama . '"
-                data-npk="' . $row->npk . '"
-                data-total="' . $row->total_keterlambatan . '"
-                data-tanggal="' . $row->tanggal . '"
-                data-waktu="' . $row->waktu . '">
-                Detail
-            </button>';
+                    data-nama="' . $row->nama_shift . '"
+                    data-npk="' . $row->npk . '"
+                    data-total="' . $row->total_keterlambatan . '"
+                    data-tanggal="' . $row->tanggal . '"  
+                    data-waktu="' . $row->waktu . '">
+                    Detail
+                </button>';
                 return $btn;
             })
             ->rawColumns(['aksi'])
             ->make(true);
     }
+
 
 
 

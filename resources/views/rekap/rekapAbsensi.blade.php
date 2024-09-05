@@ -11,9 +11,13 @@
                         data-bs-target="#checkinModal">
                         Tambah Check-in
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+                    <button type="button" class="btn btn-secondary btn-sm mr-2" data-bs-toggle="modal"
                         data-bs-target="#checkoutModal">
                         Tambah Check-out
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#uploadModal">
+                        Upload File
                     </button>
                 </div>
                 <table id="myTable" class="table table-dark table-striped">
@@ -23,8 +27,8 @@
                             <th>Nama</th>
                             <th>NPK</th>
                             <th>Tanggal</th>
-                            <th>Waktu Check in</th>
-                            <th>Waktu Check out</th>
+                            <th>Waktu Check-in</th>
+                            <th>Waktu Check-out</th>
                         </tr>
                     </thead>
                 </table>
@@ -43,10 +47,7 @@
                 <div class="modal-body">
                     <form id="checkinForm">
                         @csrf
-                        <div class="form-group">
-                            <label for="nama">Nama</label>
-                            <input type="text" class="form-control" id="nama" name="nama" required>
-                        </div>
+
                         <div class="form-group">
                             <label for="npk">NPK</label>
                             <input type="text" class="form-control" id="npk" name="npk" required>
@@ -77,10 +78,7 @@
                 <div class="modal-body">
                     <form id="checkoutForm">
                         @csrf
-                        <div class="form-group">
-                            <label for="nama">Nama</label>
-                            <input type="text" class="form-control" id="nama" name="nama" required>
-                        </div>
+
                         <div class="form-group">
                             <label for="npk">NPK</label>
                             <input type="text" class="form-control" id="npk" name="npk" required>
@@ -99,5 +97,105 @@
             </div>
         </div>
     </div>
-    @include('rekap.script')
+
+    <!-- Modal untuk Upload File -->
+
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadLabel">Upload File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadForm" method="POST" enctype="multipart/form-data" action="{{ route('upload') }}">
+                        @csrf
+                        <div class="form-group">
+                            <label for="file">Upload File</label>
+                            <input type="file" class="form-control" id="file" name="file" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('dist/js/plugins/query.dataTables.min.js') }}"></script>
+    <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#myTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('rekap.getData') }}",
+                    type: 'GET'
+                },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'nama',
+                        name: 'kategorishift.nama'
+                    },
+                    {
+                        data: 'npk',
+                        name: 'absensici.npk'
+                    },
+                    {
+                        data: 'tanggal',
+                        name: 'absensici.tanggal'
+                    },
+                    {
+                        data: 'waktuci',
+                        name: 'first_checkin.waktuci'
+                    },
+                    {
+                        data: 'waktuco',
+                        name: 'waktuco'
+                    }
+                ]
+            });
+
+            // Submit data Check-in
+            $('#checkinForm').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: "{{ route('rekap.storeCheckin') }}",
+                    method: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        $('#checkinModal').modal('hide');
+                        $('#myTable').DataTable().ajax.reload();
+                    },
+                    error: function(xhr) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+
+            // Submit data Check-out
+            $('#checkoutForm').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: "{{ route('rekap.storeCheckout') }}",
+                    method: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        $('#checkoutModal').modal('hide');
+                        $('#myTable').DataTable().ajax.reload();
+                    },
+                    error: function(xhr) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
 @endsection

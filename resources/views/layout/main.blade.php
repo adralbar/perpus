@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Performa Api</title>
 
@@ -269,7 +270,15 @@
                         </p>
                     </a>
                 </li>
-
+                <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
+                    <a href="{{ url('/shift') }}" class="nav-link {{ Request::is('shift') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>
+                            Shift Karyawan
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                </li>
 
 
 
