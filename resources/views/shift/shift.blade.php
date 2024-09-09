@@ -75,14 +75,7 @@
                             <label for="shift1">Shift 1</label>
                             <input type="text" class="form-control" id="shift1" name="shift1" required>
                         </div>
-                        <div class="form-group">
-                            <label for="shift2">Shift 2</label>
-                            <input type="text" class="form-control" id="shift2" name="shift2">
-                        </div>
-                        <div class="form-group">
-                            <label for="shift3">Shift 3</label>
-                            <input type="text" class="form-control" id="shift3" name="shift3">
-                        </div>
+
                         <div class="form-group">
                             <label for="status">Status</label>
                             <input type="text" class="form-control" id="status" name="status" required>
@@ -157,7 +150,6 @@
                         data: 'shift1',
                         name: 'shift1'
                     },
-
                     {
                         data: 'status',
                         name: 'status'
@@ -166,7 +158,12 @@
                         data: 'action',
                         name: 'action',
                         orderable: false,
-                        searchable: false
+                        searchable: false,
+                        render: function(data, type, row) {
+                            return `
+                    w
+                    `;
+                        }
                     }
                 ]
             });
@@ -210,8 +207,6 @@
                     $('#departement').val(response.section);
                     $('#section').val(response.section);
                     $('#shift1').val(response.shift1);
-                    $('#shift2').val(response.shift2);
-                    $('#shift3').val(response.shift3);
                     $('#status').val(response.status);
                     $('#shiftLabel').text('Edit Karyawan');
                     $('#saveButton').text('Update');
@@ -234,11 +229,12 @@
                     },
                     error: function(xhr) {
                         console.error(xhr.responseText);
-                        alert('Terjadi kesalahan');
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
                     }
                 });
             }
         }
+
 
 
         function resetForm() {

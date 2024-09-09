@@ -17,17 +17,10 @@ class ShiftController extends Controller
 
     public function getData(Request $request)
     {
-        $data = Shift::select(['id', 'nama', 'npk', 'divisi', 'departement', 'section', 'shift1', 'shift2', 'shift3', 'status']);
+        $data = Shift::select(['id', 'nama', 'npk', 'divisi', 'departement', 'section', 'shift1',  'status']);
 
         return DataTables::of($data)
             ->addIndexColumn()
-            ->addColumn('action', function ($row) {
-                return '
-                    <button class="btn btn-sm btn-info" onclick="editShift(' . $row->id . ')">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteShift(' . $row->id . ')">Delete</button>
-                ';
-            })
-            ->rawColumns(['action'])
             ->make(true);
     }
 
@@ -40,8 +33,6 @@ class ShiftController extends Controller
             'departement' => 'required|string',
             'section' => 'required|string',
             'shift1' => 'required|string',
-            'shift2' => 'nullable|string',
-            'shift3' => 'nullable|string',
             'status' => 'required|string',
         ]);
 
@@ -65,8 +56,6 @@ class ShiftController extends Controller
             'departement' => 'required|string',
             'section' => 'required|string',
             'shift1' => 'required|string',
-            'shift2' => 'nullable|string',
-            'shift3' => 'nullable|string',
             'status' => 'required|string',
         ]);
 

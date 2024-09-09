@@ -17,11 +17,13 @@ class dashboardController extends Controller
             ->distinct()
             ->pluck('year');
 
+        // Subquery to get the first check-in time per day for each employee
         $data = DB::table('absensici as a')
             ->select(
                 DB::raw('DATE_FORMAT(a.tanggal, "%b") AS month'),
                 DB::raw('COUNT(DISTINCT a.npk) AS total_keterlambatan')
             )
+            ->whereRaw('a.waktuci = (SELECT MIN(waktuci) FROM absensici WHERE npk = a.npk AND tanggal = a.tanggal)')
             ->whereRaw('TIME(a.waktuci) > "07:00:00"')
             ->groupBy(DB::raw('DATE_FORMAT(a.tanggal, "%b")'), DB::raw('DATE_FORMAT(a.tanggal, "%m")'))
             ->orderBy(DB::raw('DATE_FORMAT(a.tanggal, "%m")'))
@@ -33,26 +35,41 @@ class dashboardController extends Controller
         return view('dashboard.dashboard', compact('labels', 'totals', 'years'));
     }
 
+
+
     public function getTable1Data(Request $request)
     {
         $tahun = $request->query('tahun');
 
         Log::info('Received parameters:', ['tahun' => $tahun]);
 
+        // Subquery to get the earliest check-in time per date for each employee
+        $subquery = DB::table('absensici as a1')
+            ->select(
+                'a1.npk',
+                'a1.tanggal',
+                DB::raw('MIN(a1.waktuci) as awal_waktuci')
+            )
+            ->groupBy('a1.npk', 'a1.tanggal');
+
+        // Main query
         $data = DB::table('absensici')
-            ->join('kategorishift', function ($join) {
-                $join->on('absensici.npk', '=', 'kategorishift.npk')
-                    ->on('absensici.tanggal', '=', 'kategorishift.tanggal');
+            ->joinSub($subquery, 'subquery', function ($join) {
+                $join->on('absensici.npk', '=', 'subquery.npk')
+                    ->on('absensici.tanggal', '=', 'subquery.tanggal')
+                    ->on('absensici.waktuci', '=', 'subquery.awal_waktuci');
             })
+            ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
             ->select(
                 'absensici.npk',
-                'kategorishift.nama as nama',
+                'kategorishift.nama',
                 DB::raw('YEAR(absensici.tanggal) as tahun'),
                 DB::raw('COUNT(*) as total_keterlambatan'),
-                DB::raw('GROUP_CONCAT(absensici.tanggal) as tanggal'), // Menyimpan semua tanggal dalam satu kolom
-                DB::raw('GROUP_CONCAT(absensici.waktuci) as waktu') // Menyimpan semua waktu dalam satu kolom
+                DB::raw('GROUP_CONCAT(absensici.tanggal ORDER BY absensici.tanggal) as tanggal'),
+                DB::raw('GROUP_CONCAT(absensici.waktuci ORDER BY absensici.tanggal) as waktu')
             )
-            ->whereRaw('TIME(absensici.waktuci) > "07:00:00"')
+            // Filter only where the earliest check-in time is after 07:00 AM
+            ->whereRaw('TIME(subquery.awal_waktuci) > "07:00:00"')
             ->when($tahun, function ($query) use ($tahun) {
                 $query->whereYear('absensici.tanggal', $tahun);
             })
@@ -60,15 +77,16 @@ class dashboardController extends Controller
             ->orderBy(DB::raw('YEAR(absensici.tanggal)'), 'desc')
             ->get();
 
+        // Prepare the data for DataTables
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('aksi', function ($row) {
                 $btn = '<button class="btn btn-primary btn-sm btnDetail"
-                    data-nama="' . $row->nama_shift . '"
-                    data-npk="' . $row->npk . '"
-                    data-total="' . $row->total_keterlambatan . '"
-                    data-tanggal="' . $row->tanggal . '"  
-                    data-waktu="' . $row->waktu . '">
+                    data-nama="' . e($row->nama) . '"
+                    data-npk="' . e($row->npk) . '"
+                    data-total="' . e($row->total_keterlambatan) . '"
+                    data-tanggal="' . e($row->tanggal) . '"  
+                    data-waktu="' . e($row->waktu) . '">
                     Detail
                 </button>';
                 return $btn;
@@ -105,46 +123,64 @@ class dashboardController extends Controller
     }
     public function getTable1bData(Request $request)
     {
-        $bulan = $request->query('bulan');
-        $tahun = $request->query('tahun');
+        $bulan = $request->query('bulan'); // Retrieve 'bulan' (month) from the request
+        $tahun = $request->query('tahun'); // Retrieve 'tahun' (year) from the request
 
-        Log::info('Received parameters:', ['bulan' => $bulan, 'tahun' => $tahun]);
+        Log::info('Received parameters:', ['bulan' => $bulan, 'tahun' => $tahun]); // Log received parameters for debugging purposes
 
-        $data = DB::table('absensici')
+        // Subquery to get the earliest check-in time per date for each employee
+        $subquery = DB::table('absensici as a1')
             ->select(
-                'npk',
-                'nama',
-                DB::raw('YEAR(tanggal) as tahun'),
-                DB::raw('MONTH(tanggal) as bulan'),
-                DB::raw('COUNT(*) as total_keterlambatan'),
-                DB::raw('GROUP_CONCAT(tanggal) as tanggal'), // Menyimpan semua tanggal dalam satu kolom
-                DB::raw('GROUP_CONCAT(waktuci) as waktu') // Menyimpan semua waktu dalam satu kolom
+                'a1.npk',
+                'a1.tanggal',
+                DB::raw('MIN(a1.waktuci) as awal_waktuci')
             )
-            ->whereRaw('TIME(waktuci) > "07:00:00"')
-            ->when($tahun, function ($query) use ($tahun) {
-                $query->whereYear('tanggal', $tahun);
+            ->groupBy('a1.npk', 'a1.tanggal');
+
+        // Main query
+        $data = DB::table('absensici')
+            ->joinSub($subquery, 'subquery', function ($join) {
+                $join->on('absensici.npk', '=', 'subquery.npk')
+                    ->on('absensici.tanggal', '=', 'subquery.tanggal')
+                    ->on('absensici.waktuci', '=', 'subquery.awal_waktuci');
             })
-            ->when($bulan, function ($query) use ($bulan) {
-                $query->where(DB::raw('DATE_FORMAT(tanggal, "%Y-%m")'), '=', $bulan); // Format YEAR-MONTH
+            ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
+            ->select(
+                'absensici.npk',
+                'kategorishift.nama',
+                DB::raw('YEAR(absensici.tanggal) as tahun'),
+                DB::raw('MONTH(absensici.tanggal) as bulan'),
+                DB::raw('COUNT(*) as total_keterlambatan'),
+                DB::raw('GROUP_CONCAT(DATE_FORMAT(absensici.tanggal, "%Y-%m-%d") ORDER BY absensici.tanggal) as tanggal'),
+                DB::raw('GROUP_CONCAT(TIME_FORMAT(subquery.awal_waktuci, "%H:%i:%s") ORDER BY absensici.tanggal) as waktu')
+            )
+            ->whereRaw('TIME(subquery.awal_waktuci) > "07:00:00"') // Filter for lateness (after 07:00:00)
+            ->when($tahun, function ($query) use ($tahun) { // Filter by year if provided
+                $query->whereYear('absensici.tanggal', $tahun);
             })
-            ->groupBy('npk', 'nama', DB::raw('YEAR(tanggal)'), DB::raw('MONTH(tanggal)'))
-            ->orderBy(DB::raw('YEAR(tanggal)'), 'desc')
+            ->when($bulan, function ($query) use ($bulan) { // Filter by month if provided
+                $query->whereMonth('absensici.tanggal', $bulan); // Use whereMonth for clarity
+            })
+            ->groupBy('absensici.npk', 'kategorishift.nama', DB::raw('YEAR(absensici.tanggal)'), DB::raw('MONTH(absensici.tanggal)'))
+            ->orderBy(DB::raw('YEAR(absensici.tanggal)'), 'desc') // Order by year descending
+            ->orderBy(DB::raw('MONTH(absensici.tanggal)'), 'asc') // Order by month ascending
             ->get();
 
+        // Return the data to DataTables with an action column
         return DataTables::of($data)
-            ->addIndexColumn()
-            ->addColumn('aksi', function ($row) {
+            ->addIndexColumn() // Add an index column for DataTables
+            ->addColumn('aksi', function ($row) { // Add 'aksi' column with buttons
                 $btn = '<button class="btn btn-primary btn-sm btnDetail"
-                data-nama="' . $row->nama . '"
-                data-npk="' . $row->npk . '"
-                data-total="' . $row->total_keterlambatan . '"
-                data-tanggal="' . $row->tanggal . '" 
-                data-waktu="' . $row->waktu . '">
-                Detail
-            </button>';
+                    data-nama="' . e($row->nama) . '"
+                    data-npk="' . e($row->npk) . '"
+                    data-total="' . e($row->total_keterlambatan) . '"
+                    data-tanggal="' . e($row->tanggal) . '"  
+                    data-waktu="' . e($row->waktu) . '">
+                    Detail
+                </button>';
                 return $btn;
             })
-            ->rawColumns(['aksi'])
-            ->make(true);
+            ->rawColumns(['aksi']) // Render the 'aksi' column as raw HTML
+            ->make(true); // Return the formatted data
     }
 }
