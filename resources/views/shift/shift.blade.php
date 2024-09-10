@@ -10,6 +10,7 @@
             <p class="pl-3 pb-3 font-weight-bold h3">Data Absensi Karyawan</p>
             <div class="p-3 ml-3 text-black card">
                 <div class="mb-3">
+                    <!-- Button to trigger the modal -->
                     <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
                         data-bs-target="#shiftModal" onclick="resetForm()">
                         Tambah Shift Karyawan
@@ -28,7 +29,8 @@
                             <th>Divisi</th>
                             <th>Departement</th>
                             <th>Section</th>
-                            <th>Shift 1</th>
+                            <th>Shift</th>
+                            <th>Tanggal</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -38,7 +40,7 @@
         </div>
     </div>
 
-    <!-- Modal untuk Tambah/Edit Karyawan -->
+    <!-- Modal for Add/Edit Shift -->
     <div class="modal fade" id="shiftModal" tabindex="-1" aria-labelledby="shiftLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -64,7 +66,7 @@
                             <input type="text" class="form-control" id="divisi" name="divisi" required>
                         </div>
                         <div class="form-group">
-                            <label for="departement">departement</label>
+                            <label for="departement">Departement</label>
                             <input type="text" class="form-control" id="departement" name="departement" required>
                         </div>
                         <div class="form-group">
@@ -72,10 +74,13 @@
                             <input type="text" class="form-control" id="section" name="section" required>
                         </div>
                         <div class="form-group">
-                            <label for="shift1">Shift 1</label>
+                            <label for="shift1">Shift</label>
                             <input type="text" class="form-control" id="shift1" name="shift1" required>
                         </div>
-
+                        <div class="form-group">
+                            <label for="tanggal">tanggal</label>
+                            <input type="text" class="form-control" id="tanggal" name="tanggal" required>
+                        </div>
                         <div class="form-group">
                             <label for="status">Status</label>
                             <input type="text" class="form-control" id="status" name="status" required>
@@ -87,7 +92,7 @@
         </div>
     </div>
 
-    <!-- Modal untuk Upload File -->
+    <!-- Modal for Upload File -->
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -151,19 +156,19 @@
                         name: 'shift1'
                     },
                     {
+                        data: 'tanggal',
+                        name: 'tanggal'
+                    },
+                    {
                         data: 'status',
                         name: 'status'
                     },
                     {
-                        data: 'action',
+                        data: 'id',
                         name: 'action',
                         orderable: false,
                         searchable: false,
-                        render: function(data, type, row) {
-                            return `
-                    w
-                    `;
-                        }
+
                     }
                 ]
             });
@@ -188,60 +193,61 @@
                         table.ajax.reload();
                         alert(response.success);
                     },
-                    error: function(response) {
+                    error: function() {
                         alert('Terjadi kesalahan');
                     }
                 });
             });
         });
 
+        function resetForm() {
+            $('#shiftForm')[0].reset();
+            $('#shiftId').val('');
+            $('#shiftLabel').text('Tambah Karyawan');
+            $('#saveButton').text('Simpan');
+        }
+
         function editShift(id) {
-            $.ajax({
-                url: '{{ route('shift.edit', ':id') }}'.replace(':id', id),
-                method: 'GET',
-                success: function(response) {
-                    $('#shiftId').val(response.id);
-                    $('#nama').val(response.nama);
-                    $('#npk').val(response.npk);
-                    $('#divisi').val(response.divisi);
-                    $('#departement').val(response.section);
-                    $('#section').val(response.section);
-                    $('#shift1').val(response.shift1);
-                    $('#status').val(response.status);
-                    $('#shiftLabel').text('Edit Karyawan');
-                    $('#saveButton').text('Update');
-                    $('#shiftModal').modal('show');
-                }
+            console.log(`Fetching data from: /shift-data/${id}`);
+            $.get(`/shift-data/${id}`, function(data) {
+                $('#shiftModal').modal('show');
+                $('#shiftLabel').text('Edit Karyawan');
+                $('#saveButton').text('Update');
+
+                $('#shiftId').val(data.id);
+                $('#nama').val(data.nama);
+                $('#npk').val(data.npk);
+                $('#divisi').val(data.divisi);
+                $('#departement').val(data.departement);
+                $('#section').val(data.section);
+                $('#shift1').val(data.shift1);
+                $('#status').val(data.status);
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(`Error: ${textStatus} - ${errorThrown}`);
             });
         }
+
+
+
+
 
         function deleteShift(id) {
             if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
                 $.ajax({
                     url: '{{ route('shift.destroy', ':id') }}'.replace(':id', id),
                     method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    data: {
+                        _token: '{{ csrf_token() }}'
                     },
                     success: function(response) {
                         $('#myTable').DataTable().ajax.reload();
                         alert(response.success);
                     },
-                    error: function(xhr) {
-                        console.error(xhr.responseText);
-                        alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
+                    error: function() {
+                        alert('Terjadi kesalahan');
                     }
                 });
             }
-        }
-
-
-
-        function resetForm() {
-            $('#shiftForm')[0].reset();
-            $('#shiftId').val('');
-            $('#shiftLabel').text('Tambah Karyawan');
-            $('#saveButton').text('Simpan');
         }
     </script>
 @endsection

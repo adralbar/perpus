@@ -19,8 +19,8 @@ return new class extends Migration
             $table->string('departement');
             $table->string('section');
             $table->string('shift1')->nullable(); // Nullable jika tidak selalu ada data
-            $table->string('shift2')->nullable();
-            $table->string('shift3')->nullable();
+            $table->string('tanggal')->nullable();
+
             $table->string('status');
             $table->timestamps();
         });

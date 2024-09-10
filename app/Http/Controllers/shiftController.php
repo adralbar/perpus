@@ -3,21 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Shift; // Perhatikan huruf kapital pada nama model
+use App\Models\Shift;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ShiftsImport;
 
 class ShiftController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         return view('shift.shift');
     }
 
     public function getData(Request $request)
     {
-        $data = Shift::select(['id', 'nama', 'npk', 'divisi', 'departement', 'section', 'shift1',  'status']);
+        $data = Shift::select(['id', 'nama', 'npk', 'divisi', 'departement', 'section', 'shift1', 'tanggal',  'status']);
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -33,6 +33,7 @@ class ShiftController extends Controller
             'departement' => 'required|string',
             'section' => 'required|string',
             'shift1' => 'required|string',
+            'tanggal' => 'required|string',
             'status' => 'required|string',
         ]);
 
@@ -41,35 +42,12 @@ class ShiftController extends Controller
         return response()->json(['success' => 'Data berhasil disimpan']);
     }
 
-    public function edit($id)
-    {
-        $shift = Shift::find($id);
-        return response()->json($shift);
-    }
+    public function edit($id) {}
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'nama' => 'required|string',
-            'npk' => 'required|string',
-            'divisi' => 'required|string',
-            'departement' => 'required|string',
-            'section' => 'required|string',
-            'shift1' => 'required|string',
-            'status' => 'required|string',
-        ]);
 
-        $shift = Shift::find($id);
-        $shift->update($request->all());
+    public function update(Request $request, $id) {}
 
-        return response()->json(['success' => 'Data berhasil diperbarui']);
-    }
-
-    public function destroy($id)
-    {
-        Shift::destroy($id);
-        return response()->json(['success' => 'Data berhasil dihapus']);
-    }
+    public function destroy($id) {}
 
     public function importProcess(Request $request)
     {

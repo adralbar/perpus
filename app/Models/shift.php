@@ -7,10 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class shift extends Model
 {
-    use HasFactory;
-
     protected $table = 'kategorishift'; // Nama tabel yang baru
     protected $primaryKey = 'npk';
     public $incrementing = false;
-    protected $fillable = ['npk', 'nama', 'divisi', 'departement', 'section', 'shift1', 'status'];
+    protected $fillable = ['npk', 'nama', 'divisi', 'departement', 'section', 'shift1', 'tanggal', 'status'];
 }

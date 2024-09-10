@@ -48,15 +48,14 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::post('/store', [ShiftController::class, 'store'])->name('shift.store');
-    Route::get('/edit/{id}', [ShiftController::class, 'edit'])->name('shift.edit');
-
+    Route::get('/shift-data/{id}', [ShiftController::class, 'edit'])->name('shift.edit');
     Route::put('/update/{id}', [ShiftController::class, 'update'])->name('shift.update');
     Route::delete('/destroy/{id}', [ShiftController::class, 'destroy'])->name('shift.destroy');
 
     Route::post('/fileupload', [ShiftController::class, 'importProcess'])->name('shift.import');
     Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
 });
-Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 
-// Menangani proses registrasi
+
+Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 Route::post('/registerperformaapi123', [registController::class, 'register'])->name('register');

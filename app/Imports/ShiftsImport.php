@@ -24,7 +24,8 @@ class ShiftsImport implements ToCollection
                 $data['departement'] = !empty($row[5]) ? $row[5] : '';
                 $data['section'] = !empty($row[6]) ? $row[6] : '';
                 $data['shift1'] = !empty($row[7]) ? $row[7] : '';
-                $data['status'] = !empty($row[8]) ? $row[8] : '';
+                $data['tanggal'] = !empty($row[8]) ? $row[8] : '';
+                $data['status'] = !empty($row[9]) ? $row[9] : '';
 
                 // Simpan data ke database
                 Shift::create($data);
