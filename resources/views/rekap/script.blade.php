@@ -19,26 +19,31 @@
                 },
                 {
                     data: 'nama',
-                    name: 'nama'
+                    name: 'nama',
+                    searchable: true
                 },
                 {
                     data: 'npk',
-                    name: 'npk'
+                    name: 'npk',
+                    searchable: true
                 },
                 {
                     data: 'tanggal',
-                    name: 'tanggal'
+                    name: 'tanggal',
+                    searchable: true
                 },
                 {
                     data: 'waktuci',
-                    name: 'waktuci'
+                    name: 'waktuci',
+                    searchable: true
                 },
                 {
                     data: 'waktuco',
-                    name: 'waktuco'
+                    name: 'waktuco',
+                    searchable: true
                 }
-
             ]
+
         });
 
 

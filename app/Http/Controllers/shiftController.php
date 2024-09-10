@@ -7,6 +7,7 @@ use App\Models\Shift;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ShiftsImport;
+use Illuminate\Support\Facades\DB;
 
 class ShiftController extends Controller
 {
@@ -17,12 +18,25 @@ class ShiftController extends Controller
 
     public function getData(Request $request)
     {
-        $data = Shift::select(['id', 'nama', 'npk', 'divisi', 'departement', 'section', 'shift1', 'tanggal',  'status']);
+        $data = Shift::select([
+            'id',
+            'nama',
+            'npk',
+            'divisi',
+            'departement',
+            'section',
+            'shift1',
+            // Menggabungkan start_date dan end_date menjadi satu kolom 'tanggal'
+            DB::raw("CONCAT(start_date, ' - ', end_date) as tanggal"),
+            'status'
+
+        ])->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
             ->make(true);
     }
+
 
     public function store(Request $request)
     {

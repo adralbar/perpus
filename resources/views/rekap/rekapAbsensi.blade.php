@@ -20,6 +20,16 @@
                         Upload File
                     </button>
                 </div>
+                <div class="mb-3">
+                    <label for="monthFilter" class="form-label">Filter Bulan</label>
+                    <select id="monthFilter" class="form-select">
+                        <option value="">Pilih Bulan</option>
+                        <!-- Bulan dari Januari hingga Desember -->
+                        @for ($i = 1; $i <= 12; $i++)
+                            <option value="{{ $i }}">{{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
+                        @endfor
+                    </select>
+                </div>
                 <table id="myTable" class="table table-dark table-striped">
                     <thead>
                         <tr>

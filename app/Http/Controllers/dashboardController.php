@@ -44,13 +44,13 @@ class dashboardController extends Controller
         Log::info('Received parameters:', ['tahun' => $tahun]);
 
         // Subquery to get the earliest check-in time per date for each employee
-        $subquery = DB::table('absensici as a1')
+        $subquery = DB::table('absensici as a')
             ->select(
-                'a1.npk',
-                'a1.tanggal',
-                DB::raw('MIN(a1.waktuci) as awal_waktuci')
+                'a.npk',
+                'a.tanggal',
+                DB::raw('MIN(a.waktuci) as awal_waktuci')
             )
-            ->groupBy('a1.npk', 'a1.tanggal');
+            ->groupBy('a.npk', 'a.tanggal');
 
         // Main query
         $data = DB::table('absensici')
@@ -59,7 +59,10 @@ class dashboardController extends Controller
                     ->on('absensici.tanggal', '=', 'subquery.tanggal')
                     ->on('absensici.waktuci', '=', 'subquery.awal_waktuci');
             })
-            ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
+            ->join('kategorishift', function ($join) {
+                $join->on('absensici.npk', '=', 'kategorishift.npk')
+                    ->whereRaw('absensici.tanggal BETWEEN kategorishift.START_DATE AND kategorishift.END_DATE');
+            })
             ->select(
                 'absensici.npk',
                 'kategorishift.nama',
@@ -68,8 +71,15 @@ class dashboardController extends Controller
                 DB::raw('GROUP_CONCAT(absensici.tanggal ORDER BY absensici.tanggal) as tanggal'),
                 DB::raw('GROUP_CONCAT(absensici.waktuci ORDER BY absensici.tanggal) as waktu')
             )
-            // Filter only where the earliest check-in time is after 07:00 AM
-            ->whereRaw('TIME(subquery.awal_waktuci) > "07:00:00"')
+            // Filter where the check-in time is later than the shift start time
+            ->whereRaw("
+            CASE 
+                WHEN kategorishift.shift1 LIKE '07:00 - 16:00' THEN TIME(subquery.awal_waktuci) > '07:00:00'
+                WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN TIME(subquery.awal_waktuci) > '14:00:00'
+                WHEN kategorishift.shift1 LIKE '21:00 - 06:00' THEN TIME(subquery.awal_waktuci) > '21:00:00'
+                ELSE 1=1 
+            END
+        ")
             ->when($tahun, function ($query) use ($tahun) {
                 $query->whereYear('absensici.tanggal', $tahun);
             })
@@ -82,13 +92,13 @@ class dashboardController extends Controller
             ->addIndexColumn()
             ->addColumn('aksi', function ($row) {
                 $btn = '<button class="btn btn-primary btn-sm btnDetail"
-                    data-nama="' . e($row->nama) . '"
-                    data-npk="' . e($row->npk) . '"
-                    data-total="' . e($row->total_keterlambatan) . '"
-                    data-tanggal="' . e($row->tanggal) . '"  
-                    data-waktu="' . e($row->waktu) . '">
-                    Detail
-                </button>';
+                data-nama="' . e($row->nama) . '"
+                data-npk="' . e($row->npk) . '"
+                data-total="' . e($row->total_keterlambatan) . '"
+                data-tanggal="' . e($row->tanggal) . '"  
+                data-waktu="' . e($row->waktu) . '">
+                Detail
+            </button>';
                 return $btn;
             })
             ->rawColumns(['aksi'])
