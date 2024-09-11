@@ -1,5 +1,24 @@
-.logo-api {
-    max-width: 100%; 
-    height: auto;  
-    opacity: 0.8;  
-}
+@font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Regular.ttf') format('truetype');
+  }
+@font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Black.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Italic.ttf') format('truetype');
+  }

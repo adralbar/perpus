@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
 use DateTime;
+use App\Exports\RekapAbsensiExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class rekapController extends Controller
 {
@@ -20,9 +22,12 @@ class rekapController extends Controller
         return view('rekap.rekapAbsensi');
     }
 
-    public function getData()
+    public function getData(Request $request)
     {
-        $data = DB::table('absensici')
+        $month = $request->input('month');
+        $year = date('Y'); // Ganti dengan tahun yang relevan atau tambahkan filter tahun jika perlu
+
+        $query = DB::table('absensici')
             ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
                 $join->on('absensici.npk', '=', 'first_checkin.npk')
                     ->on('absensici.tanggal', '=', 'first_checkin.tanggal')
@@ -51,14 +56,26 @@ class rekapController extends Controller
                 'first_checkin.waktuci as waktuci',
                 DB::raw('COALESCE(last_checkout_tomorrow.waktuco, last_checkout_today.waktuco) as waktuco')
             )
+            ->distinct()
             ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
-            ->orderBy('absensici.tanggal', 'desc')
-            ->get();
+            ->orderBy('absensici.tanggal', 'desc');
+
+        // Apply the month filter if it is set
+        if ($month) {
+            $query->whereMonth('absensici.tanggal', $month);
+        }
+
+        // Apply the year filter
+        $query->whereYear('absensici.tanggal', $year);
+
+        $data = $query->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
             ->make(true);
     }
+
+
 
 
 
@@ -143,5 +160,13 @@ class rekapController extends Controller
         }
 
         return redirect()->back()->with('success', 'File uploaded and data processed successfully.');
+    }
+
+    public function exportAbsensi(Request $request)
+    {
+        $month = $request->input('month');
+        $year = $request->input('year');
+
+        return Excel::download(new RekapAbsensiExport($month, $year), 'absensi.xlsx');
     }
 }

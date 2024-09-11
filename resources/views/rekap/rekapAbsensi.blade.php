@@ -19,16 +19,18 @@
                         data-bs-target="#uploadModal">
                         Upload File
                     </button>
+                    <button type="button" class="btn btn-success btn-sm" id="exportButton">Export to Excel</button>
+
                 </div>
                 <div class="mb-3">
                     <label for="monthFilter" class="form-label">Filter Bulan</label>
                     <select id="monthFilter" class="form-select">
                         <option value="">Pilih Bulan</option>
-                        <!-- Bulan dari Januari hingga Desember -->
                         @for ($i = 1; $i <= 12; $i++)
                             <option value="{{ $i }}">{{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
                         @endfor
                     </select>
+
                 </div>
                 <table id="myTable" class="table table-dark table-striped">
                     <thead>
@@ -137,12 +139,13 @@
 
     <script>
         $(document).ready(function() {
-            $('#myTable').DataTable({
+            var table = $('#myTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
                     url: "{{ route('rekap.getData') }}",
-                    type: 'GET'
+                    type: 'GET',
+
                 },
                 columns: [{
                         data: 'DT_RowIndex',
@@ -156,21 +159,26 @@
                     },
                     {
                         data: 'npk',
-                        name: 'absensici.npk'
+                        name: 'npk'
                     },
                     {
                         data: 'tanggal',
-                        name: 'absensici.tanggal'
+                        name: 'tanggal'
                     },
                     {
                         data: 'waktuci',
-                        name: 'first_checkin.waktuci'
+                        name: 'waktuci'
                     },
                     {
                         data: 'waktuco',
                         name: 'waktuco'
                     }
                 ]
+            });
+
+            // Update table data when filter changes
+            $('#monthFilter').on('change', function() {
+                table.ajax.reload();
             });
 
             // Submit data Check-in
@@ -182,7 +190,7 @@
                     data: $(this).serialize(),
                     success: function(response) {
                         $('#checkinModal').modal('hide');
-                        $('#myTable').DataTable().ajax.reload();
+                        table.ajax.reload();
                     },
                     error: function(xhr) {
                         console.error(xhr.responseText);
@@ -199,12 +207,23 @@
                     data: $(this).serialize(),
                     success: function(response) {
                         $('#checkoutModal').modal('hide');
-                        $('#myTable').DataTable().ajax.reload();
+                        table.ajax.reload();
                     },
                     error: function(xhr) {
                         console.error(xhr.responseText);
                     }
                 });
+            });
+        });
+
+        $(document).ready(function() {
+            $('#exportButton').on('click', function() {
+                // Get selected month and year from filters
+                var month = $('#monthFilter').val();
+                var year = new Date().getFullYear(); // Assuming the year is the current year
+
+                // Redirect to the export route with query parameters
+                window.location.href = "{{ route('rekap.export') }}?month=" + month + "&year=" + year;
             });
         });
     </script>

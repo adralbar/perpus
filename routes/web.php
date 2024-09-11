@@ -54,6 +54,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/fileupload', [ShiftController::class, 'importProcess'])->name('shift.import');
     Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
+
+
+    Route::get('/rekap/export', [rekapController::class, 'exportAbsensi'])->name('rekap.export');
 });
 
 

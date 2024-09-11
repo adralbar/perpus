@@ -13,23 +13,23 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="{{ asset('lte/plugins/fontawesome-free/css/all.min.css') }}">
     <!-- Ionicons -->
-    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/ionicons/css/ionicons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/bootstrap-icons/bootstrap-icons.css') }}">
 
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    {{-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"> --}}
 
 
     <!-- Tempusdominus Bootstrap 4 -->
     <link
         rel="stylesheet"href="{{ asset('lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
-    <!-- iCheck -->
+    <link rel="stylesheet"href="{{ asset('lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.css') }}">
     <link rel="stylesheet"href=" {{ asset('lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-    <!-- JQVMap -->
+    <link rel="stylesheet"href=" {{ asset('lte/plugins/icheck-bootstrap/icheck-bootstrap.css') }}">
+
     <link rel="stylesheet"href="{{ asset('lte/plugins/jqvmap/jqvmap.min.css') }}">
     <!-- Theme style -->
     <link rel="stylesheet"href="{{ asset('dist/css/adminlte.min.css') }}">
-
+    <link rel="stylesheet"href="{{ asset('dist/css/adminlte.css') }}">
     <link rel="stylesheet"href="{{ asset('dist/css/app.css') }}"><!-- overlayScrollbars -->
 
     <link rel="stylesheet"href="{{ asset('lte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
