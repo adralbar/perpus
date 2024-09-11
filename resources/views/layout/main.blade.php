@@ -342,8 +342,7 @@
     <script src="{{ asset('dist/js/adminlte.js') }}"></script>
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     <script src="{{ asset('dist/js/pages/dashboard.js') }}"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
-        crossorigin="anonymous"></script>
+
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
     <script src="{{ asset('plugins/chart.js/Chart.min.js') }}"></script>
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
