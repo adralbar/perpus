@@ -47,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
 
 
+
+
     Route::post('/store', [ShiftController::class, 'store'])->name('shift.store');
     Route::get('/shift-data/{id}', [ShiftController::class, 'edit'])->name('shift.edit');
     Route::put('/update/{id}', [ShiftController::class, 'update'])->name('shift.update');

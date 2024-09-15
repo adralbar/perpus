@@ -21,6 +21,7 @@ class ShiftController extends Controller
         $data = Shift::select([
             'id',
             'nama',
+            'npkSistem',
             'npk',
             'divisi',
             'departement',
@@ -42,32 +43,81 @@ class ShiftController extends Controller
     {
         $request->validate([
             'nama' => 'required|string',
+            'npkSistem' => 'required|string',
             'npk' => 'required|string',
             'divisi' => 'required|string',
             'departement' => 'required|string',
             'section' => 'required|string',
             'shift1' => 'required|string',
-            'tanggal' => 'required|string',
+            'start_date' => 'required|string',
+            'end_date' => 'required|string',
             'status' => 'required|string',
         ]);
 
-        Shift::create($request->all());
+        shift::create($request->all());
 
         return response()->json(['success' => 'Data berhasil disimpan']);
     }
 
-    public function edit($id) {}
+
+    public function edit($id)
+    {
+        $shift = Shift::find($id);
+
+        if ($shift) {
+            return response()->json(['result' => $shift]);
+        } else {
+            return response()->json(['result' => null], 404);
+        }
+    }
 
 
-    public function update(Request $request, $id) {}
 
-    public function destroy($id) {}
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nama' => 'required|string',
+            'npkSistem' => 'required|string',
+            'npk' => 'required|string',
+            'divisi' => 'required|string',
+            'departement' => 'required|string',
+            'section' => 'required|string',
+            'shift1' => 'required|string',
+            'start_date' => 'required|string',
+            'end_date' => 'required|string',
+            'status' => 'required|string',
+        ]);
+
+        // Memperbarui data dengan array key-value
+        shift::where('id', $id)->update([
+            'nama' => $request->nama,
+            'npkSistem' => $request->npkSistem,
+            'npk' => $request->npk,
+            'divisi' => $request->divisi,
+            'departement' => $request->departement,
+            'section' => $request->section,
+            'shift1' => $request->shift1,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'status' => $request->status,
+        ]);
+    }
+
+
+    public function destroy($id)
+    {
+        shift::where('id', $id)->delete();
+    }
 
     public function importProcess(Request $request)
     {
+        $request->validate([
+            'file' => 'required|mimes:xlsx|max:2048', // validasi hanya menerima file xlsx dengan ukuran maksimal 2MB
+        ]);
         $file = $request->file('file');
         Excel::import(new ShiftsImport, $file);
 
-        return redirect()->back()->with('success', 'Data imported successfully.');
+        return redirect()->back()->with('success', 'File berhasil diunggah.');
     }
 }

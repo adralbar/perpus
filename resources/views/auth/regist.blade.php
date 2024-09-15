@@ -87,6 +87,23 @@
     <script src="lte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <script src="../../dist/js/adminlte.min.js?v=3.2.0"></script>
+    <script src="{{ asset('dist\js/adminlte.min.js?v=3.2.0') }}"></script>
+
+    <script>
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengunggah',
+                html: `
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        `, // Tampilkan semua pesan error dalam bentuk list
+            });
+        @endif
+    </script>
 </body>
 
 </html>

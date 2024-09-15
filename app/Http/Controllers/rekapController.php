@@ -21,11 +21,13 @@ class rekapController extends Controller
     {
         return view('rekap.rekapAbsensi');
     }
-
     public function getData(Request $request)
     {
         $month = $request->input('month');
-        $year = date('Y'); // Ganti dengan tahun yang relevan atau tambahkan filter tahun jika perlu
+        $year = date('Y'); // You can also make this dynamic if needed
+
+        // Debugging: Check if month parameter is received
+        Log::info('Filter Month: ' . $month);
 
         $query = DB::table('absensici')
             ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
@@ -51,22 +53,24 @@ class rekapController extends Controller
             ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
             ->select(
                 'kategorishift.nama',
+                'kategorishift.npkSistem',
+                'kategorishift.divisi',
+                'kategorishift.departement',
+                'kategorishift.section',
                 'absensici.npk',
                 'absensici.tanggal',
                 'first_checkin.waktuci as waktuci',
                 DB::raw('COALESCE(last_checkout_tomorrow.waktuco, last_checkout_today.waktuco) as waktuco')
             )
             ->distinct()
-            ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
+            ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'kategorishift.npkSistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
             ->orderBy('absensici.tanggal', 'desc');
 
         // Apply the month filter if it is set
-        if ($month) {
-            $query->whereMonth('absensici.tanggal', $month);
+        if (!empty($month)) {
+            $query->whereMonth('absensici.tanggal', $month)
+                ->whereYear('absensici.tanggal', $year); // Optional: Filter by year as well
         }
-
-        // Apply the year filter
-        $query->whereYear('absensici.tanggal', $year);
 
         $data = $query->get();
 
@@ -74,11 +78,6 @@ class rekapController extends Controller
             ->addIndexColumn()
             ->make(true);
     }
-
-
-
-
-
 
     public function storeCheckin(Request $request)
     {

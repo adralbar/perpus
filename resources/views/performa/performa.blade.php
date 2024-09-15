@@ -22,7 +22,11 @@
                         <tr>
                             <th>No</th>
                             <th>Nama</th>
-                            <th>NPK</th>
+                            <th>NPK Sistem</th>
+                            <th>NPK Api</th>
+                            <th>Divisi</th>
+                            <th>Departemen</th>
+                            <th>Section</th>
                             <th>Tanggal</th>
                             <th>Waktu Check in</th>
                             <th>Waktu Login Dashboard</th>

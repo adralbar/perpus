@@ -9,10 +9,10 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 
-    <link rel="stylesheet" href="{{ asset('lte/plugins/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('\lte\plugins\fontawesome-free\css\all.css') }}">
 
-    <link rel="stylesheet"href=" {{ asset('lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-    <link rel="stylesheet"href=" {{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="stylesheet"href=" {{ asset('\lte\plugins\icheck-bootstrap\icheck-bootstrap.min.css') }}">
+    <link rel="stylesheet"href=" {{ asset('dist\css\adminlte.min.css') }}">
 
 </head>
 
@@ -43,7 +43,7 @@
 
                     <div class="input-group mb-3">
                         <input type="username" name="username" class="form-control" placeholder="Username"
-                            value="{{ Session::get('username') }}">
+                            value="{{ Session::get('username') }}" required>
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="bi bi-person-fill"></span>
@@ -52,7 +52,7 @@
                     </div>
 
                     <div class="input-group mb-3">
-                        <input type="password" name="password" class="form-control" placeholder="Password">
+                        <input type="password" name="password" class="form-control" placeholder="Password" required>
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="fas fa-lock"></span>
@@ -85,12 +85,28 @@
     </div>
 
 
-    <link rel="stylesheet"href=" {{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="stylesheet"href=" {{ asset('dist\css\adminlte.min.css') }}">
 
-    <script src="{{ asset('lte/plugins/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('lte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('lte\plugins\jquery\jquery.min.js') }}"></script>
+    <script src="{{ asset('lte\plugins\bootstrap\js\bootstrap.bundle.min.js') }}"></script>
 
-    <script src="{{ asset('dist/js/adminlte.min.js?v=3.2.0') }}"></script>
+    <script src="{{ asset('dist\js/adminlte.min.js?v=3.2.0') }}"></script>
+
+    <script>
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengunggah',
+                html: `
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        `, // Tampilkan semua pesan error dalam bentuk list
+            });
+        @endif
+    </script>
 
 </body>
 

@@ -9,5 +9,5 @@ class shift extends Model
 {
     protected $table = 'kategorishift'; // Nama tabel yang baru
     public $incrementing = false;
-    protected $fillable = ['npk', 'nama', 'divisi', 'departement', 'section', 'shift1', 'start_date', 'end_date', 'status'];
+    protected $fillable = ['npkSistem', 'npk', 'nama', 'divisi', 'departement', 'section', 'shift1', 'start_date', 'end_date', 'status'];
 }

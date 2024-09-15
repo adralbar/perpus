@@ -3,23 +3,22 @@
 namespace App\Imports;
 
 use Illuminate\Support\Collection;
-use App\Models\Shift; // Pastikan Anda memiliki model Shift
+use App\Models\Shift;
 use Maatwebsite\Excel\Concerns\ToCollection;
 
 class ShiftsImport implements ToCollection
 {
     /**
-     * @param Collection $collection
+     * @param Collection 
      */
     public function collection(Collection $collection)
     {
-
-
         $indexKe = 1;
         foreach ($collection as $row) {
             if ($indexKe > 1) { // Skip header row
 
                 // Persiapkan data
+                $data['npkSistem'] = !empty($row[1]) ? $row[1] : '';
                 $data['npk'] = !empty($row[2]) ? $row[2] : '';
                 $data['nama'] = !empty($row[3]) ? $row[3] : '';
                 $data['divisi'] = !empty($row[4]) ? $row[4] : '';

@@ -29,13 +29,21 @@ class performaController extends Controller
                 $join->on(DB::raw('CONVERT(first_checkin.npk USING utf8mb4)'), '=', DB::raw('CONVERT(absensici.npk USING utf8mb4)'))
                     ->on('first_checkin.tanggal', '=', 'absensici.tanggal');
             })
+            ->leftJoin('kategorishift', function ($join) {
+                $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(kategorishift.npk USING utf8mb4)'));
+            })
             ->select(
                 'pcd_master_users.nama',
                 'absensici.npk',
                 'absensici.tanggal',
                 'first_checkin.waktuci AS waktuci_checkin',
                 DB::raw('TIME(pcd_login_logs.created_at) AS waktu_login_dashboard'),
-                DB::raw('TIMEDIFF(TIME(pcd_login_logs.created_at), TIME(first_checkin.waktuci)) AS selisih_waktu')
+                DB::raw('TIMEDIFF(TIME(pcd_login_logs.created_at), TIME(first_checkin.waktuci)) AS selisih_waktu'),
+                'kategorishift.npkSistem', // Adding npkSistem
+                'kategorishift.divisi', // Adding divisi
+                'kategorishift.departement', // Adding departement
+                'kategorishift.section', // Adding section
+                'kategorishift.nama AS nama' // Renaming nama to shift_nama to avoid ambiguity
             )
             ->distinct()
             ->orderBy('absensici.tanggal', 'desc')

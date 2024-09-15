@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    @yield('style')
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,31 +15,32 @@
     <link rel="stylesheet" href="{{ asset('lte/plugins/fontawesome-free/css/all.min.css') }}">
     <!-- Ionicons -->
     <link rel="stylesheet" href="{{ asset('assets/ionicons/css/ionicons.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/bootstrap-icons/bootstrap-icons.css') }}">
+    <link rel="stylesheet" href="{{ asset('/assets/bootstrap-icons/bootstrap-icons.css') }}">
 
     {{-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"> --}}
 
 
     <!-- Tempusdominus Bootstrap 4 -->
     <link
-        rel="stylesheet"href="{{ asset('lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
-    <link rel="stylesheet"href="{{ asset('lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.css') }}">
-    <link rel="stylesheet"href=" {{ asset('lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-    <link rel="stylesheet"href=" {{ asset('lte/plugins/icheck-bootstrap/icheck-bootstrap.css') }}">
+        rel="stylesheet"href="{{ asset('/lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
+    <link
+        rel="stylesheet"href="{{ asset('/lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.css') }}">
+    <link rel="stylesheet"href=" {{ asset('/lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
+    <link rel="stylesheet"href=" {{ asset('/lte/plugins/icheck-bootstrap/icheck-bootstrap.css') }}">
 
-    <link rel="stylesheet"href="{{ asset('lte/plugins/jqvmap/jqvmap.min.css') }}">
+    <link rel="stylesheet"href="{{ asset('/lte/plugins/jqvmap/jqvmap.min.css') }}">
     <!-- Theme style -->
-    <link rel="stylesheet"href="{{ asset('dist/css/adminlte.min.css') }}">
-    <link rel="stylesheet"href="{{ asset('dist/css/adminlte.css') }}">
-    <link rel="stylesheet"href="{{ asset('dist/css/app.css') }}"><!-- overlayScrollbars -->
+    <link rel="stylesheet"href="{{ asset('/dist/css/adminlte.min.css') }}">
+    <link rel="stylesheet"href="{{ asset('/dist/css/adminlte.css') }}">
+    <link rel="stylesheet"href="{{ asset('/dist/css/app.css') }}"><!-- overlayScrollbars -->
 
-    <link rel="stylesheet"href="{{ asset('lte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
+    <link rel="stylesheet"href="{{ asset('/lte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
     <!-- Daterange picker -->
-    <link rel="stylesheet"href="{{ asset('lte/plugins/daterangepicker/daterangepicker.css') }}">
+    <link rel="stylesheet"href="{{ asset('/lte/plugins/daterangepicker/daterangepicker.css') }}">
     <!-- summernote -->
-    <link rel="stylesheet"href="{{ asset('lte/plugins/summernote/summernote-bs4.min.css') }}">
+    <link rel="stylesheet"href="{{ asset('/lte/plugins/summernote/summernote-bs4.min.css') }}">
 
-    <link rel="stylesheet" href="{{ asset('dist/css/plugins/dataTables.dataTables.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('/dist/css/plugins/dataTables.dataTables.min.css') }}">
 
 </head>
 
@@ -46,10 +48,10 @@
     <div class="wrapper">
 
         <!-- Preloader -->
-        <div class="preloader flex-column justify-content-center align-items-center">
-            <img class="animation__shake" src="dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60"
-                width="60">
-        </div>
+        {{-- <div class="preloader flex-column justify-content-center align-items-center">
+                <img class="animation__shake" src="dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60"
+                    width="60">
+            </div> --}}
 
         <!-- Navbar -->
         <nav class="main-header navbar navbar-expand navbar-dark">
@@ -311,43 +313,44 @@
     <!-- ./wrapper -->
 
     <!-- jQuery -->
-    <script src="{{ asset('lte/plugins/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('/lte/plugins/jquery/jquery.min.js') }}"></script>
     <!-- jQuery UI 1.11.4 -->
-    <script src="{{ asset('lte/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
     <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
     <script>
         $.widget.bridge('uibutton', $.ui.button)
     </script>
     <!-- Bootstrap 4 -->
-    <script src="{{ asset('lte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <!-- ChartJS -->
-    <script src="{{ asset('lte/plugins/chart.js/Chart.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/chart.js/Chart.min.js') }}"></script>
     <!-- Sparkline -->
-    <script src="{{ asset('lte/plugins/sparklines/sparkline.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/sparklines/sparkline.js') }}"></script>
     <!-- JQVMap -->
-    <script src="{{ asset('lte/plugins/jqvmap/jquery.vmap.min.js') }}"></script>
-    <script src="{{ asset('lte/plugins/jqvmap/maps/jquery.vmap.usa.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/jqvmap/jquery.vmap.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/jqvmap/maps/jquery.vmap.usa.js') }}"></script>
     <!-- jQuery Knob Chart -->
-    <script src="{{ asset('lte/plugins/jquery-knob/jquery.knob.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/jquery-knob/jquery.knob.min.js') }}"></script>
     <!-- daterangepicker -->
-    <script src="{{ asset('lte/plugins/moment/moment.min.js') }}"></script>
-    <script src="{{ asset('lte/plugins/daterangepicker/daterangepicker.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/moment/moment.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/daterangepicker/daterangepicker.js') }}"></script>
     <!-- Tempusdominus Bootstrap 4 -->
-    <script src="{{ asset('lte/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
     <!-- Summernote -->
-    <script src="{{ asset('lte/plugins/summernote/summernote-bs4.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/summernote/summernote-bs4.min.js') }}"></script>
     <!-- overlayScrollbars -->
-    <script src="{{ asset('lte/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
+    <script src="{{ asset('/lte/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
     <!-- AdminLTE App -->
-    <script src="{{ asset('dist/js/adminlte.js') }}"></script>
+    <script src="{{ asset('/dist/js/adminlte.js') }}"></script>
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-    <script src="{{ asset('dist/js/pages/dashboard.js') }}"></script>
+    <script src="{{ asset('/dist/js/pages/dashboard.js') }}"></script>
 
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
-    <script src="{{ asset('plugins/chart.js/Chart.min.js') }}"></script>
+    <script src="{{ asset('/plugins/chart.js/Chart.min.js') }}"></script>
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-    <script src="{{ asset('dist/js/pages/dashboard3.js') }}"></script>
+    <script src="{{ asset('/dist/js/pages/dashboard3.js') }}"></script>
     
 </body>
 
 </html>
+    

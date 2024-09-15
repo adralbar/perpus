@@ -45,16 +45,18 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
             ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
             ->select(
                 'kategorishift.nama',
+                'kategorishift.npkSistem',
+                'kategorishift.divisi',
+                'kategorishift.departement',
+                'kategorishift.section',
                 'absensici.npk',
                 'absensici.tanggal',
                 'first_checkin.waktuci as waktuci',
                 DB::raw('COALESCE(last_checkout_tomorrow.waktuco, last_checkout_today.waktuco) as waktuco')
             )
-            ->whereYear('absensici.tanggal', $this->year) // Selalu filter berdasarkan tahun
-            ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
+            ->distinct()
+            ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'kategorishift.npkSistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
             ->orderBy('absensici.tanggal', 'desc');
-
-        // Terapkan filter bulan jika ada
         if ($this->month) {
             $query->whereMonth('absensici.tanggal', $this->month);
         }
@@ -66,7 +68,11 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
     {
         return [
             'Nama',
-            'NPK',
+            'NPK Sistem',
+            'NPK API',
+            'Divisi',
+            'Departemen',
+            'Section',
             'Tanggal',
             'Waktu Check-In',
             'Waktu Check-Out',

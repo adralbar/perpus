@@ -1,6 +1,8 @@
 @extends('layout/main')
+
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
+
 @section('content')
     <div class="content-wrapper">
         <div class="p-3">
@@ -20,7 +22,6 @@
                         Upload File
                     </button>
                     <button type="button" class="btn btn-success btn-sm" id="exportButton">Export to Excel</button>
-
                 </div>
                 <div class="mb-3">
                     <label for="monthFilter" class="form-label">Filter Bulan</label>
@@ -30,14 +31,17 @@
                             <option value="{{ $i }}">{{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
                         @endfor
                     </select>
-
                 </div>
                 <table id="myTable" class="table table-dark table-striped">
                     <thead>
                         <tr>
                             <th>No</th>
                             <th>Nama</th>
-                            <th>NPK</th>
+                            <th>NPK Sistem</th>
+                            <th>NPK Api</th>
+                            <th>Divisi</th>
+                            <th>Departemen</th>
+                            <th>Section</th>
                             <th>Tanggal</th>
                             <th>Waktu Check-in</th>
                             <th>Waktu Check-out</th>
@@ -59,9 +63,8 @@
                 <div class="modal-body">
                     <form id="checkinForm">
                         @csrf
-
                         <div class="form-group">
-                            <label for="npk">NPK</label>
+                            <label for="npk">NPK Api</label>
                             <input type="text" class="form-control" id="npk" name="npk" required>
                         </div>
                         <div class="form-group">
@@ -84,13 +87,12 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="checkoutModalLabel">Tambah Check-out</h5>
+                    <h5 class="modal-title" id="checkoutModalLabel">Tambah Check-out</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="checkoutForm">
                         @csrf
-
                         <div class="form-group">
                             <label for="npk">NPK</label>
                             <input type="text" class="form-control" id="npk" name="npk" required>
@@ -111,7 +113,6 @@
     </div>
 
     <!-- Modal untuk Upload File -->
-
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -124,7 +125,8 @@
                         @csrf
                         <div class="form-group">
                             <label for="file">Upload File</label>
-                            <input type="file" class="form-control" id="file" name="file" required>
+                            <input type="file" class="form-control" id="file" name="file" accept=".txt"
+                                required>
                         </div>
                         <button type="submit" class="btn btn-primary">Upload</button>
                     </form>
@@ -134,9 +136,9 @@
     </div>
 
     <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ asset('dist/js/plugins/query.dataTables.min.js') }}"></script>
+    <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
-
+    <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
     <script>
         $(document).ready(function() {
             var table = $('#myTable').DataTable({
@@ -145,7 +147,9 @@
                 ajax: {
                     url: "{{ route('rekap.getData') }}",
                     type: 'GET',
-
+                    data: function(d) {
+                        d.month = $('#monthFilter').val();
+                    }
                 },
                 columns: [{
                         data: 'DT_RowIndex',
@@ -155,11 +159,27 @@
                     },
                     {
                         data: 'nama',
-                        name: 'kategorishift.nama'
+                        name: 'nama'
+                    },
+                    {
+                        data: 'npkSistem',
+                        name: 'npkSistem'
                     },
                     {
                         data: 'npk',
                         name: 'npk'
+                    },
+                    {
+                        data: 'divisi',
+                        name: 'divisi'
+                    },
+                    {
+                        data: 'departement',
+                        name: 'departement'
+                    },
+                    {
+                        data: 'section',
+                        name: 'section'
                     },
                     {
                         data: 'tanggal',
@@ -214,17 +234,30 @@
                     }
                 });
             });
-        });
 
-        $(document).ready(function() {
+            // Export to Excel
             $('#exportButton').on('click', function() {
-                // Get selected month and year from filters
                 var month = $('#monthFilter').val();
-                var year = new Date().getFullYear(); // Assuming the year is the current year
+                var year = new Date().getFullYear(); // Assuming the year is the
+
 
                 // Redirect to the export route with query parameters
                 window.location.href = "{{ route('rekap.export') }}?month=" + month + "&year=" + year;
             });
         });
+
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengunggah',
+                html: `
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            `, // Tampilkan semua pesan error dalam bentuk list
+            });
+        @endif
     </script>
 @endsection

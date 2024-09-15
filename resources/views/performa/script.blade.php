@@ -22,8 +22,24 @@
                     name: 'nama'
                 },
                 {
+                    data: 'npkSistem',
+                    name: 'npkSistem'
+                },
+                {
                     data: 'npk',
                     name: 'npk'
+                },
+                {
+                    data: 'divisi',
+                    name: 'divisi'
+                },
+                {
+                    data: 'departement',
+                    name: 'departement'
+                },
+                {
+                    data: 'section',
+                    name: 'section'
                 },
                 {
                     data: 'tanggal',

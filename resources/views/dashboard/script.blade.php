@@ -2,7 +2,7 @@
 <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
 <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
-
+<script src="{{ asset('dist/js/sweetalert.js') }}"></script>
 <script>
     // const monthMap = {
     //     'January': '01',
@@ -224,4 +224,18 @@
             table1.ajax.url('{{ route('data.table1') }}').load();
         }
     }
+
+    @if ($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Mengunggah',
+            html: `
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            `, // Tampilkan semua pesan error dalam bentuk list
+        });
+    @endif
 </script>

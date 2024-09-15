@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('kategorishift', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
+            $table->string('npkSistem');
             $table->string('npk');
             $table->string('divisi');
             $table->string('departement');
