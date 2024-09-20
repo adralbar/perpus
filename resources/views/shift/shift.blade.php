@@ -1,6 +1,6 @@
 @extends('layout/main')
 
-<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
 
@@ -59,7 +59,7 @@
                         </div>
                         <div class="form-group">
                             <label for="npk">NPK Sistem</label>
-                            <input type="text" class="form-control" id="npk" name="npk" required>
+                            <input type="text" class="form-control" id="npkSistem" name="npkSistem" required>
                         </div>
                         <div class="form-group">
                             <label for="npk">NPK Api</label>
@@ -213,8 +213,10 @@
                     success: function(response) {
                         $('#shiftModal').modal('hide');
                         table.ajax.reload();
-                    },
+                    }
                 });
+                console.log('URL:', url);
+                console.log('Method:', method);
             });
         });
 
@@ -229,8 +231,8 @@
                         $('#shiftId').val(id); // Set the ID
                         $('#nama').val(response.result.nama);
                         $('#nama').val(response.result.nama);
-                        $('#npkSistem').val(response.result.npkSistem);
                         $('#npk').val(response.result.npk);
+                        $('#npkSistem').val(response.result.npkSistem);
                         $('#divisi').val(response.result.divisi);
                         $('#departement').val(response.result.departement);
                         $('#section').val(response.result.section);

@@ -23,11 +23,12 @@ class rekapController extends Controller
     }
     public function getData(Request $request)
     {
-        $month = $request->input('month');
-        $year = date('Y'); // You can also make this dynamic if needed
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
 
         // Debugging: Check if month parameter is received
-        Log::info('Filter Month: ' . $month);
+        Log::info('Filter Month: ' . $startDate);
+        Log::info('Filter Month: ' . $endDate);
 
         $query = DB::table('absensici')
             ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
@@ -67,10 +68,11 @@ class rekapController extends Controller
             ->orderBy('absensici.tanggal', 'desc');
 
         // Apply the month filter if it is set
-        if (!empty($month)) {
-            $query->whereMonth('absensici.tanggal', $month)
-                ->whereYear('absensici.tanggal', $year); // Optional: Filter by year as well
+        if (!empty($startDate) && !empty($endDate)) {
+            $query->whereBetween('absensici.tanggal', [$startDate, $endDate]);
         }
+
+
 
         $data = $query->get();
 
@@ -163,9 +165,10 @@ class rekapController extends Controller
 
     public function exportAbsensi(Request $request)
     {
-        $month = $request->input('month');
-        $year = $request->input('year');
 
-        return Excel::download(new RekapAbsensiExport($month, $year), 'absensi.xlsx');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate'); // Perbaiki kesalahan pengetikan di sini
+
+        return Excel::download(new RekapAbsensiExport($startDate, $endDate), 'absensi.xlsx');
     }
 }

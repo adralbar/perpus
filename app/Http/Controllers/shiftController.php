@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ShiftsImport;
 use Illuminate\Support\Facades\DB;
 
-class ShiftController extends Controller
+class shiftController extends Controller
 {
     public function index()
     {
@@ -42,16 +42,16 @@ class ShiftController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string',
-            'npkSistem' => 'required|string',
-            'npk' => 'required|string',
-            'divisi' => 'required|string',
-            'departement' => 'required|string',
-            'section' => 'required|string',
-            'shift1' => 'required|string',
-            'start_date' => 'required|string',
-            'end_date' => 'required|string',
-            'status' => 'required|string',
+            'nama' => 'required',
+            'npkSistem' => 'required',
+            'npk' => 'required',
+            'divisi' => 'required',
+            'departement' => 'required',
+            'section' => 'required',
+            'shift1' => 'required',
+            'start_date' => 'required',
+            'end_date' => 'required',
+            'status' => 'required',
         ]);
 
         shift::create($request->all());
@@ -62,7 +62,7 @@ class ShiftController extends Controller
 
     public function edit($id)
     {
-        $shift = Shift::find($id);
+        $shift = shift::find($id);
 
         if ($shift) {
             return response()->json(['result' => $shift]);
@@ -76,17 +76,18 @@ class ShiftController extends Controller
 
     public function update(Request $request, $id)
     {
+
         $request->validate([
-            'nama' => 'required|string',
-            'npkSistem' => 'required|string',
-            'npk' => 'required|string',
-            'divisi' => 'required|string',
-            'departement' => 'required|string',
-            'section' => 'required|string',
-            'shift1' => 'required|string',
-            'start_date' => 'required|string',
-            'end_date' => 'required|string',
-            'status' => 'required|string',
+            'nama' => 'required',
+            'npkSistem' => 'required',
+            'npk' => 'required',
+            'divisi' => 'required',
+            'departement' => 'required',
+            'section' => 'required',
+            'shift1' => 'required',
+            'start_date' => 'required',
+            'end_date' => 'required',
+            'status' => 'required',
         ]);
 
         // Memperbarui data dengan array key-value

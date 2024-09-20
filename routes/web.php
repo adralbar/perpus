@@ -37,7 +37,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/data/chart', [dashboardController::class, 'getChartData'])->name('data.chart');
     // Route::get('/data/table1', [dashboardController::class, 'getTable1Data'])->name('data.table1');
     Route::get('/performa/get-data', [performaController::class, 'getData'])->name('performa.getData');
-
     Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/getChartData', [dashboardController::class, 'getChartData'])->name('getChartData');
     Route::get('data/table1', [dashboardController::class, 'getTable1bData'])->name('data.table1b');
@@ -49,12 +48,12 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-    Route::post('/store', [ShiftController::class, 'store'])->name('shift.store');
-    Route::get('/shift-data/{id}', [ShiftController::class, 'edit'])->name('shift.edit');
-    Route::put('/update/{id}', [ShiftController::class, 'update'])->name('shift.update');
-    Route::delete('/destroy/{id}', [ShiftController::class, 'destroy'])->name('shift.destroy');
+    Route::post('/store', [shiftController::class, 'store'])->name('shift.store');
+    Route::get('/shift-data/{id}', [shiftController::class, 'edit'])->name('shift.edit');
+    Route::put('/update/{id}', [shiftController::class, 'update'])->name('shift.update');
+    Route::delete('/destroy/{id}', [shiftController::class, 'destroy'])->name('shift.destroy');
 
-    Route::post('/fileupload', [ShiftController::class, 'importProcess'])->name('shift.import');
+    Route::post('/fileupload', [shiftController::class, 'importProcess'])->name('shift.import');
     Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
 
 

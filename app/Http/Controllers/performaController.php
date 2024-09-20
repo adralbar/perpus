@@ -21,15 +21,15 @@ class performaController extends Controller
             ->leftJoin('pcd_master_users', function ($join) {
                 $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_master_users.npk USING utf8mb4)'));
             })
-            ->leftJoin('pcd_login_logs', function ($join) {
+            ->join('pcd_login_logs', function ($join) {
                 $join->on(DB::raw('CONVERT(pcd_master_users.id USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_login_logs.user_id USING utf8mb4)'))
                     ->on('absensici.tanggal', '=', DB::raw('DATE(pcd_login_logs.created_at)'));
             })
-            ->leftJoin(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
+            ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
                 $join->on(DB::raw('CONVERT(first_checkin.npk USING utf8mb4)'), '=', DB::raw('CONVERT(absensici.npk USING utf8mb4)'))
                     ->on('first_checkin.tanggal', '=', 'absensici.tanggal');
             })
-            ->leftJoin('kategorishift', function ($join) {
+            ->join('kategorishift', function ($join) {
                 $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(kategorishift.npk USING utf8mb4)'));
             })
             ->select(

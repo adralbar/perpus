@@ -9,18 +9,17 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class RekapAbsensiExport implements FromCollection, WithHeadings
 {
-    protected $month;
-    protected $year;
+    protected $startDate;
+    protected $endDate;
 
-    public function __construct($month = null, $year = null)
+    public function __construct($startDate = null, $endDate = null)
     {
-        $this->month = $month;
-        $this->year = $year ?? date('Y'); // Set default year to current year if not provided
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     public function collection(): Collection
     {
-        // Mulai query dari absensici
         $query = DB::table('absensici')
             ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
                 $join->on('absensici.npk', '=', 'first_checkin.npk')
@@ -57,9 +56,11 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
             ->distinct()
             ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'kategorishift.npkSistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
             ->orderBy('absensici.tanggal', 'desc');
-        if ($this->month) {
-            $query->whereMonth('absensici.tanggal', $this->month);
+
+        if (!empty($this->startDate) && !empty($this->endDate)) {
+            $query->whereBetween('absensici.tanggal', [$this->startDate, $this->endDate]);
         }
+
 
         return $query->get();
     }

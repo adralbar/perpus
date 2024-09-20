@@ -16,7 +16,7 @@
 
 </head>
 
-<body class="hold-transition login-page">
+<body class="hold-transition dark-mode login-page">
     <div class="login-box">
 
 
@@ -46,7 +46,7 @@
                             value="{{ Session::get('username') }}" required>
                         <div class="input-group-append">
                             <div class="input-group-text">
-                                <span class="bi bi-person-fill"></span>
+                                <span class="fas fa-envelope"></span>
                             </div>
                         </div>
                     </div>
