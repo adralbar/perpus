@@ -68,7 +68,7 @@ class dashboardController extends Controller
 
         Log::info('Received parameters:', ['tahun' => $tahun]);
 
-        // Subquery to get the earliest check-in time per date for each employee
+        // Subquery untuk mendapatkan waktu check-in paling awal per tanggal untuk setiap karyawan
         $subquery = DB::table('absensici as a')
             ->select(
                 'a.npk',
@@ -98,21 +98,21 @@ class dashboardController extends Controller
                 DB::raw('YEAR(absensici.tanggal) as tahun'),
                 DB::raw('COUNT(*) as total_keterlambatan'),
                 DB::raw('GROUP_CONCAT(absensici.tanggal ORDER BY absensici.tanggal) as tanggal'),
-                DB::raw('GROUP_CONCAT(absensici.waktuci ORDER BY absensici.tanggal) as waktu')
+                DB::raw('GROUP_CONCAT(absensici.waktuci ORDER BY absensici.tanggal) as waktu'),
+                'kategorishift.shift1' // Tambahkan shift1 ke dalam query
             )
-            // Filter where the check-in time is later than the shift start time
-            ->whereRaw("
+            // Filter di mana waktu check-in lebih lambat dari waktu shift
+            ->whereRaw("TIME(subquery.awal_waktuci) > 
                 CASE 
-                    WHEN kategorishift.shift1 LIKE '07:00 - 16:00' THEN TIME(subquery.awal_waktuci) > '07:00:00'
-                    WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN TIME(subquery.awal_waktuci) > '14:00:00'
-                    WHEN kategorishift.shift1 LIKE '21:00 - 06:00' THEN TIME(subquery.awal_waktuci) > '21:00:00'
-                    ELSE 1=1 
-                END
-            ")
+                    WHEN kategorishift.shift1 LIKE '07:00 - 16:00' THEN '07:00:00'
+                    WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN '14:00:00'
+                    WHEN kategorishift.shift1 LIKE '21:00 - 06:00' THEN '21:00:00'
+                    ELSE '00:00:00' 
+                END")
             ->when($tahun, function ($query) use ($tahun) {
                 $query->whereYear('absensici.tanggal', $tahun);
             })
-            ->groupBy('absensici.npk', 'kategorishift.npksistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'kategorishift.nama', DB::raw('YEAR(absensici.tanggal)'))
+            ->groupBy('absensici.npk', 'kategorishift.npksistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'kategorishift.nama', DB::raw('YEAR(absensici.tanggal)'), 'kategorishift.shift1')
             ->orderBy(DB::raw('YEAR(absensici.tanggal)'), 'desc')
             ->get();
 
@@ -126,17 +126,18 @@ class dashboardController extends Controller
                 data-total="' . e($row->total_keterlambatan) . '"
                 data-tanggal="' . e($row->tanggal) . '"  
                 data-waktu="' . e($row->waktu) . '"
-                data-npksistem="' . e($row->npksistem) . '"
-                data-divisi="' . e($row->divisi) . '"
-                data-departement="' . e($row->departement) . '"
-                data-section="' . e($row->section) . '">
+                data-shift1="' . e($row->shift1) . '"> <!-- Tambahkan shift1 ke data -->
                 Detail
-            </button>';
+                </button>';
                 return $btn;
             })
             ->rawColumns(['aksi'])
             ->make(true);
     }
+
+
+
+
 
 
 
@@ -173,7 +174,7 @@ class dashboardController extends Controller
             ->whereRaw("
                 CASE 
                     WHEN kategorishift.shift1 LIKE '07:00 - 16:00' THEN TIME(subquery.awal_waktuci) > '07:00:00'
-                    WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN TIME(subquery.awal_waktuci) > '14:00:00'
+                    WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN TIME(subquery.awal_waktuci) > '14:00:00'    
                     WHEN kategorishift.shift1 LIKE '21:00 - 06:00' THEN TIME(subquery.awal_waktuci) > '21:00:00'
                     ELSE 1=1 
                 END

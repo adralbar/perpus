@@ -4,12 +4,18 @@
 
 <script>
     $(document).ready(function() {
-        $('#myTable').DataTable({
+        var table = $('#myTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
                 url: "{{ route('performa.getData') }}",
-                type: 'GET'
+                type: 'GET',
+                data: function(d) {
+                    d.startDate = $('#startDate').val();
+                    d.endDate = $('#endDate').val();
+                    console.log("Start Date:", d.startDate);
+                    console.log("End Date:", d.endDate);
+                }
             },
             columns: [{
                     data: 'DT_RowIndex',
@@ -18,8 +24,8 @@
                     searchable: false
                 },
                 {
-                    data: 'nama',
-                    name: 'nama'
+                    data: 'name',
+                    name: 'name'
                 },
                 {
                     data: 'npkSistem',
@@ -59,7 +65,11 @@
                 }
             ]
         });
+        $('#startDate, #endDate').on('change', function() {
+            table.ajax.reload(); // Reload data berdasarkan rentang tanggal
+        });
     });
+
 
     $('#logForm').on('submit', function(e) {
         e.preventDefault();
@@ -93,5 +103,18 @@
                 console.error(xhr.responseText);
             }
         });
+    });
+
+    $('#exportButton').on('click', function() {
+        // Ambil nilai filter bulan dan tahun dari elemen
+        var startDate = $('#startDate').val(); // Pastikan ini adalah format yyyy-mm-dd
+        var endDate = $('#endDate').val(); // Pastikan ini adalah format yyyy-mm-dd
+        var search = $('#dt-search-0').val();
+        // Redirect to the export route with query parameters
+        window.location.href = "{{ route('performa.export') }}?startDate=" + encodeURIComponent(
+                startDate) +
+            "&endDate=" + encodeURIComponent(endDate) +
+            "&search=" + encodeURIComponent(search);
+
     });
 </script>

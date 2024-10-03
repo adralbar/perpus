@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\absensici;
-use Illuminate\Support\Facades\DB;
-use App\Models\absensico;
-use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Log;
 use DateTime;
+use Carbon\Carbon;
+use App\Models\absensici;
+use App\Models\absensico;
+use App\Jobs\UploadFileJob;
+use App\Models\SectionModel;
+use Illuminate\Http\Request;
+use App\Models\DepartmentModel;
+use Illuminate\Support\Facades\DB;
 use App\Exports\RekapAbsensiExport;
+use App\Models\DivisionModel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\Facades\DataTables;
 
 class rekapController extends Controller
 {
@@ -21,65 +27,126 @@ class rekapController extends Controller
     {
         return view('rekap.rekapAbsensi');
     }
+
     public function getData(Request $request)
     {
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        // Debugging: Check if month parameter is received
-        Log::info('Filter Month: ' . $startDate);
-        Log::info('Filter Month: ' . $endDate);
-
-        $query = DB::table('absensici')
-            ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
-                $join->on('absensici.npk', '=', 'first_checkin.npk')
-                    ->on('absensici.tanggal', '=', 'first_checkin.tanggal')
-                    ->on('absensici.waktuci', '=', 'first_checkin.waktuci');
-            })
-            ->leftJoin(DB::raw('(SELECT npk, tanggal, MAX(waktuco) as waktuco FROM absensico GROUP BY npk, tanggal) as last_checkout_today'), function ($join) {
-                $join->on('absensici.npk', '=', 'last_checkout_today.npk')
-                    ->on('absensici.tanggal', '=', 'last_checkout_today.tanggal');
-            })
-            ->leftJoin(DB::raw('(SELECT npk, tanggal, MAX(waktuco) as waktuco FROM absensico GROUP BY npk, tanggal) as last_checkout_tomorrow'), function ($join) {
-                $join->on('absensici.npk', '=', 'last_checkout_tomorrow.npk')
-                    ->on(DB::raw('DATE_ADD(absensici.tanggal, INTERVAL 1 DAY)'), '=', 'last_checkout_tomorrow.tanggal')
-                    ->whereNotExists(function ($query) {
-                        $query->select(DB::raw(1))
-                            ->from('absensici as next_checkin')
-                            ->whereRaw('next_checkin.npk = absensici.npk')
-                            ->whereRaw('next_checkin.tanggal = DATE_ADD(absensici.tanggal, INTERVAL 1 DAY)')
-                            ->whereRaw('next_checkin.waktuci < last_checkout_tomorrow.waktuco');
-                    });
-            })
-            ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
+        // Ambil data check-in
+        $checkinData = DB::table('absensici')
+            ->join('users', 'absensici.npk', '=', 'users.npk')
             ->select(
-                'kategorishift.nama',
-                'kategorishift.npkSistem',
-                'kategorishift.divisi',
-                'kategorishift.departement',
-                'kategorishift.section',
-                'absensici.npk',
+                'users.nama',
+                'users.npk as npk',
+                'users.section_id',
                 'absensici.tanggal',
-                'first_checkin.waktuci as waktuci',
-                DB::raw('COALESCE(last_checkout_tomorrow.waktuco, last_checkout_today.waktuco) as waktuco')
+                DB::raw('MIN(absensici.waktuci) as waktuci')
             )
-            ->distinct()
-            ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'kategorishift.npkSistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
-            ->orderBy('absensici.tanggal', 'desc');
+            ->groupBy(
+                'users.nama',
+                'users.npk',
+                'users.section_id',
+                'absensici.tanggal'
+            );
 
-        // Apply the month filter if it is set
         if (!empty($startDate) && !empty($endDate)) {
-            $query->whereBetween('absensici.tanggal', [$startDate, $endDate]);
+            $checkinData->whereBetween('absensici.tanggal', [$startDate, $endDate]);
+        }
+
+        $checkinResults = $checkinData->get();
+
+        // Ambil data check-out
+        $checkoutData = DB::table('absensico')
+            ->join('users', 'absensico.npk', '=', 'users.npk')
+            ->select(
+                'users.nama',
+                'users.npk as npk',
+                'users.section_id',
+                'absensico.tanggal',
+                DB::raw('MAX(absensico.waktuco) as waktuco')
+            )
+            ->groupBy(
+                'users.nama',
+                'users.npk',
+                'users.section_id',
+                'absensico.tanggal'
+            );
+
+        if (!empty($startDate) && !empty($endDate)) {
+            $checkoutData->whereBetween('absensico.tanggal', [$startDate, $endDate]);
+        }
+
+        $checkoutResults = $checkoutData->get();
+
+        // Gabungkan data check-in dan check-out
+        $results = [];
+
+        foreach ($checkinResults as $checkin) {
+            $key = $checkin->npk . '-' . $checkin->tanggal;
+            $section = SectionModel::find($checkin->section_id);
+
+            // Pastikan section tidak null sebelum mencoba mengakses division_id
+            $department = $section ? DepartmentModel::find($section->department_id) : null; // Ambil department berdasarkan section
+            $division = $department ? DivisionModel::find($department->division_id) : null; // Ambil division berdasarkan section
+
+            $results[$key] = [
+                'nama' => $checkin->nama,
+                'npk' => $checkin->npk,
+                'tanggal' => $checkin->tanggal,
+                'waktuci' => $checkin->waktuci,
+                'waktuco' => null, // Default null untuk waktu checkout
+                'section_nama' => $section ? $section->nama : 'Unknown',
+                'department_nama' => $department ? $department->nama : 'Unknown',
+                'division_nama' => $division ? $division->nama : 'Unknown', // Pastikan division_nama diambil dengan benar
+            ];
+        }
+
+        // Proses untuk checkout
+        foreach ($checkoutResults as $checkout) {
+            $key = $checkout->npk . '-' . $checkout->tanggal;
+            $section = SectionModel::find($checkout->section_id);
+            $department = $section ? DepartmentModel::find($section->department_id) : null;
+            $division = $section ? DivisionModel::find($section->division_id) : null;
+
+            if (isset($results[$key])) {
+                $results[$key]['waktuco'] = $checkout->waktuco;
+                $results[$key]['section_nama'] = $section ? $section->nama : 'Unknown';
+                $results[$key]['department_nama'] = $department ? $department->nama : 'Unknown';
+                $results[$key]['division_nama'] = $division ? $division->nama : 'Unknown';
+            } else {
+                $results[$key] = [
+                    'nama' => $checkout->nama,
+                    'npk' => $checkout->npk,
+                    'tanggal' => $checkout->tanggal,
+                    'waktuci' => null,
+                    'waktuco' => $checkout->waktuco,
+                    'section_nama' => $section ? $section->nama : 'Unknown',
+                    'department_nama' => $department ? $department->nama : 'Unknown',
+                    'division_nama' => $division ? $division->nama : 'Unknown',
+                ];
+            }
         }
 
 
+        // Ubah hasil menjadi koleksi dan urutkan berdasarkan tanggal ascending
+        $finalResults = collect(array_values($results))->sortBy('tanggal');
 
-        $data = $query->get();
-
-        return DataTables::of($data)
+        // Tampilkan "no in" dan "no out" jika waktuci atau waktuco null
+        return DataTables::of($finalResults)
             ->addIndexColumn()
+            ->editColumn('waktuci', function ($row) {
+                return $row['waktuci'] ? $row['waktuci'] : 'NO IN';
+            })
+            ->editColumn('waktuco', function ($row) {
+                return $row['waktuco'] ? $row['waktuco'] : 'NO OUT';
+            })
             ->make(true);
     }
+
+
+
+
 
     public function storeCheckin(Request $request)
     {
@@ -121,15 +188,62 @@ class rekapController extends Controller
 
     public function upload(Request $request)
     {
+        // Validasi file yang diunggah
         $request->validate([
-            'file' => 'required|mimes:txt'
+            'file' => 'required|mimes:txt,csv' // Memperbolehkan file CSV juga
         ]);
 
+        // Cek apakah file valid
         $file = $request->file('file');
+        if (!$file->isValid()) {
+            return redirect()->back()->withErrors('File upload failed. Please try again.');
+        }
+
+        // Simpan file ke storage (misalnya, di 'uploads' folder)
+        $filePath = $file->storeAs('uploads', $file->getClientOriginalName());
+
+        if (!$filePath) {
+            return redirect()->back()->withErrors('Failed to upload the file.');
+        }
+
+        // Dispatch job pertama untuk memproses file batch pertama
+        UploadFileJob::dispatch($filePath);
+
+        // Redirect kembali dengan pesan sukses
+        return redirect()->back()->with('success', 'File sedang diproses di latar belakang.');
+    }
+
+
+    public function exportAbsensi(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $search = $request->input('search'); // Ambil parameter search
+
+        return Excel::download(new RekapAbsensiExport($startDate, $endDate, $search), 'absensi.xlsx');
+    }
+    public function uploadapi(Request $request)
+    {
+        // Validasi file yang diunggah
+        $request->validate([
+            'file' => 'required|mimes:txt,csv' // Memperbolehkan file CSV juga
+        ]);
+
+        // Logging informasi tentang permintaan upload
+
+
+
+        // Cek apakah file valid
+        $file = $request->file('file');
+        if (!$file->isValid()) {
+            return redirect()->back()->withErrors('File upload failed. Please try again.');
+        }
+
+        // Membaca isi file
         $fileContent = file($file->getRealPath());
 
         foreach ($fileContent as $line) {
-            $data = str_getcsv($line, "\t"); // Assuming the file uses tabs as delimiters
+            $data = str_getcsv($line, "\t"); // Menganggap file menggunakan tab sebagai pemisah
 
             if (count($data) >= 5) {
                 $npk = $data[1];
@@ -137,12 +251,13 @@ class rekapController extends Controller
                 $status = $data[3];
                 $time = $data[4];
 
-                // Convert the date format from dd.mm.yyyy to yyyy-mm-dd
+                // Mengonversi format tanggal dari dd.mm.yyyy ke yyyy-mm-dd
                 $date = DateTime::createFromFormat('d.m.Y', $tanggal);
                 if ($date) {
-                    $formattedDate = $date->format('Y-m-d'); // Converts to yyyy-mm-dd
+                    $formattedDate = $date->format('Y-m-d'); // Mengonversi ke yyyy-mm-dd
                 } else {
-                    // Handle error if the date is invalid
+                    // Log error jika tanggal tidak valid
+                    Log::error('Invalid date format', ['date' => $tanggal]);
                     continue;
                 }
 
@@ -157,18 +272,12 @@ class rekapController extends Controller
                         ['waktuco' => $time]
                     );
                 }
+            } else {
+                // Log bahwa baris tidak mengandung cukup data
+                Log::warning('Insufficient data in line', ['line' => $line]);
             }
         }
 
-        return redirect()->back()->with('success', 'File uploaded and data processed successfully.');
-    }
-
-    public function exportAbsensi(Request $request)
-    {
-
-        $startDate = $request->input('startDate');
-        $endDate = $request->input('endDate'); // Perbaiki kesalahan pengetikan di sini
-
-        return Excel::download(new RekapAbsensiExport($startDate, $endDate), 'absensi.xlsx');
+        return response()->json(['success' => 'Data berhasil diupload!']);
     }
 }

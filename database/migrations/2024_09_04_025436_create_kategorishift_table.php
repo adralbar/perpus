@@ -4,34 +4,26 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateKategorishiftTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::create('kategorishift', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
-            $table->string('npkSistem');
+
             $table->string('npk');
-            $table->string('divisi');
-            $table->string('departement');
-            $table->string('section');
+
             $table->string('shift1');
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->string('status');
+            $table->date('start_date')->nullable(); // Simpan start_date
+            $table->date('end_date')->nullable();   // Simpan end_date
+            $table->date('date');       // Simpan setiap tanggal antara start_date dan end_date
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('kategorishift');
     }
-};
+}

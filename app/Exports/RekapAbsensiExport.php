@@ -11,11 +11,13 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
 {
     protected $startDate;
     protected $endDate;
+    protected $search;
 
-    public function __construct($startDate = null, $endDate = null)
+    public function __construct($startDate = null, $endDate = null, $search = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
+        $this->search = $search;
     }
 
     public function collection(): Collection
@@ -45,10 +47,11 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
             ->select(
                 'kategorishift.nama',
                 'kategorishift.npkSistem',
+                'absensici.npk',
                 'kategorishift.divisi',
                 'kategorishift.departement',
                 'kategorishift.section',
-                'absensici.npk',
+
                 'absensici.tanggal',
                 'first_checkin.waktuci as waktuci',
                 DB::raw('COALESCE(last_checkout_tomorrow.waktuco, last_checkout_today.waktuco) as waktuco')
@@ -57,10 +60,22 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
             ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'kategorishift.npkSistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
             ->orderBy('absensici.tanggal', 'desc');
 
+        if (!empty($this->search)) {
+            // Terapkan filter search ke query
+            $query->where(function ($query) {
+                $query->where('kategorishift.nama', 'LIKE', "%{$this->search}%")
+                    ->orWhere('kategorishift.npkSistem', 'LIKE', "%{$this->search}%")
+                    ->orWhere('kategorishift.divisi', 'LIKE', "%{$this->search}%")
+                    ->orWhere('kategorishift.departement', 'LIKE', "%{$this->search}%")
+                    ->orWhere('kategorishift.section', 'LIKE', "%{$this->search}%")
+                    ->orWhere('absensici.npk', 'LIKE', "%{$this->search}%")
+                    ->orWhere('absensici.tanggal', 'LIKE', "%{$this->search}%");
+            });
+        }
+
         if (!empty($this->startDate) && !empty($this->endDate)) {
             $query->whereBetween('absensici.tanggal', [$this->startDate, $this->endDate]);
         }
-
 
         return $query->get();
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -16,13 +17,14 @@ class loginController extends Controller
 
     public function authenticate(Request $request)
     {
+
         // Validasi input
         Session::flash('username', $request->username);
         $credentials = $request->validate([
-            'username' => 'required|string',
+            'npk' => 'required|string',
             'password' => 'required|string',
         ], [
-            'username.required' => 'Username wajib diisi',
+            'npk.required' => 'Username wajib diisi',
             'password.required' => 'Password wajib diisi',
         ]);
 
@@ -36,6 +38,7 @@ class loginController extends Controller
             ]);
         }
     }
+
     public function logout(Request $request)
     {
         Auth::logout();

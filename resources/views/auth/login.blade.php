@@ -8,26 +8,20 @@
 
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-
-    <link rel="stylesheet" href="{{ asset('\lte\plugins\fontawesome-free\css\all.css') }}">
-
-    <link rel="stylesheet"href=" {{ asset('\lte\plugins\icheck-bootstrap\icheck-bootstrap.min.css') }}">
-    <link rel="stylesheet"href=" {{ asset('dist\css\adminlte.min.css') }}">
-
+    <link rel="stylesheet" href="{{ asset('lte/plugins/fontawesome-free/css/all.css') }}">
+    <link rel="stylesheet" href="{{ asset('lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
 </head>
 
 <body class="hold-transition dark-mode login-page">
     <div class="login-box">
-
-
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
                 <a href="/login" class="h1"><b>LOGIN</b></a>
             </div>
             <div class="card-body">
-                <img src="dist/img/LogoApi.png" alt="Api Logo" class="logo-api rounded img-fluid w-50"
-                    style="display: block; margin: 0 auto;"></img>
-
+                <img src="{{ asset('dist/img/LogoApi.png') }}" alt="API Logo"
+                    class="logo-api rounded img-fluid w-50 mb-4" style="display: block; margin: 0 auto;">
                 <form action="{{ route('login') }}" method="post">
                     @csrf
 
@@ -42,8 +36,8 @@
                     @endif
 
                     <div class="input-group mb-3">
-                        <input type="username" name="username" class="form-control" placeholder="Username"
-                            value="{{ Session::get('username') }}" required>
+                        <input type="text" name="npk" class="form-control" placeholder="npk"
+                            value="{{ old('npk') }}" required>
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="fas fa-envelope"></span>
@@ -63,7 +57,7 @@
                     <div class="row">
                         <div class="col-8">
                             <div class="icheck-primary">
-                                <input type="checkbox" id="remember">
+                                <input type="checkbox" id="remember" name="remember">
                                 <label for="remember">
                                     Remember Me
                                 </label>
@@ -74,23 +68,13 @@
                         </div>
                     </div>
                 </form>
-
-
-
-
             </div>
-
         </div>
-
     </div>
 
-
-    <link rel="stylesheet"href=" {{ asset('dist\css\adminlte.min.css') }}">
-
-    <script src="{{ asset('lte\plugins\jquery\jquery.min.js') }}"></script>
-    <script src="{{ asset('lte\plugins\bootstrap\js\bootstrap.bundle.min.js') }}"></script>
-
-    <script src="{{ asset('dist\js/adminlte.min.js?v=3.2.0') }}"></script>
+    <script src="{{ asset('lte/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('lte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('dist/js/adminlte.min.js?v=3.2.0') }}"></script>
 
     <script>
         @if ($errors->any())
@@ -98,16 +82,15 @@
                 icon: 'error',
                 title: 'Gagal Mengunggah',
                 html: `
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-        `, // Tampilkan semua pesan error dalam bentuk list
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                `, // Tampilkan semua pesan error dalam bentuk list
             });
         @endif
     </script>
-
 </body>
 
 </html>

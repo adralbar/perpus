@@ -1,15 +1,19 @@
 <?php
 
+use Database\Seeders\users;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\loginController;
+use App\Http\Controllers\rekapController;
+use App\Http\Controllers\shiftController;
+use App\Http\Controllers\UsersController;
+use App\Http\Controllers\registController;
+use App\Http\Controllers\uploadController;
 use App\Http\Controllers\absensiController;
+use App\Http\Controllers\performaController;
 use App\Http\Controllers\absensiCoController;
 use App\Http\Controllers\dashboardController;
-use App\Http\Controllers\rekapController;
-use App\Http\Controllers\loginController;
-use App\Http\Controllers\performaController;
-use App\Http\Controllers\registController;
-use App\Http\Controllers\shiftController;
-use App\Http\Controllers\uploadController;
+
 // Route::get('/', function () {
 //     return view('welcome');
 // });
@@ -21,6 +25,13 @@ Route::middleware(['guest'])->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
+    Route::post('/user', [UsersController::class, 'store']);
+    Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
+    Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
+    Route::put('/user/update/{npk}', [UsersController::class, 'update']);
+    Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
+
     Route::resource('absensiControllerAjax', absensiController::class);
     Route::resource('absensiCoControllerAjax', absensiCoController::class);
     Route::get('/rekap', [rekapController::class, 'index'])->name('rekap.index');
@@ -54,12 +65,16 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/destroy/{id}', [shiftController::class, 'destroy'])->name('shift.destroy');
 
     Route::post('/fileupload', [shiftController::class, 'importProcess'])->name('shift.import');
+    Route::get('/rekap/export', [rekapController::class, 'exp   ortAbsensi'])->name('rekap.export');
+    Route::get('/performa/export', [performaController::class, 'performaExport'])->name('performa.export');
     Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
-
-
-    Route::get('/rekap/export', [rekapController::class, 'exportAbsensi'])->name('rekap.export');
+    Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
 });
+
 
 
 Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 Route::post('/registerperformaapi123', [registController::class, 'register'])->name('register');
+Route::get('/sanctum/csrf-cookie', function (Request $request) {
+    return response()->json(['csrfToken' => csrf_token()]);
+});

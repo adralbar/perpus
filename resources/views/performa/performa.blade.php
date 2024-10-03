@@ -15,25 +15,36 @@
                         data-bs-target="#userIdModal">
                         Tambah User Id
                     </button>
-
+                    <button type="button" class="btn btn-success btn-sm" id="exportButton">Export to Excel</button>
                 </div>
-                <table id="myTable" class="table table-dark table-striped">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama</th>
-                            <th>NPK Sistem</th>
-                            <th>NPK Api</th>
-                            <th>Divisi</th>
-                            <th>Departemen</th>
-                            <th>Section</th>
-                            <th>Tanggal</th>
-                            <th>Waktu Check in</th>
-                            <th>Waktu Login Dashboard</th>
-                            <th>Selisih Waktu</th>
-                        </tr>
-                    </thead>
-                </table>
+                <div class="mb-3">
+                    <label for="startDate" class="form-label">Tanggal Mulai</label>
+                    <input type="date" id="startDate" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="endDate" class="form-label">Tanggal Selesai</label>
+                    <input type="date" id="endDate" class="form-control">
+                </div>
+                <div class="table-responsive">
+                    <table id="myTable" class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>NPK Sistem</th>
+                                <th>NPK Api</th>
+                                <th>Divisi</th>
+                                <th>Departemen</th>
+                                <th>Section</th>
+                                <th>Tanggal</th>
+                                <th>Waktu Check in</th>
+                                <th>Waktu Login Dashboard</th>
+                                <th>Selisih Waktu</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>
@@ -84,13 +95,18 @@
                             <input type="text" class="form-control" id="id" name="id" required>
                         </div>
                         <div class="form-group">
-                            <label for="nama">Nama</label>
-                            <input type="text" class="form-control" id="nama" name="nama" required>
+                            <label for="npk">NPK API</label>
+                            <input type="text" class="form-control" id="npk" name="npk" list="npkList"
+                                required>
+                            <datalist id="npkList">
+
+                            </datalist>
                         </div>
                         <div class="form-group">
-                            <label for="text">NPK</label>
-                            <input type="text" class="form-control" id="npk" name="npk" required>
+                            <label for="nama">Nama</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
                         </div>
+
 
 
                         <button type="submit" class="btn btn-primary">Simpan</button>

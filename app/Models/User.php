@@ -2,46 +2,48 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, HasApiTokens, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'username',
-        'email',
-        'password',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'users'; // Laravel's default is 'users', so this is optional.
+   
     protected $hidden = [
         'password',
-        'remember_token',
+    ];
+    protected $fillable = [
+        'npk', 
+        'nama', 
+        'password', 
+        'no_telp', 
+        'section_id', 
+        'department_id', 
+        'division_id', 
+        'role_id'
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function section()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsTo(SectionModel::class, 'section_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(DepartmentModel::class);
+    }
+
+    public function division()
+    {
+        return $this->belongsTo(DivisionModel::class);
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(RoleModel::class);
     }
 }

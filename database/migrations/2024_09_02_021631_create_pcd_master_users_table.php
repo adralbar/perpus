@@ -15,7 +15,7 @@ class CreatePcdMasterUsersTable extends Migration
     {
         Schema::create('pcd_master_users', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
+            $table->string('name');
             $table->string('npk')->unique();
             $table->timestamps();
         });

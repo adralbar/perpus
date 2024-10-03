@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\Shift;
-use Yajra\DataTables\Facades\DataTables;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Http\Request;
 use App\Imports\ShiftsImport;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\Facades\DataTables;
 
 class shiftController extends Controller
 {
@@ -18,20 +19,15 @@ class shiftController extends Controller
 
     public function getData(Request $request)
     {
-        $data = Shift::select([
-            'id',
-            'nama',
-            'npkSistem',
-            'npk',
-            'divisi',
-            'departement',
-            'section',
-            'shift1',
-            // Menggabungkan start_date dan end_date menjadi satu kolom 'tanggal'
-            DB::raw("CONCAT(start_date, ' - ', end_date) as tanggal"),
-            'status'
-
-        ])->get();
+        $data = shift::select([
+            'kategorishift.id',
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama' // assuming the user's name is stored in the 'name' column
+        ])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk') // join with the users table
+            ->get();
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -39,25 +35,40 @@ class shiftController extends Controller
     }
 
 
+
+
+
     public function store(Request $request)
     {
+        // Validasi input
         $request->validate([
-            'nama' => 'required',
-            'npkSistem' => 'required',
             'npk' => 'required',
-            'divisi' => 'required',
-            'departement' => 'required',
-            'section' => 'required',
             'shift1' => 'required',
-            'start_date' => 'required',
-            'end_date' => 'required',
-            'status' => 'required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        shift::create($request->all());
+        // Parse tanggal dari input
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
 
+        // Loop untuk setiap hari antara start_date dan end_date
+        while ($startDate->lte($endDate)) {
+            $data = $request->except(['start_date', 'end_date']); // Mengabaikan kolom start_date dan end_date
+            $data['date'] = $startDate->toDateString(); // Set tanggal harian
+
+            // Simpan data ke tabel kategorishift
+            Shift::create($data);
+
+            // Lanjut ke hari berikutnya
+            $startDate->addDay();
+        }
+
+        // Return response success
         return response()->json(['success' => 'Data berhasil disimpan']);
     }
+
+
 
 
     public function edit($id)
@@ -76,34 +87,32 @@ class shiftController extends Controller
 
     public function update(Request $request, $id)
     {
-
         $request->validate([
-            'nama' => 'required',
-            'npkSistem' => 'required',
             'npk' => 'required',
-            'divisi' => 'required',
-            'departement' => 'required',
-            'section' => 'required',
             'shift1' => 'required',
-            'start_date' => 'required',
-            'end_date' => 'required',
+            'date' => 'required',
             'status' => 'required',
         ]);
 
-        // Memperbarui data dengan array key-value
-        shift::where('id', $id)->update([
-            'nama' => $request->nama,
-            'npkSistem' => $request->npkSistem,
+        // Temukan data shift berdasarkan ID untuk mendapatkan detail awal
+        $shift = Shift::find($id);
+
+        if (!$shift) {
+            return back()->with('error', 'Shift tidak ditemukan');
+        }
+
+
+        // Update data spesifik berdasarkan ID (termasuk shift dan tanggal)
+        $shift->update([
             'npk' => $request->npk,
-            'divisi' => $request->divisi,
-            'departement' => $request->departement,
-            'section' => $request->section,
             'shift1' => $request->shift1,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
+            'date' => $request->date,
             'status' => $request->status,
         ]);
     }
+
+
+
 
 
     public function destroy($id)

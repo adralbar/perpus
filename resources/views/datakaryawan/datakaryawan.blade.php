@@ -20,20 +20,23 @@
                         Upload File
                     </button>
                 </div>
-                <div class=table-responsive>
-                    <table id="myTable" class="table table-dark table-striped">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama</th>
-                                <th>NPK Api</th>
-                                <th>Shift</th>
-                                <th>Tanggal</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
+                <table id="myTable" class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama</th>
+                            <th>NPK Sistem</th>
+                            <th>NPK Api</th>
+                            <th>Divisi</th>
+                            <th>Departement</th>
+                            <th>Section</th>
+                            <th>Shift</th>
+                            <th>Tanggal</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
         </div>
     </div>
@@ -50,10 +53,33 @@
                     <form id="shiftForm">
                         @csrf
                         <input type="hidden" id="shiftId" name="id">
-
+                        <div class="form-group">
+                            <label for="nama">Nama</label>
+                            <input type="text" class="form-control" id="nama" name="nama" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="npk">NPK Sistem</label>
+                            <input type="text" class="form-control" id="npkSistem" name="npkSistem" required>
+                        </div>
                         <div class="form-group">
                             <label for="npk">NPK Api</label>
                             <input type="text" class="form-control" id="npk" name="npk" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="divisi">Divisi</label>
+                            <input type="text" class="form-control" id="divisi" name="divisi" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="departement">Departement</label>
+                            <input type="text" class="form-control" id="departement" name="departement" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="section">Section</label>
+                            <input type="text" class="form-control" id="section" name="section" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="shift1">Shift</label>
+                            <input type="text" class="form-control" id="shift1" name="shift1" required>
                         </div>
                         <div class="form-group">
                             <label for="start_date">Start date</label>
@@ -64,8 +90,8 @@
                             <input type="date" class="form-control" id="end_date" name="end_date" required>
                         </div>
                         <div class="form-group">
-                            <label for="npk">Shift</label>
-                            <input type="text" class="form-control" id="shift1" name="shift1" required>
+                            <label for="status">Status</label>
+                            <input type="text" class="form-control" id="status" name="status" required>
                         </div>
                         <button type="submit" class="btn btn-primary" id="saveButton">Simpan</button>
                     </form>
@@ -83,7 +109,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="uploadForm" method="POST" enctype="multipart/form-data" action="{{ route('shift.import') }}">
+                    <form id="uploadForm" method="POST" enctype="multipart/form-data"
+                        action="{{ route('shift.import') }}">
                         @csrf
                         <div class="form-group">
                             <label for="file">Upload File</label>
@@ -118,18 +145,37 @@
                         data: 'nama',
                         name: 'nama'
                     },
-
+                    {
+                        data: 'npkSistem',
+                        name: 'npkSistem'
+                    },
                     {
                         data: 'npk',
                         name: 'npk'
+                    },
+                    {
+                        data: 'divisi',
+                        name: 'divisi'
+                    },
+                    {
+                        data: 'departement',
+                        name: 'departement'
+                    },
+                    {
+                        data: 'section',
+                        name: 'section'
                     },
                     {
                         data: 'shift1',
                         name: 'shift1'
                     },
                     {
-                        data: 'date',
-                        name: 'date'
+                        data: 'tanggal',
+                        name: 'tanggal'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status'
                     },
                     {
                         data: 'id', // Menggunakan 'id' untuk referensi penghapusan/edit data
@@ -149,45 +195,29 @@
             });
 
             $('#shiftForm').submit(function(e) {
-                e.preventDefault(); // Mencegah pengiriman form secara default
-                var id = $('#shiftId').val(); // Ambil nilai ID dari input
+                e.preventDefault();
+                var id = $('#shiftId').val();
                 var url, method;
-
-                // Tentukan URL dan metode berdasarkan apakah ID ada
                 if (id === '') {
-                    url = '{{ route('shift.store') }}'; // URL untuk menyimpan data baru
-                    method = 'POST'; // Metode untuk membuat data baru
+                    url = '{{ route('shift.store') }}';
+                    method = 'POST';
                 } else {
-                    url = '{{ route('shift.update', ':id') }}'.replace(':id',
-                        id); // URL untuk memperbarui data yang ada
-                    method = 'PUT'; // Metode untuk memperbarui data
+                    url = '{{ route('shift.update', ':id') }}'.replace(':id', id);
+                    method = 'PUT';
                 }
 
-                // AJAX request
                 $.ajax({
-                    url: url, // URL yang ditentukan
-                    method: method, // Metode yang ditentukan
-                    data: $(this)
-                        .serialize(), // Mengambil data dari form dan mengubahnya menjadi string
+                    url: url,
+                    method: method,
+                    data: $(this).serialize(),
                     success: function(response) {
-                        $('#shiftModal').modal('hide'); // Menutup modal setelah sukses
-                        table.ajax.reload(); // Memuat ulang data tabel
-                        alert(response.success); // Menampilkan pesan sukses
-                    },
-                    error: function(xhr, status, error) {
-                        // Menangani error jika request gagal
-                        console.error(xhr.responseText); // Log pesan error ke konsol
-                        alert('Terjadi kesalahan: ' + xhr.responseJSON
-                            .message); // Tampilkan pesan kesalahan
+                        $('#shiftModal').modal('hide');
+                        table.ajax.reload();
                     }
                 });
-
-                // Untuk debugging
                 console.log('URL:', url);
                 console.log('Method:', method);
-                console.log('data:', $(this).serialize());
             });
-
         });
 
         function editShift(id) {
@@ -199,9 +229,17 @@
                     if (response.result) {
                         $('#shiftModal').modal('show');
                         $('#shiftId').val(id); // Set the ID
+                        $('#nama').val(response.result.nama);
+                        $('#nama').val(response.result.nama);
                         $('#npk').val(response.result.npk);
+                        $('#npkSistem').val(response.result.npkSistem);
+                        $('#divisi').val(response.result.divisi);
+                        $('#departement').val(response.result.departement);
+                        $('#section').val(response.result.section);
                         $('#shift1').val(response.result.shift1);
-                        $('#date').val(response.result.date);
+                        $('#start_date').val(response.result.start_date);
+                        $('#end_date').val(response.result.end_date);
+                        $('#status').val(response.result.status);
                         $('#shiftLabel').text('Edit Karyawan');
                     } else {
                         alert('Data not found.');

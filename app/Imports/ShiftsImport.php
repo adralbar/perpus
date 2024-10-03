@@ -5,6 +5,7 @@ namespace App\Imports;
 use Illuminate\Support\Collection;
 use App\Models\Shift;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Carbon\Carbon;
 
 class ShiftsImport implements ToCollection
 {
@@ -18,19 +19,23 @@ class ShiftsImport implements ToCollection
             if ($indexKe > 1) { // Skip header row
 
                 // Persiapkan data
-                $data['npkSistem'] = !empty($row[1]) ? $row[1] : '';
-                $data['npk'] = !empty($row[2]) ? $row[2] : '';
-                $data['nama'] = !empty($row[3]) ? $row[3] : '';
-                $data['divisi'] = !empty($row[4]) ? $row[4] : '';
-                $data['departement'] = !empty($row[5]) ? $row[5] : '';
-                $data['section'] = !empty($row[6]) ? $row[6] : '';
-                $data['shift1'] = !empty($row[7]) ? $row[7] : '';
-                $data['start_date'] = !empty($row[8]) ? str_replace("'", "", $row[8]) : '';
-                $data['end_date'] = !empty($row[9]) ? str_replace("'", "", $row[9]) : '';
-                $data['status'] = !empty($row[10]) ? $row[10] : '';
+                $data['npk'] = !empty($row[1]) ? $row[1] : '';
+                $data['shift1'] = !empty($row[3]) ? $row[3] : '';
+                $startDate = !empty($row[4]) ? Carbon::createFromFormat('Y-m-d', str_replace("'", "", $row[4])) : null;
+                $endDate = !empty($row[5]) ? Carbon::createFromFormat('Y-m-d', str_replace("'", "", $row[5])) : null;
 
-                // Simpan data ke database
-                Shift::create($data);
+                if ($startDate && $endDate) {
+
+                    while ($startDate->lte($endDate)) {
+                        $data['date'] = $startDate->toDateString();
+
+                        // Simpan data ke tabel Shift
+                        Shift::create($data);
+
+                        // Lanjut ke hari berikutnya
+                        $startDate->addDay();
+                    }
+                }
             }
             $indexKe++;
         }
