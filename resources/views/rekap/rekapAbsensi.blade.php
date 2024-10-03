@@ -49,8 +49,10 @@
                                         <th>Departemen</th>
                                         <th>Section</th>
                                         <th>Tanggal</th>
+                                        <th>Shift</th>
                                         <th>Waktu Check-in</th>
                                         <th>Waktu Check-out</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -203,6 +205,10 @@
                             data: 'tanggal',
                             name: 'tanggal'
                         },
+                        {
+                            data: 'shift1',
+                            name: 'shift1'
+                        },
 
                         {
                             data: 'waktuci',
@@ -211,6 +217,10 @@
                         {
                             data: 'waktuco',
                             name: 'waktuco'
+                        },
+                        {
+                            data: 'status',
+                            name: 'status'
                         },
 
                     ]

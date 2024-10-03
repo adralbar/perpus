@@ -153,14 +153,13 @@
                 var id = $('#shiftId').val(); // Ambil nilai ID dari input
                 var url, method;
 
-                // Tentukan URL dan metode berdasarkan apakah ID ada
                 if (id === '') {
-                    url = '{{ route('shift.store') }}'; // URL untuk menyimpan data baru
-                    method = 'POST'; // Metode untuk membuat data baru
+                    url = '{{ route('shift.store') }}';
+                    method = 'POST';
                 } else {
                     url = '{{ route('shift.update', ':id') }}'.replace(':id',
-                        id); // URL untuk memperbarui data yang ada
-                    method = 'PUT'; // Metode untuk memperbarui data
+                        id);
+                    method = 'PUT';
                 }
 
                 // AJAX request

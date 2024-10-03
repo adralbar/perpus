@@ -33,21 +33,27 @@ class rekapController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        // Ambil data check-in
+        // Ambil data check-in dengan join ke tabel kategorishift untuk mendapatkan shift1
         $checkinData = DB::table('absensici')
             ->join('users', 'absensici.npk', '=', 'users.npk')
+            ->leftJoin('kategorishift', function ($join) {
+                $join->on('absensici.npk', '=', 'kategorishift.npk')
+                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            })
             ->select(
                 'users.nama',
                 'users.npk as npk',
                 'users.section_id',
                 'absensici.tanggal',
-                DB::raw('MIN(absensici.waktuci) as waktuci')
+                DB::raw('MIN(absensici.waktuci) as waktuci'),
+                'kategorishift.shift1' // Mengambil shift1 dari tabel kategorishift
             )
             ->groupBy(
                 'users.nama',
                 'users.npk',
                 'users.section_id',
-                'absensici.tanggal'
+                'absensici.tanggal',
+                'kategorishift.shift1'
             );
 
         if (!empty($startDate) && !empty($endDate)) {
@@ -56,21 +62,27 @@ class rekapController extends Controller
 
         $checkinResults = $checkinData->get();
 
-        // Ambil data check-out
+        // Ambil data check-out dengan join ke tabel kategorishift untuk mendapatkan shift1
         $checkoutData = DB::table('absensico')
             ->join('users', 'absensico.npk', '=', 'users.npk')
+            ->leftJoin('kategorishift', function ($join) {
+                $join->on('absensico.npk', '=', 'kategorishift.npk')
+                    ->on('absensico.tanggal', '=', 'kategorishift.date');
+            })
             ->select(
                 'users.nama',
                 'users.npk as npk',
                 'users.section_id',
                 'absensico.tanggal',
-                DB::raw('MAX(absensico.waktuco) as waktuco')
+                DB::raw('MAX(absensico.waktuco) as waktuco'),
+                'kategorishift.shift1' // Mengambil shift1 dari tabel kategorishift
             )
             ->groupBy(
                 'users.nama',
                 'users.npk',
                 'users.section_id',
-                'absensico.tanggal'
+                'absensico.tanggal',
+                'kategorishift.shift1'
             );
 
         if (!empty($startDate) && !empty($endDate)) {
@@ -85,35 +97,37 @@ class rekapController extends Controller
         foreach ($checkinResults as $checkin) {
             $key = $checkin->npk . '-' . $checkin->tanggal;
             $section = SectionModel::find($checkin->section_id);
+            $department = $section ? DepartmentModel::find($section->department_id) : null;
+            $division = $department ? DivisionModel::find($department->division_id) : null;
 
-            // Pastikan section tidak null sebelum mencoba mengakses division_id
-            $department = $section ? DepartmentModel::find($section->department_id) : null; // Ambil department berdasarkan section
-            $division = $department ? DivisionModel::find($department->division_id) : null; // Ambil division berdasarkan section
+            // Tentukan status berdasarkan waktu shift dan waktuci
+            $status = 'Tepat Waktu';
+            if ($checkin->waktuci > $checkin->shift1) {
+                $status = 'Terlambat';
+            }
 
             $results[$key] = [
                 'nama' => $checkin->nama,
                 'npk' => $checkin->npk,
                 'tanggal' => $checkin->tanggal,
                 'waktuci' => $checkin->waktuci,
-                'waktuco' => null, // Default null untuk waktu checkout
+                'waktuco' => null,
+                'shift1' => $checkin->shift1,
                 'section_nama' => $section ? $section->nama : 'Unknown',
                 'department_nama' => $department ? $department->nama : 'Unknown',
-                'division_nama' => $division ? $division->nama : 'Unknown', // Pastikan division_nama diambil dengan benar
+                'division_nama' => $division ? $division->nama : 'Unknown',
+                'status' => $status
             ];
         }
 
-        // Proses untuk checkout
         foreach ($checkoutResults as $checkout) {
             $key = $checkout->npk . '-' . $checkout->tanggal;
             $section = SectionModel::find($checkout->section_id);
             $department = $section ? DepartmentModel::find($section->department_id) : null;
-            $division = $section ? DivisionModel::find($section->division_id) : null;
+            $division = $department ? DivisionModel::find($department->division_id) : null;
 
             if (isset($results[$key])) {
                 $results[$key]['waktuco'] = $checkout->waktuco;
-                $results[$key]['section_nama'] = $section ? $section->nama : 'Unknown';
-                $results[$key]['department_nama'] = $department ? $department->nama : 'Unknown';
-                $results[$key]['division_nama'] = $division ? $division->nama : 'Unknown';
             } else {
                 $results[$key] = [
                     'nama' => $checkout->nama,
@@ -121,13 +135,14 @@ class rekapController extends Controller
                     'tanggal' => $checkout->tanggal,
                     'waktuci' => null,
                     'waktuco' => $checkout->waktuco,
+                    'shift1' => $checkout->shift1,
                     'section_nama' => $section ? $section->nama : 'Unknown',
                     'department_nama' => $department ? $department->nama : 'Unknown',
                     'division_nama' => $division ? $division->nama : 'Unknown',
+                    'status' => 'Unknown' // Tidak bisa menentukan status jika tidak ada waktu check-in
                 ];
             }
         }
-
 
         // Ubah hasil menjadi koleksi dan urutkan berdasarkan tanggal ascending
         $finalResults = collect(array_values($results))->sortBy('tanggal');
@@ -136,13 +151,29 @@ class rekapController extends Controller
         return DataTables::of($finalResults)
             ->addIndexColumn()
             ->editColumn('waktuci', function ($row) {
-                return $row['waktuci'] ? $row['waktuci'] : 'NO IN';
+                return $row['waktuci'] ? $row['waktuci'] : 'NO IN'; // Tetap tampilkan Unknown jika waktuci tidak ada
             })
             ->editColumn('waktuco', function ($row) {
                 return $row['waktuco'] ? $row['waktuco'] : 'NO OUT';
             })
+            ->editColumn('shift1', function ($row) {
+                return $row['shift1'] ? $row['shift1'] : 'NO SHIFT'; // Tampilkan NO SHIFT jika shift1 kosong
+            })
+            ->editColumn('status', function ($row) {
+                if (!$row['shift1']) {
+                    return 'NO SHIFT'; // Jika shift1 kosong, status menjadi NO SHIFT
+                }
+                if (!$row['waktuci']) {
+                    return 'NO IN'; // Jika waktuci kosong, status menjadi NO IN
+                }
+                if ($row['waktuci'] > $row['shift1']) {
+                    return 'Terlambat'; // Jika waktuci lebih besar dari shift1, status Terlambat
+                }
+                return 'Tepat Waktu'; // Jika waktuci kurang atau sama dengan shift1, status Tepat Waktu
+            })
             ->make(true);
     }
+
 
 
 
