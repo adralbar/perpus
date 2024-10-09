@@ -46,7 +46,6 @@
         position: sticky; /* Mengatur posisi sticky */
         left: 0; /* Mengatur agar tetap di kiri */
         background-color: #343a40; /* Warna latar belakang sesuai tema tabel */
-        z-index: 2; /* Pastikan header di atas konten tabel */
         color: white; /* Warna teks header */
         padding: 10px; /* Padding untuk header */
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Tambahkan bayangan agar terlihat lebih baik */
@@ -66,6 +65,10 @@
 
 .dt-input{
     margin-right: 10px;
+}
+
+#editShiftModal{
+    z-index: 4000;
 }
 
 

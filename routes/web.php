@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::post('/store', [shiftController::class, 'store'])->name('shift.store');
+    Route::post('/store2', [shiftController::class, 'store2'])->name('shift.store2');
     Route::get('/shift-data/{id}', [shiftController::class, 'edit'])->name('shift.edit');
     Route::put('/update/{id}', [shiftController::class, 'update'])->name('shift.update');
     Route::delete('/destroy/{id}', [shiftController::class, 'destroy'])->name('shift.destroy');

@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('dist/css/daterangepicker.css') }}">
     <link rel="stylesheet" type="text/css">
 
     @section('content')
@@ -50,6 +50,8 @@
                 </div>
             </div>
         </div>
+        <!-- Modal untuk Tambah/Edit Karyawan -->
+        <!-- Modal untuk Tambah/Edit Karyawan -->
         <div class="modal fade" id="shiftModal" tabindex="-1" aria-labelledby="shiftLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -64,34 +66,34 @@
 
                             <div class="form-group">
                                 <label for="npk">NPK Api</label>
-                                <div class="form-group">
-                                    <select multiple="multiple" size="10" name="npk[]" id="npk"
-                                        class="form-control">
-                                        @foreach ($userData as $user)
-                                            <option value="{{ $user->npk }}">{{ $user->nama }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                <select multiple="multiple" size="10" name="npk[]" id="npk"
+                                    class="form-control">
+                                    @foreach ($userData as $user)
+                                        <option value="{{ $user->npk }}">{{ $user->nama }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                                <div class="form-group">
-                                    <label for="shift1">Waktu Shift</label>
-                                    <input type="text" class="form-control" id="shift1" name="shift1" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="start_date">Start date</label>
-                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="end_date">End date</label>
-                                    <input type="date" class="form-control" id="end_date" name="end_date" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary" id="saveButton">Simpan</button>
+                            <div class="form-group">
+                                <label for="shift1">Waktu Shift</label>
+                                <input type="text" class="form-control" id="shift1" name="shift1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="start_date">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end_date">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="saveButton">Simpan</button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Modal for Upload File -->
+
+        <!-- Modal untuk Upload File -->
         <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -114,36 +116,49 @@
                 </div>
             </div>
         </div>
-        <!-- Modal untuk menampilkan detail shift -->
-        <div class="modal fade" id="editShiftModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+
+        <div class="modal fade" id="editShiftModal" tabindex="-1" aria-labelledby="editShiftModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Edit Shift</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <h5 class="modal-title" id="editShiftModalLabel">Edit Shift</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <!-- Input untuk shift, tanggal, dan NPK -->
-                        <input type="text" id="shift1" placeholder="Shift" />
-                        <input type="text" id="date" placeholder="Tanggal" />
-                        <input type="text" id="npk" placeholder="NPK" />
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>
+                        <form id="editShiftForm">
+                            @csrf
+                            <div class="form-group">
+                                <label for="shift1">Shift</label>
+                                <input type="text" class="form-control" id="shift1" name="shift1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="date">Tanggal</label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="npk">NPK</label>
+                                <input type="text" class="form-control" id="npk" name="npk" required>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="saveShiftBtn">Edit</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
+
+
+
 
         <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
         <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
         <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
         <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
+        <script src="{{ asset('dist/js/daterangepicker.js') }}"></script>
 
         </script>
 
@@ -171,6 +186,7 @@
                             d.endDate = $('#endDate').val(); // Ambil nilai tanggal selesai
                         }
                     },
+                    pageLength: -1,
                     columns: [{
                             data: 'nama',
                             name: 'nama'
@@ -294,18 +310,15 @@
 
                             shiftCell.addEventListener('click', function() {
                                 console.log("Clicked Shift Cell!");
-                                console.log("Shift:", shift, "Date:", date, "NPK:", details
-                                    .npk); // Debugging
-
-                                // Pastikan nilai yang diambil ada
-                                $('#shift1').val(shift ? shift :
-                                    ''); // Set input dengan nilai shift yang ada
-                                $('#date').val(date); // Set tanggal
-                                $('#npk').val(details.npk); // Set NPK
-
-                                // Tampilkan modal
+                                console.log("Shift:", shift, "Date:", date, "NPK:", details.npk);
                                 $('#editShiftModal').modal('show');
+                                $('#editShiftModal #shift1').val(shift);
+                                $('#editShiftModal #date').val(date);
+                                $('#editShiftModal #npk').val(details.npk);
                             });
+
+                            // Continue your renderTable function logic
+
 
                             row.appendChild(shiftCell);
                         });
@@ -348,17 +361,13 @@
                 });
 
 
-
-
-                // Event listener untuk tombol simpan
-                $('#saveShiftBtn').on('click', function() {
+                $('#editShiftForm').submit(function(e) {
                     const shift = $('#shift1').val();
                     const date = $('#date').val();
                     const npk = $('#npk').val();
 
-                    // Kirim data ke server untuk memperbarui shift
                     $.ajax({
-                        url: '{{ route('shift.store') }}', // Ganti dengan route yang sesuai
+                        url: '{{ route('shift.store2') }}', // Ganti dengan route yang sesuai
                         type: 'POST',
                         data: {
                             npk: npk,
@@ -402,12 +411,7 @@
                 }
             });
 
-            function resetForm() {
-                $('#shiftForm')[0].reset();
-                $('#shiftId').val('');
-                $('#shiftLabel').text('Tambah Karyawan');
-                $('#saveButton').text('Simpan');
-            }
+
 
             @if ($errors->any())
                 Swal.fire({
@@ -422,5 +426,18 @@
                 `, // Tampilkan semua pesan error dalam bentuk list
                 });
             @endif
+            //Date range picker
+            $('#reservation').daterangepicker()
         </script>
+
+
+        <style>
+            #dt-length-0 {
+                display: none;
+            }
+
+            label[for="dt-length-0"] {
+                display: none;
+            }
+        </style>
     @endsection

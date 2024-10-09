@@ -115,30 +115,25 @@ class shiftController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function store2(Request $request)
     {
+
         $request->validate([
-            'npk' => 'required',
-            'shift1' => 'required',
-            'date' => 'required',
-            'status' => 'required',
+            'npk' => 'required|array', // Memastikan npk adalah array
+            'shift1' => 'required', // Minimal input untuk shift hari kerja
+            'date' => 'required|date'
         ]);
 
-        // Temukan data shift berdasarkan ID untuk mendapatkan detail awal
-        $shift = Shift::find($id);
 
-        if (!$shift) {
-            return back()->with('error', 'Shift tidak ditemukan');
-        }
+        shift::create([
 
-
-        // Update data spesifik berdasarkan ID (termasuk shift dan tanggal)
-        $shift->update([
             'npk' => $request->npk,
             'shift1' => $request->shift1,
             'date' => $request->date,
-            'status' => $request->status,
         ]);
+
+        // Return response success
+        return response()->json(['success' => 'Data berhasil disimpan']);
     }
 
     public function destroy($id)
