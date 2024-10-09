@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\PcdLoginLog;
 use App\Models\PcdLoginLogs;
+use App\Models\SectionModel;
 use Illuminate\Http\Request;
+use App\Models\DivisionModel;
 use App\Models\PcdMasterUser;
+use App\Exports\performaExport;
+use App\Models\DepartmentModel;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
-use App\Exports\performaExport;
 
 class performaController extends Controller
 {
@@ -23,32 +26,30 @@ class performaController extends Controller
         $endDate = $request->input('endDate');
 
         $query = DB::table('absensici')
-            ->leftJoin('pcd_master_users', function ($join) {
-                $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_master_users.npk USING utf8mb4)'));
+            ->leftJoin('users as user1', function ($join) {
+                $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(user1.npk USING utf8mb4)'));
             })
             ->join('pcd_login_logs', function ($join) {
-                $join->on(DB::raw('CONVERT(pcd_master_users.id USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_login_logs.user_id USING utf8mb4)'))
+                $join->on(DB::raw('CONVERT(user1.id USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_login_logs.user_id USING utf8mb4)'))
                     ->on('absensici.tanggal', '=', DB::raw('DATE(pcd_login_logs.created_at)'));
             })
             ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
                 $join->on(DB::raw('CONVERT(first_checkin.npk USING utf8mb4)'), '=', DB::raw('CONVERT(absensici.npk USING utf8mb4)'))
                     ->on('first_checkin.tanggal', '=', 'absensici.tanggal');
             })
-            ->join('kategorishift', function ($join) {
-                $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(kategorishift.npk USING utf8mb4)'));
+            ->join('users as user2', function ($join) {
+                $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(user2.npk USING utf8mb4)'));
             })
             ->select(
-                'pcd_master_users.name',
+                'user2.nama',
                 'absensici.npk',
                 'absensici.tanggal',
                 'first_checkin.waktuci AS waktuci_checkin',
                 DB::raw('TIME(pcd_login_logs.created_at) AS waktu_login_dashboard'),
                 DB::raw('TIMEDIFF(TIME(pcd_login_logs.created_at), TIME(first_checkin.waktuci)) AS selisih_waktu'),
-                'kategorishift.npkSistem',
-                'kategorishift.divisi',
-                'kategorishift.departement',
-                'kategorishift.section',
-                'kategorishift.nama AS shift_nama'
+                'user2.division_id',
+                'user2.department_id',
+                'user2.section_id',
             )
             ->distinct()
             ->orderBy('absensici.tanggal', 'desc');
@@ -58,10 +59,36 @@ class performaController extends Controller
         }
 
         $data = $query->get();
+        foreach ($data as $item) {
+            $section = SectionModel::find($item->section_id);
+            $department = $section ? DepartmentModel::find($section->department_id) : null;
+            $division = $department ? DivisionModel::find($department->division_id) : null;
+
+            // Tambahkan data section, department, dan division ke setiap item
+            $item->section_nama = $section ? $section->nama : 'Unknown';
+            $item->department_nama = $department ? $department->nama : 'Unknown';
+            $item->division_nama = $division ? $division->nama : 'Unknown';
+        }
+
+        // Prepare the data for DataTables
         return DataTables::of($data)
             ->addIndexColumn()
+            ->addColumn('aksi', function ($row) {
+                $btn = '<button class="btn btn-primary btn-sm btnDetail"
+            data-nama="' . e($row->nama) . '"
+            data-npk="' . e($row->npk) . '"
+            data-tanggal="' . e($row->tanggal) . '"  
+            data-section="' . e($row->section_nama) . '"
+            data-department="' . e($row->department_nama) . '"
+            data-division="' . e($row->division_nama) . '"> 
+            Detail
+            </button>';
+                return $btn;
+            })
+            ->rawColumns(['aksi'])
             ->make(true);
     }
+
 
 
 
@@ -90,13 +117,13 @@ class performaController extends Controller
     {
         $request->validate([
             'id' => 'required',
-            'name' => 'required',
+            'nama' => 'required',
             'npk' => 'required',
         ]);
 
         PcdMasterUser::create([
             'id' => $request->id,
-            'name' => $request->name,
+            'nama' => $request->nama,
             'npk' => $request->npk,
         ]);
 

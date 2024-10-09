@@ -1,0 +1,65 @@
+@font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Regular.ttf') format('truetype');
+  }
+@font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Black.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    src: url('../fonts/SourceSansPro-Italic.ttf') format('truetype');
+  }
+  #myTable {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Styling untuk elemen <thead> */
+#myTable thead {
+    background-color: #f5f5f5;
+    /* Warna latar belakang header tabel */
+    font-weight: bold;
+    text-align: center;
+    /* Pusatkan teks dalam header */
+}
+
+/* Styling untuk kolom dalam <thead> */
+#myTable thead th {
+    width: 200px;
+    /* Atur lebar spesifik untuk kolom header */
+    padding: 10px;
+    /* Padding dalam header */
+    white-space: nowrap;
+    /* Mencegah teks terpotong */
+}
+
+/* Styling untuk elemen <tbody> */
+#myTable tbody td {
+    width: 200px;
+    /* Atur lebar spesifik untuk kolom body */
+    padding: 10px;
+    /* Padding dalam body */
+    text-align: center;
+    /* Pusatkan teks dalam body */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Tampilkan elipsis jika teks terlalu panjang */
+    white-space: nowrap;
+    /* Mencegah teks terpotong */
+}
+
+
+   

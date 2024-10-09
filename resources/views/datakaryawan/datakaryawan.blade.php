@@ -20,7 +20,7 @@
                         Upload File
                     </button>
                 </div>
-                <table id="myTable" class="table table-dark table-striped">
+                <table id="myTable" class="table table-dark table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -203,7 +203,7 @@
                     method = 'POST';
                 } else {
                     url = '{{ route('shift.update', ':id') }}'.replace(':id', id);
-                    method = 'PUT';
+                    method = 'POST';
                 }
 
                 $.ajax({

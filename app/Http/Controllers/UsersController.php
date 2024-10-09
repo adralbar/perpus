@@ -18,6 +18,7 @@ class UsersController extends Controller
         $section = SectionModel::all(); // Ambil semua section
         $department = DepartmentModel::all(); // Ambil semua departemen
         $division = DivisionModel::all(); // Ambil semua division
+
         return view('user.index', compact('userData', 'role', 'section', 'department', 'division'));
     }
     public function store(Request $request)
@@ -152,5 +153,16 @@ class UsersController extends Controller
             'departments' => $department,
             'divisions' => $division
         ]);
+    }
+    public function getDepartments($divisionId)
+    {
+        $departments = DepartmentModel::where('division_id', $divisionId)->get();
+        return response()->json($departments);
+    }
+
+    public function getSections($departmentId)
+    {
+        $sections = SectionModel::where('department_id', $departmentId)->get();
+        return response()->json($sections);
     }
 }

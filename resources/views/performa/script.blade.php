@@ -24,28 +24,25 @@
                     searchable: false
                 },
                 {
-                    data: 'name',
-                    name: 'name'
+                    data: 'nama',
+                    name: 'nama'
                 },
-                {
-                    data: 'npkSistem',
-                    name: 'npkSistem'
-                },
+
                 {
                     data: 'npk',
                     name: 'npk'
                 },
                 {
-                    data: 'divisi',
-                    name: 'divisi'
+                    data: 'division_nama',
+                    name: 'division_nama'
                 },
                 {
-                    data: 'departement',
-                    name: 'departement'
+                    data: 'department_nama',
+                    name: 'department_nama'
                 },
                 {
-                    data: 'section',
-                    name: 'section'
+                    data: 'section_nama',
+                    name: 'section_nama'
                 },
                 {
                     data: 'tanggal',

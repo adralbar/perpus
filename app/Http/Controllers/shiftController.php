@@ -9,6 +9,11 @@ use App\Imports\ShiftsImport;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\DepartmentModel;
+use App\Models\DivisionModel;
+use App\Models\RoleModel;
+use App\Models\SectionModel;
+use App\Models\User;
 
 class shiftController extends Controller
 {
@@ -19,18 +24,29 @@ class shiftController extends Controller
 
     public function getData(Request $request)
     {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
         $data = shift::select([
             'kategorishift.id',
             'kategorishift.npk',
             'kategorishift.shift1',
             'kategorishift.date',
-            'users.nama' // assuming the user's name is stored in the 'name' column
+            'users.nama'
         ])
-            ->join('users', 'kategorishift.npk', '=', 'users.npk') // join with the users table
-            ->get();
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            ->orderBy('kategorishift.date', 'DESC');
+
+        // Check if both startDate and endDate are provided
+        if (!empty($startDate) && !empty($endDate)) {
+            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
+        }
 
         return DataTables::of($data)
             ->addIndexColumn()
+            ->setRowId(function ($data) {
+                return $data->id; // Set ID baris jika diperlukan
+            })
             ->make(true);
     }
 
@@ -38,12 +54,13 @@ class shiftController extends Controller
 
 
 
+
     public function store(Request $request)
     {
-        // Validasi input
+
         $request->validate([
-            'npk' => 'required',
-            'shift1' => 'required',
+            'npk' => 'required|array', // Memastikan npk adalah array
+            'shift1' => 'required', // Minimal input untuk shift hari kerja
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -54,11 +71,30 @@ class shiftController extends Controller
 
         // Loop untuk setiap hari antara start_date dan end_date
         while ($startDate->lte($endDate)) {
-            $data = $request->except(['start_date', 'end_date']); // Mengabaikan kolom start_date dan end_date
-            $data['date'] = $startDate->toDateString(); // Set tanggal harian
+            foreach ($request->input('npk') as $npk) { // Loop untuk setiap NPK yang dipilih
+                $data = $request->except(['start_date', 'end_date']); // Mengabaikan kolom start_date dan end_date
+                $data['npk'] = $npk; // Menyimpan NPK yang dipilih
+                $data['date'] = $startDate->toDateString(); // Set tanggal harian
 
-            // Simpan data ke tabel kategorishift
-            Shift::create($data);
+                // Simpan data ke tabel Shift
+                Shift::create($data);
+            }
+            // Lanjut ke hari berikutnya
+            $startDate->addDay();
+        }
+
+        // Cek hari setelah end_date untuk menambahkan Sabtu dan Minggu sebagai off
+        while ($startDate->dayOfWeek == 6 || $startDate->dayOfWeek == 0) {
+            foreach ($request->input('npk') as $npk) { // Loop untuk setiap NPK yang dipilih
+                $data = [
+                    'npk' => $npk,
+                    'date' => $startDate->toDateString(),
+                    'shift1' => 'OFF', // Menyimpan status OFF untuk akhir pekan
+                ];
+
+                // Simpan data untuk hari Sabtu atau Minggu setelah end_date
+                Shift::create($data);
+            }
 
             // Lanjut ke hari berikutnya
             $startDate->addDay();
@@ -67,9 +103,6 @@ class shiftController extends Controller
         // Return response success
         return response()->json(['success' => 'Data berhasil disimpan']);
     }
-
-
-
 
     public function edit($id)
     {
@@ -81,9 +114,6 @@ class shiftController extends Controller
             return response()->json(['result' => null], 404);
         }
     }
-
-
-
 
     public function update(Request $request, $id)
     {
@@ -111,10 +141,6 @@ class shiftController extends Controller
         ]);
     }
 
-
-
-
-
     public function destroy($id)
     {
         shift::where('id', $id)->delete();
@@ -129,5 +155,11 @@ class shiftController extends Controller
         Excel::import(new ShiftsImport, $file);
 
         return redirect()->back()->with('success', 'File berhasil diunggah.');
+    }
+    public function getKaryawan()
+    {
+        $userData = User::select('nama', 'npk')->get();
+
+        return view('shift.shift', compact('userData'));
     }
 }

@@ -69,6 +69,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/performa/export', [performaController::class, 'performaExport'])->name('performa.export');
     Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
     Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
+
+    Route::get('/departments/{divisionId}', [UsersController::class, 'getDepartments']);
+    Route::get('/sections/{departmentId}', [UsersController::class, 'getSections']);
+    Route::post('/shift/update', [ShiftController::class, 'update'])->name('shift.update');
+    Route::get('/shift', [shiftController::class, 'getKaryawan']);
 });
 
 

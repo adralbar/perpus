@@ -4,3 +4,75 @@
     opacity: 0.8;  
     
 }
+<style>
+<style>#myTable {
+    table-layout: fixed;
+    width: 100%;
+}
+
+#myTable thead {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    text-align: center;
+}
+
+#myTable thead th {
+
+    white-space: nowrap;
+}
+
+#myTable tbody td {
+    width: 200px;
+    padding: 10px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#myTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#myTable tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+#myTable{
+    border-collapse: collapse; /* Menghindari jarak antara border tabel */
+    width: 100%; /* Pastikan tabel memenuhi lebar kontainer */
+}
+
+    .sticky-header {
+        position: sticky; /* Mengatur posisi sticky */
+        left: 0; /* Mengatur agar tetap di kiri */
+        background-color: #343a40; /* Warna latar belakang sesuai tema tabel */
+        z-index: 2; /* Pastikan header di atas konten tabel */
+        color: white; /* Warna teks header */
+        padding: 10px; /* Padding untuk header */
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Tambahkan bayangan agar terlihat lebih baik */
+    }
+
+.table-wrapper {
+    overflow-x: auto; /* Agar tabel bisa digulir horizontal */
+}
+  
+#dt-length-0{
+    margin-right: 10px;
+}
+.dt-layout-full {
+    overflow-x: auto; /* Mengizinkan gulir horizontal */
+    white-space: nowrap; /* Mencegah teks membungkus ke baris baru */
+}
+
+.dt-input{
+    margin-right: 10px;
+}
+
+
+
+
+</style>
+</style>
+
+
+

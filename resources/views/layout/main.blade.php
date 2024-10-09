@@ -44,7 +44,8 @@
 
 </head>
 
-<body class="hold-transition dark-mode sidebar-mini layout-fixed  layout-footer-fixed">
+<body class="hold-transition dark-mode sidebar-mini layout-fixed  layout-footer-fixed @yield('body-class')">
+
     <div class="wrapper">
 
         <!-- Preloader -->

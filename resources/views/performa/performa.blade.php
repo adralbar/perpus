@@ -17,13 +17,15 @@
                     </button>
                     <button type="button" class="btn btn-success btn-sm" id="exportButton">Export to Excel</button>
                 </div>
-                <div class="mb-3">
-                    <label for="startDate" class="form-label">Tanggal Mulai</label>
-                    <input type="date" id="startDate" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label for="endDate" class="form-label">Tanggal Selesai</label>
-                    <input type="date" id="endDate" class="form-control">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="startDate" class="form-label">Tanggal Mulai</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="endDate" class="form-label">Tanggal Selesai</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table id="myTable" class="table table-dark table-striped">
@@ -31,7 +33,6 @@
                             <tr>
                                 <th>No</th>
                                 <th>Nama</th>
-                                <th>NPK Sistem</th>
                                 <th>NPK Api</th>
                                 <th>Divisi</th>
                                 <th>Departemen</th>

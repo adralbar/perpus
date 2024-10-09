@@ -7,12 +7,12 @@ use Carbon\Carbon;
 use App\Models\absensici;
 use App\Models\absensico;
 use App\Jobs\UploadFileJob;
-use App\Models\SectionModel;
 use Illuminate\Http\Request;
+use App\Models\SectionModel;
 use App\Models\DepartmentModel;
+use App\Models\DivisionModel;
 use Illuminate\Support\Facades\DB;
 use App\Exports\RekapAbsensiExport;
-use App\Models\DivisionModel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
@@ -145,7 +145,8 @@ class rekapController extends Controller
         }
 
         // Ubah hasil menjadi koleksi dan urutkan berdasarkan tanggal ascending
-        $finalResults = collect(array_values($results))->sortBy('tanggal');
+        // Ubah hasil menjadi koleksi dan urutkan berdasarkan tanggal descending (paling baru di atas)
+        $finalResults = collect(array_values($results))->sortByDesc('tanggal');
 
         // Tampilkan "no in" dan "no out" jika waktuci atau waktuco null
         return DataTables::of($finalResults)

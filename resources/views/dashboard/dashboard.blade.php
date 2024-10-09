@@ -42,7 +42,6 @@
                                         <tr>
                                             <th>No</th>
                                             <th>Nama</th>
-                                            <th>NPK Sistem</th>
                                             <th>NPK Api</th>
                                             <th>Divisi</th>
                                             <th>Departemen</th>
@@ -87,41 +86,14 @@
         </div>
     </div>
 
-    <style>
-        .table-responsive {
-            /* display: block;
-                width: 100%;
-                overflow-x: hidden;
-
-                -webkit-overflow-scrolling: touch; */
-        }
-    </style>
-
-
-
     <script src="{{ asset('dist/js/plugins/chart.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
     <script>
-        // const monthMap = {
-        //     'January': '01',
-        //     'February': '02',
-        //     'March': '03',
-        //     'April': '04',
-        //     'May': '05',
-        //     'June': '06',
-        //     'July': '07',
-        //     'August': '08',
-        //     'September': '09',
-        //     'October': '10',
-        //     'November': '11',
-        //     'December': '12'
-        // };
-
-        // Define table1 globally
         let table1;
+        let selectedMonth = '';
 
         document.getElementById('filterYear').addEventListener('change', function() {
             const selectedYear = this.value;
@@ -260,25 +232,22 @@
                         data: 'nama',
                         name: 'nama'
                     },
-                    {
-                        data: 'npksistem',
-                        name: 'npksistem'
-                    },
+
                     {
                         data: 'npk',
                         name: 'npk'
                     },
                     {
-                        data: 'divisi',
-                        name: 'divisi'
+                        data: 'division_nama',
+                        name: 'division_nama'
                     },
                     {
-                        data: 'departement',
-                        name: 'departement'
+                        data: 'department_nama',
+                        name: 'department_nama'
                     },
                     {
-                        data: 'section',
-                        name: 'section'
+                        data: 'section_nama',
+                        name: 'section_nama'
                     },
                     {
                         data: 'tahun',
@@ -321,11 +290,11 @@
                 for (var i = 0; i < tanggalList.length; i++) {
                     var selisihWaktu = calculateTimeDifference(shift1, waktuList[i]);
                     detailHtml += `
-            <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
-                <strong>Tanggal:</strong> ${tanggalList[i]}<br>
-                <strong>Waktu In:</strong> ${waktuList[i]}<br>
-                <strong>Keterlambatan:</strong> ${selisihWaktu} menit
-            </div>`;
+                 <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                     <strong>Tanggal:</strong> ${tanggalList[i]}<br>
+                     <strong>Waktu In:</strong> ${waktuList[i]}<br>
+                     <strong>Keterlambatan:</strong> ${selisihWaktu} menit
+                 </div>`;
                 }
 
                 $('#detailNama').text(nama);
@@ -340,9 +309,16 @@
 
             $('#filterYear').change(function() {
                 var year = $(this).val();
+
+                // Muat data chart dengan tahun yang baru
                 loadChartData(year);
-                table1.ajax.reload();
+
+                // Reset tabel untuk menampilkan data tahun yang dipilih
+                if (table1) {
+                    table1.ajax.url('{{ route('data.table1') }}?tahun=' + encodeURIComponent(year)).load();
+                }
             });
+
 
             $('.btnReset').on('click', function() {
                 resetChartAndTable();
@@ -365,12 +341,12 @@
                 icon: 'error',
                 title: 'Gagal Mengunggah',
                 html: `
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            `, // Tampilkan semua pesan error dalam bentuk list
+                     <ul>
+                         @foreach ($errors->all() as $error)
+                             <li>{{ $error }}</li>
+                         @endforeach
+                     </ul>
+                 `, // Tampilkan semua pesan error dalam bentuk list
             });
         @endif
     </script>
