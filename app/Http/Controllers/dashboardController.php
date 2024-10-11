@@ -64,7 +64,6 @@ class dashboardController extends Controller
     }
 
 
-
     public function getTable1Data(Request $request)
     {
         $tahun = $request->query('tahun');
@@ -87,9 +86,17 @@ class dashboardController extends Controller
                     ->on('absensici.tanggal', '=', 'subquery.tanggal')
                     ->on('absensici.waktuci', '=', 'subquery.awal_waktuci');
             })
-            ->join('kategorishift', function ($join) {
-                $join->on('absensici.npk', '=', 'kategorishift.npk')
-                    ->whereRaw('absensici.tanggal = kategorishift.date');
+            ->join('kategorishift as k', function ($join) {
+                $join->on('absensici.npk', '=', 'k.npk')
+                    ->whereColumn('absensici.tanggal', 'k.date') // Join berdasarkan tanggal dan npk
+                    ->whereRaw('k.shift1 = (
+                        SELECT ks.shift1 
+                        FROM kategorishift ks 
+                        WHERE ks.npk = absensici.npk 
+                        AND ks.date = absensici.tanggal 
+                        ORDER BY ks.created_at DESC 
+                        LIMIT 1
+                    )');
             })
             ->join('users', 'absensici.npk', '=', 'users.npk') // Join ke tabel users
             ->select(
@@ -99,22 +106,17 @@ class dashboardController extends Controller
                 'users.department_id',
                 'users.section_id',
                 DB::raw('YEAR(absensici.tanggal) as tahun'),
-                DB::raw('COUNT(*) as total_keterlambatan'),
-                DB::raw('GROUP_CONCAT(absensici.tanggal ORDER BY absensici.tanggal) as tanggal'),
-                DB::raw('GROUP_CONCAT(absensici.waktuci ORDER BY absensici.tanggal) as waktu'),
-                'kategorishift.shift1' // Tambahkan shift1 ke dalam query
+                // Hitung keterlambatan dengan memperhatikan bahwa tidak menghitung jika sama
+                DB::raw('COUNT(DISTINCT CASE WHEN TIME_FORMAT(absensici.waktuci, "%H:%i:%s") > TIME_FORMAT(k.shift1, "%H:%i:%s") THEN absensici.tanggal END) as total_keterlambatan'),
+                DB::raw('GROUP_CONCAT(DISTINCT absensici.tanggal ORDER BY absensici.tanggal) as tanggal'),
+                DB::raw('GROUP_CONCAT(DISTINCT absensici.waktuci ORDER BY absensici.tanggal) as waktu'),
+                DB::raw('GROUP_CONCAT(DISTINCT k.shift1 ORDER BY absensici.tanggal) as shift1')
             )
-            ->whereRaw("TIME(subquery.awal_waktuci) > 
-            CASE 
-                WHEN kategorishift.shift1 LIKE '07:00 - 16:00' THEN '07:00:00'
-                WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN '14:00:00'
-                WHEN kategorishift.shift1 LIKE '21:00 - 06:00' THEN '21:00:00'
-                ELSE '00:00:00' 
-            END")
             ->when($tahun, function ($query) use ($tahun) {
                 $query->whereYear('absensici.tanggal', $tahun);
             })
-            ->groupBy('absensici.npk', DB::raw('YEAR(absensici.tanggal)'), 'kategorishift.shift1', 'users.nama')
+            ->groupBy('absensici.npk', DB::raw('YEAR(absensici.tanggal)'), 'users.nama')
+            ->having('total_keterlambatan', '>', 0) // Exclude rows with total_keterlambatan = 0
             ->orderBy(DB::raw('YEAR(absensici.tanggal)'), 'desc')
             ->get();
 
@@ -124,7 +126,7 @@ class dashboardController extends Controller
             $department = $section ? DepartmentModel::find($section->department_id) : null;
             $division = $department ? DivisionModel::find($department->division_id) : null;
 
-            // Tambahkan data section, department, dan division ke setiap item
+            // Add section, department, and division names to each item
             $item->section_nama = $section ? $section->nama : 'Unknown';
             $item->department_nama = $department ? $department->nama : 'Unknown';
             $item->division_nama = $division ? $division->nama : 'Unknown';
@@ -135,22 +137,25 @@ class dashboardController extends Controller
             ->addIndexColumn()
             ->addColumn('aksi', function ($row) {
                 $btn = '<button class="btn btn-primary btn-sm btnDetail"
-            data-nama="' . e($row->nama) . '"
-            data-npk="' . e($row->npk) . '"
-            data-total="' . e($row->total_keterlambatan) . '"
-            data-tanggal="' . e($row->tanggal) . '"  
-            data-waktu="' . e($row->waktu) . '"
-            data-shift1="' . e($row->shift1) . '"
-            data-section="' . e($row->section_nama) . '"
-            data-department="' . e($row->department_nama) . '"
-            data-division="' . e($row->division_nama) . '"> 
-            Detail
-            </button>';
+                    data-nama="' . e($row->nama) . '"
+                    data-npk="' . e($row->npk) . '"
+                    data-total="' . e($row->total_keterlambatan) . '"
+                    data-tanggal="' . e($row->tanggal) . '"  
+                    data-waktu="' . e($row->waktu) . '"
+                    data-shift1="' . e($row->shift1) . '"
+                    data-section="' . e($row->section_nama) . '"
+                    data-department="' . e($row->department_nama) . '"
+                    data-division="' . e($row->division_nama) . '"> 
+                    Detail
+                    </button>';
                 return $btn;
             })
             ->rawColumns(['aksi'])
             ->make(true);
     }
+
+
+
 
 
     public function getTable1bData(Request $request)

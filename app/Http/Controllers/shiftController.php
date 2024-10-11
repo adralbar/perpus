@@ -24,10 +24,10 @@ class shiftController extends Controller
 
     public function getData(Request $request)
     {
-        $startDate = $request->input('startDate');
-        $endDate = $request->input('endDate');
+        $npk = $request->input('npk');
+        $date = $request->input('date');
 
-        $data = shift::select([
+        $data = Shift::select([
             'kategorishift.id',
             'kategorishift.npk',
             'kategorishift.shift1',
@@ -37,9 +37,12 @@ class shiftController extends Controller
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             ->orderBy('kategorishift.date', 'DESC');
 
-        // Check if both startDate and endDate are provided
-        if (!empty($startDate) && !empty($endDate)) {
-            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
+        // Filter berdasarkan npk dan date
+        if (!empty($npk)) {
+            $data->where('kategorishift.npk', $npk);
+        }
+        if (!empty($date)) {
+            $data->where('kategorishift.date', $date);
         }
 
         return DataTables::of($data)
@@ -49,6 +52,7 @@ class shiftController extends Controller
             })
             ->make(true);
     }
+
 
 
 
@@ -119,17 +123,17 @@ class shiftController extends Controller
     {
 
         $request->validate([
-            'npk' => 'required|array', // Memastikan npk adalah array
+            'npk' => 'required', // Memastikan npk adalah array
             'shift1' => 'required', // Minimal input untuk shift hari kerja
-            'date' => 'required|date'
+            'date' => 'required'
         ]);
 
 
         shift::create([
 
-            'npk' => $request->npk,
-            'shift1' => $request->shift1,
-            'date' => $request->date,
+            'npk' => $request->input('npk'),
+            'shift1' => $request->input('shift1'),
+            'date' => $request->input('date'),
         ]);
 
         // Return response success
@@ -156,5 +160,33 @@ class shiftController extends Controller
         $userData = User::select('nama', 'npk')->get();
 
         return view('shift.shift', compact('userData'));
+    }
+    public function getShiftHistory(Request $request)
+    {
+
+        $data = shift::select([
+            'kategorishift.id',
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama'
+        ])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            ->orderBy('kategorishift.date', 'DESC');
+
+        $date = $request->query('date');
+        $npk = $request->query('npk');
+
+        // Ambil data shift berdasarkan tanggal dan npk
+        $data = shift::where('date', $date)
+            ->where('npk', $npk)
+            ->get();
+
+        return response()->json([
+            'draw' => 0,
+            'recordsTotal' => $data->count(),
+            'recordsFiltered' => $data->count(),
+            'data' => $data,
+        ]);
     }
 }

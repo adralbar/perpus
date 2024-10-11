@@ -21,7 +21,7 @@
 
 
                     <div class="table-responsive">
-                        <table id="myTable" class="table table-dark table-striped">
+                        <table id="myTable" class="table table-light table-striped">
                             <thead>
                                 <tr>
                                     <th>No</th>

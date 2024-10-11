@@ -7,15 +7,16 @@ use Carbon\Carbon;
 use App\Models\absensici;
 use App\Models\absensico;
 use App\Jobs\UploadFileJob;
-use Illuminate\Http\Request;
 use App\Models\SectionModel;
-use App\Models\DepartmentModel;
+use Illuminate\Http\Request;
 use App\Models\DivisionModel;
+use App\Models\DepartmentModel;
 use Illuminate\Support\Facades\DB;
 use App\Exports\RekapAbsensiExport;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\attendanceRecordModel;
 use Yajra\DataTables\Facades\DataTables;
 
 class rekapController extends Controller
@@ -33,27 +34,25 @@ class rekapController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        // Ambil data check-in dengan join ke tabel kategorishift untuk mendapatkan shift1
         $checkinData = DB::table('absensici')
             ->join('users', 'absensici.npk', '=', 'users.npk')
-            ->leftJoin('kategorishift', function ($join) {
-                $join->on('absensici.npk', '=', 'kategorishift.npk')
-                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            ->leftJoin('kategorishift as ks', function ($join) {
+                $join->on('absensici.npk', '=', 'ks.npk')
+                    ->on('absensici.tanggal', '=', 'ks.date');
             })
             ->select(
                 'users.nama',
                 'users.npk as npk',
                 'users.section_id',
                 'absensici.tanggal',
-                DB::raw('MIN(absensici.waktuci) as waktuci'),
-                'kategorishift.shift1' // Mengambil shift1 dari tabel kategorishift
+                DB::raw('DATE_FORMAT(MIN(absensici.waktuci), "%H:%i") as waktuci'),
+                DB::raw('(SELECT shift1 FROM kategorishift WHERE npk = absensici.npk AND date = absensici.tanggal ORDER BY created_at DESC LIMIT 1) as shift1')
             )
             ->groupBy(
                 'users.nama',
                 'users.npk',
                 'users.section_id',
-                'absensici.tanggal',
-                'kategorishift.shift1'
+                'absensici.tanggal'
             );
 
         if (!empty($startDate) && !empty($endDate)) {
@@ -62,27 +61,25 @@ class rekapController extends Controller
 
         $checkinResults = $checkinData->get();
 
-        // Ambil data check-out dengan join ke tabel kategorishift untuk mendapatkan shift1
         $checkoutData = DB::table('absensico')
             ->join('users', 'absensico.npk', '=', 'users.npk')
-            ->leftJoin('kategorishift', function ($join) {
-                $join->on('absensico.npk', '=', 'kategorishift.npk')
-                    ->on('absensico.tanggal', '=', 'kategorishift.date');
+            ->leftJoin('kategorishift as ks', function ($join) {
+                $join->on('absensico.npk', '=', 'ks.npk')
+                    ->on('absensico.tanggal', '=', 'ks.date');
             })
             ->select(
                 'users.nama',
                 'users.npk as npk',
                 'users.section_id',
                 'absensico.tanggal',
-                DB::raw('MAX(absensico.waktuco) as waktuco'),
-                'kategorishift.shift1' // Mengambil shift1 dari tabel kategorishift
+                DB::raw('DATE_FORMAT(MAX(absensico.waktuco),"%H:%i") as waktuco'),
+                DB::raw('(SELECT shift1 FROM kategorishift WHERE npk = absensico.npk AND date = absensico.tanggal ORDER BY created_at DESC LIMIT 1) as shift1')
             )
             ->groupBy(
                 'users.nama',
                 'users.npk',
                 'users.section_id',
-                'absensico.tanggal',
-                'kategorishift.shift1'
+                'absensico.tanggal'
             );
 
         if (!empty($startDate) && !empty($endDate)) {
@@ -118,6 +115,18 @@ class rekapController extends Controller
                 'division_nama' => $division ? $division->nama : 'Unknown',
                 'status' => $status
             ];
+            attendanceRecordModel::updateOrCreate(
+                [
+                    'npk' => $checkin->npk,
+                    'tanggal' => $checkin->tanggal
+                ],
+                [
+                    'waktuci' => $checkin->waktuci,
+                    'shift1' => $checkin->shift1,
+                    'status' => $status,
+                    'waktuco' => null // Set waktu checkout sebagai null saat check-in
+                ]
+            );
         }
 
         foreach ($checkoutResults as $checkout) {
@@ -128,6 +137,9 @@ class rekapController extends Controller
 
             if (isset($results[$key])) {
                 $results[$key]['waktuco'] = $checkout->waktuco;
+                attendanceRecordModel::where('npk', $checkout->npk)
+                    ->where('tanggal', $checkout->tanggal)
+                    ->update(['waktuco' => $checkout->waktuco]);
             } else {
                 $results[$key] = [
                     'nama' => $checkout->nama,
@@ -141,44 +153,47 @@ class rekapController extends Controller
                     'division_nama' => $division ? $division->nama : 'Unknown',
                     'status' => 'Unknown' // Tidak bisa menentukan status jika tidak ada waktu check-in
                 ];
+                attendanceRecordModel::updateOrCreate(
+                    [
+                        'npk' => $checkout->npk,
+                        'tanggal' => $checkout->tanggal
+                    ],
+                    [
+                        'waktuco' => $checkout->waktuco,
+                        'status' => 'Unknown' // Status tidak dapat ditentukan jika tidak ada waktu check-in
+                    ]
+                );
             }
         }
 
-        // Ubah hasil menjadi koleksi dan urutkan berdasarkan tanggal ascending
-        // Ubah hasil menjadi koleksi dan urutkan berdasarkan tanggal descending (paling baru di atas)
         $finalResults = collect(array_values($results))->sortByDesc('tanggal');
 
-        // Tampilkan "no in" dan "no out" jika waktuci atau waktuco null
         return DataTables::of($finalResults)
             ->addIndexColumn()
             ->editColumn('waktuci', function ($row) {
-                return $row['waktuci'] ? $row['waktuci'] : 'NO IN'; // Tetap tampilkan Unknown jika waktuci tidak ada
+                return $row['waktuci'] ? $row['waktuci'] : 'NO IN';
             })
             ->editColumn('waktuco', function ($row) {
                 return $row['waktuco'] ? $row['waktuco'] : 'NO OUT';
             })
             ->editColumn('shift1', function ($row) {
-                return $row['shift1'] ? $row['shift1'] : 'NO SHIFT'; // Tampilkan NO SHIFT jika shift1 kosong
+                return $row['shift1'] ? $row['shift1'] : 'NO SHIFT';
             })
             ->editColumn('status', function ($row) {
                 if (!$row['shift1']) {
-                    return 'NO SHIFT'; // Jika shift1 kosong, status menjadi NO SHIFT
+                    return 'NO SHIFT';
                 }
                 if (!$row['waktuci']) {
-                    return 'NO IN'; // Jika waktuci kosong, status menjadi NO IN
+                    return 'NO IN';
                 }
+
                 if ($row['waktuci'] > $row['shift1']) {
-                    return 'Terlambat'; // Jika waktuci lebih besar dari shift1, status Terlambat
+                    return 'Terlambat';
                 }
-                return 'Tepat Waktu'; // Jika waktuci kurang atau sama dengan shift1, status Tepat Waktu
+                return 'Tepat Waktu';
             })
             ->make(true);
     }
-
-
-
-
-
 
     public function storeCheckin(Request $request)
     {

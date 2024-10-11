@@ -34,7 +34,7 @@
                         </div>
                     </div>
                     <div class="table-wrapper   table-responsive">
-                        <table id="myTable" class="table table-dark table-bordered " style="width:100%">
+                        <table id="myTable" class="table table-light table-bordered " style="width:100%">
                             <thead id="data-table-head">
                                 <tr>
                                 </tr>
@@ -50,14 +50,11 @@
                 </div>
             </div>
         </div>
-        <!-- Modal untuk Tambah/Edit Karyawan -->
-        <!-- Modal untuk Tambah/Edit Karyawan -->
         <div class="modal fade" id="shiftModal" tabindex="-1" aria-labelledby="shiftLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="shiftLabel">Tambah/Edit Karyawan</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form id="shiftForm">
@@ -130,7 +127,7 @@
                             @csrf
                             <div class="form-group">
                                 <label for="shift1">Shift</label>
-                                <input type="text" class="form-control" id="shift1" name="shift1" required>
+                                <input type="text" class="form-control" id="shift1" name="shift1">
                             </div>
                             <div class="form-group">
                                 <label for="date">Tanggal</label>
@@ -138,17 +135,37 @@
                             </div>
                             <div class="form-group">
                                 <label for="npk">NPK</label>
-                                <input type="text" class="form-control" id="npk" name="npk" required>
+                                <input type="text" class="form-control" id="npk" name="npk">
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-info" id="showHistoryBtn">Riwayat Upload</button>
                                 <button type="submit" class="btn btn-primary" id="saveShiftBtn">Edit</button>
                             </div>
                         </form>
+                        <div id="shiftHistory" class="mt-3" style="display:none;">
+                            <h6>Riwayat Shift pada <span id="historyDate"></span></h6>
+                            <table class="table table-light">
+                                <thead>
+                                    <tr>
+                                        <th>NPK</th>
+                                        <th>Shift</th>
+                                        <th>Tanggal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyBody">
+                                </tbody>
+                            </table>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-info" id="showEditShift">Edit shift</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+
 
 
 
@@ -160,9 +177,9 @@
         <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
         <script src="{{ asset('dist/js/daterangepicker.js') }}"></script>
 
-        </script>
-
         <script>
+            let shiftHistoryUrl;
+
             var demo1 = $('select[name="npk[]"]').bootstrapDualListbox();
             $("#demoform").submit(function() {
                 alert($('[name="npk[]"]').val());
@@ -315,9 +332,45 @@
                                 $('#editShiftModal #shift1').val(shift);
                                 $('#editShiftModal #date').val(date);
                                 $('#editShiftModal #npk').val(details.npk);
-                            });
 
-                            // Continue your renderTable function logic
+                                // Membuat URL dengan menggunakan route dan parameter yang diambil
+                                shiftHistoryUrl =
+                                    "{{ route('shift.data', ['npk' => 'npkPlaceholder', 'date' => 'datePlaceholder']) }}"
+                                    .replace('npkPlaceholder', details.npk)
+                                    .replace('datePlaceholder', date).replace(/&amp;/g, '&');
+                                console.log(shiftHistoryUrl);
+                                $.ajax({
+                                    url: shiftHistoryUrl,
+                                    method: 'GET',
+                                    data: {
+                                        npk: details
+                                            .npk, // Ensure you use the correct npk variable
+                                        date: date
+                                    },
+                                    success: function(response) {
+                                        $('#historyBody').empty(); // Clear previous data
+
+                                        if (response.data.length > 0) {
+                                            response.data.forEach(function(shift) {
+                                                $('#historyBody').append(`
+                        <tr>
+                            <td>${shift.npk}</td>
+                            <td>${shift.shift1}</td>
+                            <td>${shift.date}</td>
+                        </tr>
+                    `);
+                                            });
+                                        } else {
+                                            $('#historyBody').append(
+                                                '<tr><td colspan="3">Tidak ada data shift</td></tr>'
+                                            );
+                                        }
+                                    },
+                                    error: function() {
+                                        alert('Gagal mengambil data riwayat shift.');
+                                    }
+                                });
+                            });
 
 
                             row.appendChild(shiftCell);
@@ -326,6 +379,50 @@
                         tableBody.appendChild(row); // Tambahkan baris ke dalam body tabel
                     }
                 }
+                $('#showHistoryBtn').on('click', function() {
+                    const npk = $('#npk').val();
+                    const date = $('#date').val();
+
+                    if (!npk || !date) {
+                        alert('NPK dan Tanggal harus diisi!');
+                        return;
+                    }
+
+                    $('#editShiftForm').hide();
+                    $('#shiftHistory').show();
+
+                    $.ajax({
+                        url: shiftHistoryUrl,
+                        method: 'GET',
+                        data: {
+                            npk: npk,
+                            date: date
+                        },
+                        success: function(response) {
+                            $('#historyBody').empty();
+
+                            if (response.data.length > 0) {
+                                response.data.forEach(function(shift) {
+                                    $('#historyBody').append(`
+                        <tr>
+                            <td>${shift.npk}</td>
+                            <td>${shift.shift1}</td>
+                            <td>${shift.date}</td>
+                        </tr>
+                    `);
+                                });
+                            } else {
+                                $('#historyBody').append(
+                                    '<tr><td colspan="3">Tidak ada data shift</td></tr>'
+                                );
+                            }
+                        },
+                        error: function() {
+                            alert('Gagal mengambil data riwayat shift.');
+                        }
+                    });
+                });
+
 
                 $('#shiftForm').submit(function(e) {
                     e.preventDefault(); // Mencegah pengiriman form secara default
@@ -333,65 +430,35 @@
                     var url, method;
                     url = '{{ route('shift.store') }}'; // URL untuk menyimpan data baru
                     method = 'POST'; // Metode untuk membuat data baru
-
-
-                    // AJAX request
                     $.ajax({
-                        url: url, // URL yang ditentukan
-                        method: method, // Metode yang ditentukan
+                        url: url,
+                        method: method,
                         data: $(this)
-                            .serialize(), // Mengambil data dari form dan mengubahnya menjadi string
+                            .serialize(),
                         success: function(response) {
-                            $('#shiftModal').modal('hide'); // Menutup modal setelah sukses
-                            table.ajax.reload(); // Memuat ulang data tabel
-                            alert(response.success); // Menampilkan pesan sukses
+                            $('#shiftModal').modal('hide');
+                            table.ajax.reload();
+                            alert(response.success);
                         },
                         error: function(xhr, status, error) {
-                            // Menangani error jika request gagal
-                            console.error(xhr.responseText); // Log pesan error ke konsol
+
+                            console.error(xhr.responseText);
                             alert('Terjadi kesalahan: ' + xhr.responseJSON
-                                .message); // Tampilkan pesan kesalahan
+                                .message);
                         }
                     });
 
-                    // Untuk debugging
+
                     console.log('URL:', url);
                     console.log('Method:', method);
                     console.log('data:', $(this).serialize());
                 });
 
+                $('#showEditShift').on('click', function() {
+                    $('#shiftHistory').hide();
+                    $('#editShiftForm').show();
 
-                $('#editShiftForm').submit(function(e) {
-                    const shift = $('#shift1').val();
-                    const date = $('#date').val();
-                    const npk = $('#npk').val();
-
-                    $.ajax({
-                        url: '{{ route('shift.store2') }}', // Ganti dengan route yang sesuai
-                        type: 'POST',
-                        data: {
-                            npk: npk,
-                            date: date,
-                            shift: shift,
-                            _token: '{{ csrf_token() }}' // Sertakan CSRF token
-                        },
-                        success: function(response) {
-                            // Tindakan setelah berhasil menyimpan perubahan
-                            $('#editShiftModal').modal('hide');
-                            $('#myTable').DataTable().ajax
-                                .reload(); // Reload data tabel
-                            alert('Shift berhasil diperbarui!'); // Pesan sukses
-                        },
-                        error: function(xhr, status, error) {
-                            // Menangani error jika request gagal
-                            console.error(xhr
-                                .responseText); // Log pesan error ke konsol
-                            alert('Terjadi kesalahan: ' + xhr.responseJSON
-                                .message); // Tampilkan pesan kesalahan
-                        }
-                    });
                 });
-
 
 
                 function deleteShift(id) {
@@ -413,6 +480,7 @@
 
 
 
+
             @if ($errors->any())
                 Swal.fire({
                     icon: 'error',
@@ -423,11 +491,35 @@
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                `, // Tampilkan semua pesan error dalam bentuk list
+                `,
                 });
             @endif
-            //Date range picker
+
             $('#reservation').daterangepicker()
+
+            $('#editShiftForm').submit(function(e) {
+                e.preventDefault();
+
+                const shift1 = $('#shift1').val();
+                const date = $('#date').val();
+                const npk = $('#npk').val();
+
+                $.ajax({
+                    url: '{{ route('shift.store2') }}',
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        $('#editShiftModal').modal('hide');
+                        $('#myTable').DataTable().ajax.reload();
+                        alert('Shift berhasil diperbarui!');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', xhr
+                            .responseText);
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
         </script>
 
 

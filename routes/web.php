@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/performa/storeuserid', [performaController::class, 'storeUserId'])->name('performa.storeUserId');
     Route::get('/shift', [shiftController::class, 'index'])->name('shift');
     Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
+    Route::get('/shift-history', [ShiftController::class, 'getShiftHistory']);
 
 
 

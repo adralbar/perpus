@@ -20,7 +20,7 @@
                         Upload File
                     </button>
                 </div>
-                <table id="myTable" class="table table-dark table-striped table-bordered">
+                <table id="myTable" class="table table-light table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>No</th>

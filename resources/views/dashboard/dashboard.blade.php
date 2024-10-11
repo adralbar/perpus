@@ -26,7 +26,7 @@
 
             <!-- Chart Area -->
             <div class="chart-container" style="margin: 20px; border-radius: 8px; overflow: hidden;">
-                <canvas id="myChart" style="width: 100%; height: 400px; background-color: #343a40;"></canvas>
+                <canvas id="myChart" style="width: 100%; height: 400px; background-color: #ffffff;"></canvas>
             </div>
         </div>
 
@@ -37,7 +37,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table id="table1" class="table table-dark table-striped">
+                                <table id="table1" class="table table-light table-striped">
                                     <thead>
                                         <tr>
                                             <th>No</th>
@@ -274,27 +274,41 @@
                 var waktu = $(this).data('waktu');
                 var shift1 = $(this).data('shift1');
 
+                // Split tanggal, waktu, dan shift menjadi array
                 var tanggalList = tanggal.split(',');
                 var waktuList = waktu.split(',');
+                var shiftList = shift1.split(',');
+
                 var detailHtml = '';
 
-                // Calculate the time difference in minutes
-                function calculateTimeDifference(shift, absensi) {
-                    var shiftTimes = shift.split(' - ');
-                    var shiftStart = new Date('1970-01-01T' + shiftTimes[0] + 'Z');
-                    var absensiTime = new Date('1970-01-01T' + absensi + 'Z');
+                // Function to calculate the time difference in minutes
+                function calculateTimeDifference(shiftStart, absensiTime) {
+                    var shiftStartTime = new Date('1970-01-01T' + shiftStart + 'Z');
+                    var absensiTime = new Date('1970-01-01T' + absensiTime + 'Z');
 
-                    return Math.floor((absensiTime - shiftStart) / 60000);
+                    // Calculate the difference in minutes
+                    var difference = Math.floor((absensiTime - shiftStartTime) / 60000);
+                    return difference;
                 }
 
+                // Loop through the dates
                 for (var i = 0; i < tanggalList.length; i++) {
-                    var selisihWaktu = calculateTimeDifference(shift1, waktuList[i]);
-                    detailHtml += `
-                 <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
-                     <strong>Tanggal:</strong> ${tanggalList[i]}<br>
-                     <strong>Waktu In:</strong> ${waktuList[i]}<br>
-                     <strong>Keterlambatan:</strong> ${selisihWaktu} menit
-                 </div>`;
+                    var shift = shiftList[i] ? shiftList[i].trim() :
+                        ''; // Get the shift for the current date
+                    var selisihWaktu = calculateTimeDifference(shift.split(' - ')[0], waktuList[i]
+                        .trim()); // Compare start of shift with waktuList[i]
+
+                    // Only add to detailHtml if selisihWaktu is >= 0
+                    if (selisihWaktu > 0) {
+                        detailHtml += `
+            <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                <strong>Tanggal:</strong> ${tanggalList[i]}<br>
+                <strong>Waktu In:</strong> ${waktuList[i]}<br>
+               
+                <strong>Shif:</strong> ${shift}<br>
+                 <strong>Keterlambatan :</strong> ${selisihWaktu} menit
+            </div>`;
+                    }
                 }
 
                 $('#detailNama').text(nama);
@@ -303,7 +317,6 @@
                 $('#detailTanggalWaktu').html(detailHtml);
                 $('#detailModal').modal('show');
             });
-
 
 
 

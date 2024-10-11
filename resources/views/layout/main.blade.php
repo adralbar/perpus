@@ -44,7 +44,7 @@
 
 </head>
 
-<body class="hold-transition dark-mode sidebar-mini layout-fixed  layout-footer-fixed @yield('body-class')">
+<body class="hold-transition light-mode sidebar-mini layout-fixed  layout-footer-fixed @yield('body-class')">
 
     <div class="wrapper">
 
@@ -55,7 +55,7 @@
             </div> --}}
 
         <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-dark">
+        <nav class="main-header navbar navbar-expand navbar-light">
             <!-- Left navbar links -->
             <ul class="navbar-nav">
                 <li class="nav-item">
@@ -206,7 +206,7 @@
         <!-- /.navbar -->
 
         <!-- Main Sidebar Container -->
-        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <aside class="main-sidebar sidebar-light-primary elevation-4">
             <div class="text-center">
                 <img src="dist/img/LogoApi.png" alt="Api Logo" class="logo-api rounded img-fluid" width="80%"
                     style="margin: 20px auto;">
@@ -308,7 +308,7 @@
         </footer>
 
         <!-- Control Sidebar -->
-        <aside class="control-sidebar control-sidebar-dark">
+        <aside class="control-sidebar control-sidebar-light">
             <!-- Control sidebar content goes here -->
         </aside>
         <!-- /.control-sidebar -->
