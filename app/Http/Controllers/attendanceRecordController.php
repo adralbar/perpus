@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use DateTime;
 use Carbon\Carbon;
 use App\Models\absensici;
 use App\Models\absensico;
 use App\Jobs\UploadFileJob;
 use App\Models\SectionModel;
-use App\Models\DepartmentModel;
+use Illuminate\Http\Request;
 use App\Models\DivisionModel;
+use App\Models\DepartmentModel;
 use Illuminate\Support\Facades\DB;
 use App\Exports\RekapAbsensiExport;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\attendanceRecordModel;
 use Yajra\DataTables\Facades\DataTables;
 
 class AttendanceSummaryController extends Controller
@@ -25,7 +26,6 @@ class AttendanceSummaryController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        // Mengambil data check-in
         $checkinData = DB::table('absensici')
             ->join('users', 'absensici.npk', '=', 'users.npk')
             ->leftJoin('kategorishift as ks', function ($join) {
@@ -53,7 +53,6 @@ class AttendanceSummaryController extends Controller
 
         $checkinResults = $checkinData->get();
 
-        // Mengambil data check-out
         $checkoutData = DB::table('absensico')
             ->join('users', 'absensico.npk', '=', 'users.npk')
             ->leftJoin('kategorishift as ks', function ($join) {
@@ -86,23 +85,28 @@ class AttendanceSummaryController extends Controller
 
         foreach ($checkinResults as $checkin) {
             $key = $checkin->npk . '-' . $checkin->tanggal;
+            $section = SectionModel::find($checkin->section_id);
+            $department = $section ? DepartmentModel::find($section->department_id) : null;
+            $division = $department ? DivisionModel::find($department->division_id) : null;
+
+            // Tentukan status berdasarkan waktu shift dan waktuci
             $status = 'Tepat Waktu';
             if ($checkin->waktuci > $checkin->shift1) {
                 $status = 'Terlambat';
             }
 
-            // Simpan data ke array hasil
             $results[$key] = [
                 'nama' => $checkin->nama,
                 'npk' => $checkin->npk,
                 'tanggal' => $checkin->tanggal,
                 'waktuci' => $checkin->waktuci,
-                'waktuco' => null, // Awalnya null
+                'waktuco' => null,
                 'shift1' => $checkin->shift1,
+                'section_nama' => $section ? $section->nama : 'Unknown',
+                'department_nama' => $department ? $department->nama : 'Unknown',
+                'division_nama' => $division ? $division->nama : 'Unknown',
                 'status' => $status
             ];
-
-            // Simpan data check-in ke database
             attendanceRecordModel::updateOrCreate(
                 [
                     'npk' => $checkin->npk,
@@ -119,31 +123,28 @@ class AttendanceSummaryController extends Controller
 
         foreach ($checkoutResults as $checkout) {
             $key = $checkout->npk . '-' . $checkout->tanggal;
+            $section = SectionModel::find($checkout->section_id);
+            $department = $section ? DepartmentModel::find($section->department_id) : null;
+            $division = $department ? DivisionModel::find($department->division_id) : null;
 
-            // Periksa apakah ada data check-in
             if (isset($results[$key])) {
                 $results[$key]['waktuco'] = $checkout->waktuco;
-
-                // Update waktu checkout di database
-                attendanceRecordModel::where('npk', $checkout->npk)
-                    ->where('tanggal', $checkout->tanggal)
-                    ->update(['waktuco' => $checkout->waktuco]);
             } else {
-                // Jika tidak ada data check-in, simpan hanya check-out
-                attendanceRecordModel::updateOrCreate(
-                    [
-                        'npk' => $checkout->npk,
-                        'tanggal' => $checkout->tanggal
-                    ],
-                    [
-                        'waktuco' => $checkout->waktuco,
-                        'status' => 'Unknown' // Status tidak dapat ditentukan jika tidak ada waktu check-in
-                    ]
-                );
+                $results[$key] = [
+                    'nama' => $checkout->nama,
+                    'npk' => $checkout->npk,
+                    'tanggal' => $checkout->tanggal,
+                    'waktuci' => null,
+                    'waktuco' => $checkout->waktuco,
+                    'shift1' => $checkout->shift1,
+                    'section_nama' => $section ? $section->nama : 'Unknown',
+                    'department_nama' => $department ? $department->nama : 'Unknown',
+                    'division_nama' => $division ? $division->nama : 'Unknown',
+                    'status' => 'Unknown' // Tidak bisa menentukan status jika tidak ada waktu check-in
+                ];
             }
         }
 
-        // Mengurutkan hasil dan mengembalikan data ke DataTables
         $finalResults = collect(array_values($results))->sortByDesc('tanggal');
 
         return DataTables::of($finalResults)
@@ -165,7 +166,10 @@ class AttendanceSummaryController extends Controller
                     return 'NO IN';
                 }
 
-                return $row['waktuci'] > $row['shift1'] ? 'Terlambat' : 'Tepat Waktu';
+                if ($row['waktuci'] > $row['shift1']) {
+                    return 'Terlambat';
+                }
+                return 'Tepat Waktu';
             })
             ->make(true);
     }
