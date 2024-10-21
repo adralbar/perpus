@@ -2,25 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DepartmentModel;
-use App\Models\DivisionModel;
+use App\Models\User;
 use App\Models\RoleModel;
 use App\Models\SectionModel;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\DivisionModel;
+use App\Models\DepartmentModel;
+use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Auth;
 
 class UsersController extends Controller
 {
     public function index()
     {
-        $userData = User::with('division', 'department', 'section', 'role')->orderBy('created_at', 'DESC')->get();
-        $role = RoleModel::all();
-        $section = SectionModel::all(); // Ambil semua section
-        $department = DepartmentModel::all(); // Ambil semua departemen
-        $division = DivisionModel::all(); // Ambil semua division
+        $user = Auth::user();
+        $roleId = $user->role_id;
+        $sectionId = $user->section_id;
 
+        // Initialize userData as an empty collection
+        $userData = collect();
+
+        // Check role ID and fetch data accordingly
+        if ($roleId == 2) {
+            // Fetch users based on section id if the role is 2
+            $userData = User::with('division', 'department', 'section', 'role')
+                ->where('section_id', $sectionId)
+                ->orderBy('created_at', 'DESC')
+                ->get();
+        } elseif ($roleId == 1 || $roleId == 6) {
+            // Fetch all users if the role is 1 or 6
+            $userData = User::with('division', 'department', 'section', 'role')
+                ->orderBy('created_at', 'DESC')
+                ->get();
+        }
+
+        // Fetch other models if needed (optional)
+        $role = RoleModel::all();
+        $section = SectionModel::all();
+        $department = DepartmentModel::all();
+        $division = DivisionModel::all();
+
+        // Use the retrieved userData for DataTables response
         return view('user.index', compact('userData', 'role', 'section', 'department', 'division'));
     }
+
+
+
     public function store(Request $request)
     {
         $request->validate(

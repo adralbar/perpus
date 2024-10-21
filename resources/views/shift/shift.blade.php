@@ -18,20 +18,14 @@
                             data-bs-target="#shiftModal" onclick="resetForm()">
                             Tambah Shift Karyawan
                         </button>
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+                        <button type="button" class="btn btn-secondary btn-sm mr-2" data-bs-toggle="modal"
                             data-bs-target="#uploadModal">
                             Upload File
                         </button>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="startDate" class="form-label">Tanggal Mulai</label>
-                            <input type="date" id="startDate" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="endDate" class="form-label">Tanggal Selesai</label>
-                            <input type="date" id="endDate" class="form-control">
-                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#filterModal">
+                            Filter
+                        </button>
                     </div>
                     <div class="table-wrapper   table-responsive">
                         <table id="myTable" class="table table-light table-bordered " style="width:100%">
@@ -60,7 +54,6 @@
                         <form id="shiftForm">
                             @csrf
                             <input type="hidden" id="shiftId" name="id">
-
                             <div class="form-group">
                                 <label for="npk">NPK Api</label>
                                 <select multiple="multiple" size="10" name="npk[]" id="npk"
@@ -90,7 +83,42 @@
             </div>
         </div>
 
-        <!-- Modal untuk Upload File -->
+
+        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="shiftLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="shiftLabel">Filter Karyawan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="filterForm">
+                            <label for="npk">NPK Api</label>
+                            <select class="dualistbox" multiple="multiple" size="10" name="selected_npk[]"
+                                id="selected_npk" class="form-control">
+                                @foreach ($userData as $user)
+                                    <option value="{{ $user->npk }}">
+                                        {{ $user->nama }} ({{ $user->npk }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="row">
+                                <div class="col-md-6 mb-3 mt-3">
+                                    <label for="startDate" class="form-label">Tanggal Mulai</label>
+                                    <input type="date" id="startDate" class="form-control">
+                                </div>
+                                <div class="col-md-6 mb-3 mt-3">
+                                    <label for="endDate" class="form-label">Tanggal Selesai</label>
+                                    <input type="date" id="endDate" class="form-control">
+                                </div>
+                            </div>
+                            <input type="hidden" id="selectedNPK" name="selectedNPK">
+                            <button type="button" class="btn btn-primary" id="filterButton">Simpan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -164,12 +192,6 @@
                 </div>
             </div>
         </div>
-
-
-
-
-
-
         <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
         <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
         <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
@@ -179,12 +201,9 @@
 
         <script>
             let shiftHistoryUrl;
+            var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox();
 
             var demo1 = $('select[name="npk[]"]').bootstrapDualListbox();
-            $("#demoform").submit(function() {
-                alert($('[name="npk[]"]').val());
-                return false;
-            });
             var demo2 = $('.demo2').bootstrapDualListbox({
                 nonSelectedListLabel: 'Non-selected',
                 selectedListLabel: 'Selected',
@@ -199,8 +218,10 @@
                     ajax: {
                         url: '{{ route('shift.data') }}',
                         data: function(d) {
-                            d.startDate = $('#startDate').val(); // Ambil nilai tanggal mulai
-                            d.endDate = $('#endDate').val(); // Ambil nilai tanggal selesai
+                            d.startDate = $('#startDate').val();
+                            d.endDate = $('#endDate').val();
+                            d.selected_npk = $('#selectedNPK')
+                                .val(); // Pastikan ini sesuai dengan parameter yang digunakan
                         }
                     },
                     pageLength: -1,
@@ -222,7 +243,7 @@
                             data: 'date',
                             name: 'date',
                             visible: false
-                        },
+                        }
                     ],
                     drawCallback: function(settings) {
                         const api = this.api();
@@ -233,11 +254,48 @@
                     },
                 });
 
-                $('#startDate, #endDate').on('change', function() {
-                    table.ajax.reload(); // Reload data berdasarkan rentang tanggal
+                // Modal shown event
+                $('#filterModal').on('shown.bs.modal', function() {
+                    $('.duallistbox').bootstrapDualListbox({
+                        nonSelectedListLabel: 'Available Members',
+                        selectedListLabel: 'Selected Members',
+                        preserveSelectionOnMove: 'moved',
+                        moveOnSelect: false,
+                        filterPlaceHolder: 'Filter',
+                        moveAllLabel: 'Move all',
+                        removeAllLabel: 'Remove all',
+                        infoTextEmpty: 'No Members available',
+                        infoText: 'Showing {0} members',
+                        infoTextFiltered: '<span class="badge badge-warning">Filtered</span> {0} from {1}',
+                        infoTextSelected: '{0} members selected'
+                    });
                 });
 
-                // Fungsi untuk memformat tanggal menjadi 'Kamis, 7 Okt 2024'
+                // Filter button click event
+                $('#filterButton').click(function(e) {
+                    e.preventDefault();
+                    var selectedNPK = $('#selected_npk').val() || []; // Ambil nilai NPK yang dipilih
+                    console.log('NPK yang dipilih: ', selectedNPK);
+
+                    if (selectedNPK.length > 0) {
+                        console.log('Menutup modal dan menyimpan NPK: ', selectedNPK.join(','));
+                        $('#filterModal').modal('hide');
+                        $('#selectedNPK').val(selectedNPK.join(',')); // Simpan NPK yang dipilih
+                        table.ajax.reload(); // Reload data table
+                    } else {
+                        alert('Silakan pilih karyawan terlebih dahulu.');
+                        console.log('Tidak ada karyawan yang dipilih.');
+                    }
+                });
+
+                // Reload DataTable on date change
+                $('#startDate, #endDate').on('change', function() {
+                    table.ajax.reload();
+                });
+
+
+
+                // Format date
                 function formatDate(dateString) {
                     const date = new Date(dateString);
                     return date.toLocaleDateString('id-ID', {
@@ -252,79 +310,68 @@
                     const tableHead = document.getElementById('data-table-head').querySelector('tr');
                     const tableBody = document.getElementById('data-table-body');
 
-                    // Bersihkan header dan body tabel yang ada
                     tableHead.innerHTML = '';
                     tableBody.innerHTML = '';
 
-                    // Buat header untuk Nama (NPK)
-                    tableHead.innerHTML = '<th class="sticky-header">Nama (NPK)</th>'; // Header kolom untuk Nama (NPK)
+                    tableHead.innerHTML = '<th class="sticky-header">Nama (NPK)</th>';
 
-                    // Ambil daftar tanggal dari data
                     const uniqueDates = [...new Set(data.map(entry => entry.date))];
 
                     uniqueDates.forEach(date => {
                         const th = document.createElement('th');
-                        th.textContent = formatDate(
-                            date); // Gunakan fungsi formatDate untuk menampilkan tanggal
+                        th.textContent = formatDate(date);
                         tableHead.appendChild(th);
                     });
 
-                    // Mengelompokkan data berdasarkan nama dan npk
                     const groupedData = {};
-
                     data.forEach(entry => {
-                        const key = `${entry.nama} (${entry.npk})`; // Kunci unik untuk setiap nama dan npk
+                        const key = `${entry.nama} (${entry.npk})`;
                         if (!groupedData[key]) {
                             groupedData[key] = {
                                 shifts: {},
                                 npk: entry.npk
                             };
                         }
-                        // Simpan shift berdasarkan tanggal
                         groupedData[key].shifts[entry.date] = entry.shift1 || '';
                     });
 
-                    // Menambahkan data ke dalam tabel
                     for (const [nameNpk, details] of Object.entries(groupedData)) {
                         const row = document.createElement('tr');
-
-                        // Sel untuk Nama (NPK) dengan kelas sticky-header
                         const nameCell = document.createElement('td');
-                        nameCell.textContent = nameNpk; // Mengambil nama dan NPK
-                        nameCell.classList.add('sticky-header'); // Menambahkan kelas sticky-header
+                        nameCell.textContent = nameNpk;
+                        nameCell.classList.add('sticky-header');
                         row.appendChild(nameCell);
 
                         uniqueDates.forEach(date => {
                             const shiftCell = document.createElement('td');
-                            const shift = details.shifts[date] || ''; // Mengambil shift atau kosong
+                            const shift = details.shifts[date] || '';
                             shiftCell.textContent = shift;
 
-                            // Mengatur warna berdasarkan hari
-                            const dayOfWeek = new Date(date)
-                                .getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+                            const dayOfWeek = new Date(date).getDay();
                             switch (dayOfWeek) {
-                                case 0: // Minggu
-                                case 6: // Sabtu
-                                    shiftCell.style.backgroundColor =
-                                        '#b91c1c'; // Warna gelap untuk sabtu dan minggu
+                                case 0:
+                                case 6:
+                                    shiftCell.style.backgroundColor = '#f87171';
                                     break;
                                 case 1: // Senin
-                                    shiftCell.style.backgroundColor = '#1e3a8a'; // Biru tua untuk Senin
+                                    shiftCell.style.backgroundColor = '#60a5fa';
                                     break;
                                 case 2: // Selasa
-                                    shiftCell.style.backgroundColor = '#1f2937'; // Hijau tua untuk Selasa
+                                    shiftCell.style.backgroundColor = '#86efac';
                                     break;
                                 case 3: // Rabu
-                                    shiftCell.style.backgroundColor = '#ca8a04'; // Kuning keemasan untuk Rabu
+                                    shiftCell.style.backgroundColor = '#facc15';
                                     break;
                                 case 4: // Kamis
-                                    shiftCell.style.backgroundColor = '#d946ef'; // Merah muda untuk Kamis
+                                    shiftCell.style.backgroundColor = '#f9a8d4';
                                     break;
                                 case 5: // Jumat
-                                    shiftCell.style.backgroundColor = '#9333ea'; // Ungu muda untuk Jumat
+                                    shiftCell.style.backgroundColor = '#c4b5fd';
                                     break;
                             }
 
+
+                            // Click event for shift cell
                             shiftCell.addEventListener('click', function() {
                                 console.log("Clicked Shift Cell!");
                                 console.log("Shift:", shift, "Date:", date, "NPK:", details.npk);
@@ -333,32 +380,33 @@
                                 $('#editShiftModal #date').val(date);
                                 $('#editShiftModal #npk').val(details.npk);
 
-                                // Membuat URL dengan menggunakan route dan parameter yang diambil
+                                // Create URL for shift history
                                 shiftHistoryUrl =
-                                    "{{ route('shift.data', ['npk' => 'npkPlaceholder', 'date' => 'datePlaceholder']) }}"
+                                    "{{ route('shift.history', ['npk' => 'npkPlaceholder', 'date' => 'datePlaceholder']) }}"
                                     .replace('npkPlaceholder', details.npk)
-                                    .replace('datePlaceholder', date).replace(/&amp;/g, '&');
+                                    .replace('datePlaceholder', date)
+                                    .replace(/&amp;/g, '&');
                                 console.log(shiftHistoryUrl);
+
+                                // Fetch shift history
                                 $.ajax({
                                     url: shiftHistoryUrl,
                                     method: 'GET',
                                     data: {
-                                        npk: details
-                                            .npk, // Ensure you use the correct npk variable
+                                        npk: details.npk,
                                         date: date
                                     },
                                     success: function(response) {
-                                        $('#historyBody').empty(); // Clear previous data
-
+                                        $('#historyBody').empty();
                                         if (response.data.length > 0) {
                                             response.data.forEach(function(shift) {
                                                 $('#historyBody').append(`
-                        <tr>
-                            <td>${shift.npk}</td>
-                            <td>${shift.shift1}</td>
-                            <td>${shift.date}</td>
-                        </tr>
-                    `);
+                                        <tr>
+                                            <td>${shift.npk}</td>
+                                            <td>${shift.shift1}</td>
+                                            <td>${shift.date}</td>
+                                        </tr>
+                                    `);
                                             });
                                         } else {
                                             $('#historyBody').append(
@@ -372,13 +420,14 @@
                                 });
                             });
 
-
-                            row.appendChild(shiftCell);
+                            row.appendChild(shiftCell); // Add shift cell to the row
                         });
 
-                        tableBody.appendChild(row); // Tambahkan baris ke dalam body tabel
+                        tableBody.appendChild(row); // Add row to table body
                     }
                 }
+
+                // Show history button click event
                 $('#showHistoryBtn').on('click', function() {
                     const npk = $('#npk').val();
                     const date = $('#date').val();
@@ -387,10 +436,10 @@
                         alert('NPK dan Tanggal harus diisi!');
                         return;
                     }
-
                     $('#editShiftForm').hide();
                     $('#shiftHistory').show();
 
+                    // Fetch shift history
                     $.ajax({
                         url: shiftHistoryUrl,
                         method: 'GET',
@@ -400,21 +449,19 @@
                         },
                         success: function(response) {
                             $('#historyBody').empty();
-
                             if (response.data.length > 0) {
                                 response.data.forEach(function(shift) {
                                     $('#historyBody').append(`
-                        <tr>
-                            <td>${shift.npk}</td>
-                            <td>${shift.shift1}</td>
-                            <td>${shift.date}</td>
-                        </tr>
-                    `);
+                                <tr>
+                                    <td>${shift.npk}</td>
+                                    <td>${shift.shift1}</td>
+                                    <td>${shift.date}</td>
+                                </tr>
+                            `);
                                 });
                             } else {
                                 $('#historyBody').append(
-                                    '<tr><td colspan="3">Tidak ada data shift</td></tr>'
-                                );
+                                    '<tr><td colspan="3">Tidak ada data shift</td></tr>');
                             }
                         },
                         error: function() {
@@ -486,12 +533,12 @@
                     icon: 'error',
                     title: 'Gagal Mengunggah',
                     html: `
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                `,
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            `,
                 });
             @endif
 

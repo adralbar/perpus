@@ -72,6 +72,17 @@
 }
 
 
+.disabled {
+    pointer-events: none; /* Mencegah interaksi */
+    color: gray; /* Mengubah warna teks */
+    background-color: #e0e0e0; /* Ubah background agar lebih pudar */
+    border-color: #d0d0d0; /* Ubah warna border */
+    cursor: not-allowed; /* Menunjukkan bahwa tautan tidak dapat diklik */
+    opacity: 0.6; /* Menurunkan opacity agar terlihat lebih lemah */
+    box-shadow: none; /* Menghapus bayangan jika ada */
+}
+
+
 
 
 </style>

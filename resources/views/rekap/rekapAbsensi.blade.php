@@ -55,6 +55,7 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
+
                         </table>
                     </div>
                 </div>
@@ -154,6 +155,35 @@
         </div>
     </div>
 
+    <div class="modal fade" id="penyimpanganModal" tabindex="-1" aria-labelledby="penyimpanganModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="penyimpanganModalLabel">Detail Penyimpangan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered" id="penyimpanganTable">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>Keterangan</th>
+                                <th>Tanggal Mulai</th>
+                                <th>Jam Mulai</th>
+                                <th>Kategori</th>
+                                <th>Approved By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
@@ -220,9 +250,45 @@
                         data: 'status',
                         name: 'status'
                     },
-
                 ]
             });
+            $(document).on('click', '.view-pelanggaran', function() {
+                var npk = $(this).data('npk');
+                var tanggal = $(this).data('tanggal');
+
+                $.ajax({
+                    url: "{{ route('getPenyimpangan') }}",
+                    method: 'GET',
+                    data: {
+                        npk: npk,
+                        tanggal: tanggal
+                    },
+                    success: function(response) {
+                        var tableBody = $('#penyimpanganTable tbody');
+                        tableBody.empty();
+                        $.each(response.data, function(index, item) {
+                            tableBody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.nama}</td>
+                        <td>${item.keterangan}</td>
+                        <td>${item.tanggal_mulai}</td>
+                        <td>${item.jam_mulai}</td>
+                        <td>${item.kategori}</td>
+                        <td>${item.approved_by}</td>
+                    </tr>
+                `);
+                        });
+                        $('#penyimpanganModal').modal('show');
+                    },
+                    error: function() {
+                        alert('Error fetching data.');
+                    }
+                });
+            });
+
+
+
 
             // Update table data when filter changes (Tanggal Mulai atau Tanggal Selesai)
             $('#startDate, #endDate').on('change', function() {

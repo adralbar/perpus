@@ -37,3 +37,7 @@ Route::middleware(['web', 'auth:sanctum'])->group(function () {
 Route::post('/uploadrekapbyapi', [rekapController::class, 'uploadapi'])->name('uploadapi');
 
 Route::get('/karyawandataapi', [UsersController::class, 'karyawandata'])->name('karyawandataapi');
+
+Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
+
+Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');

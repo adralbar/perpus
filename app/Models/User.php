@@ -11,19 +11,19 @@ class User extends Authenticatable
 {
     use HasFactory, HasApiTokens, Notifiable;
 
-    protected $table = 'users'; // Laravel's default is 'users', so this is optional.
-   
+    protected $table = 'users';
+
     protected $hidden = [
         'password',
     ];
     protected $fillable = [
-        'npk', 
-        'nama', 
-        'password', 
-        'no_telp', 
-        'section_id', 
-        'department_id', 
-        'division_id', 
+        'npk',
+        'nama',
+        'password',
+        'no_telp',
+        'section_id',
+        'department_id',
+        'division_id',
         'role_id'
     ];
 

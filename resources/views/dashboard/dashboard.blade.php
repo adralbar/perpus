@@ -74,7 +74,6 @@
                         <p><strong>Nama:</strong> <span id="detailNama"></span></p>
                         <p><strong>NPK:</strong> <span id="detailNpk"></span></p>
                         <p><strong>Total Keterlambatan:</strong> <span id="detailTotal"></span></p>
-
                         <div id="detailTanggalWaktu"></div>
                     </div>
 
@@ -126,11 +125,11 @@
         const myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: @json($labels), // Chart labels, usually month names or abbreviations
+                labels: @json($labels),
                 datasets: [{
                     label: 'Total keterlambatan',
                     backgroundColor: '#3f6791',
-                    data: @json($totals), // Data points corresponding to each label
+                    data: @json($totals),
                     borderWidth: 1
                 }]
             },
@@ -145,7 +144,7 @@
                     },
                     y: {
                         beginAtZero: true,
-                        max: 10, // Adjust this as needed
+                        max: 10,
                         grid: {
                             drawBorder: false,
                             borderDash: [5, 5]
@@ -210,8 +209,6 @@
             }
         });
 
-
-
         $(document).ready(function() {
             table1 = $('#table1').DataTable({
                 processing: true,
@@ -232,7 +229,6 @@
                         data: 'nama',
                         name: 'nama'
                     },
-
                     {
                         data: 'npk',
                         name: 'npk'
@@ -267,6 +263,7 @@
 
             $('#table1').on('click', '.btnDetail', function(e) {
                 e.preventDefault();
+
                 var nama = $(this).data('nama');
                 var npk = $(this).data('npk');
                 var total = $(this).data('total');
@@ -274,41 +271,45 @@
                 var waktu = $(this).data('waktu');
                 var shift1 = $(this).data('shift1');
 
-                // Split tanggal, waktu, dan shift menjadi array
                 var tanggalList = tanggal.split(',');
                 var waktuList = waktu.split(',');
                 var shiftList = shift1.split(',');
 
                 var detailHtml = '';
 
-                // Function to calculate the time difference in minutes
-                function calculateTimeDifference(shiftStart, absensiTime) {
-                    var shiftStartTime = new Date('1970-01-01T' + shiftStart + 'Z');
-                    var absensiTime = new Date('1970-01-01T' + absensiTime + 'Z');
-
-                    // Calculate the difference in minutes
-                    var difference = Math.floor((absensiTime - shiftStartTime) / 60000);
-                    return difference;
-                }
-
-                // Loop through the dates
                 for (var i = 0; i < tanggalList.length; i++) {
-                    var shift = shiftList[i] ? shiftList[i].trim() :
-                        ''; // Get the shift for the current date
-                    var selisihWaktu = calculateTimeDifference(shift.split(' - ')[0], waktuList[i]
-                        .trim()); // Compare start of shift with waktuList[i]
+                    var shift = shiftList[i] ? shiftList[i].trim() : '';
+                    var absensiTime = waktuList[i].trim(); // Ambil waktu masuk
 
-                    // Only add to detailHtml if selisihWaktu is >= 0
-                    if (selisihWaktu > 0) {
-                        detailHtml += `
+                    // Mengambil waktu mulai shift (hanya bagian awal sebelum ' - ')
+                    var shiftStartTimeStr = shift.split(' - ')[0].replace('.', ':'); // Ubah '.' menjadi ':'
+                    shiftStartTimeStr += ':00'; // Tambahkan detik
+
+                    var shiftStartTime = new Date('1970-01-01T' + shiftStartTimeStr +
+                        'Z'); // Ubah ke format Date
+
+                    var absensiDate = new Date('1970-01-01T' + absensiTime + 'Z'); // Waktu absensi
+
+                    // Debug untuk melihat nilai shiftStartTime dan absensiDate
+                    console.log("Shift Start Time: ", shiftStartTime);
+                    console.log("Absensi Time: ", absensiDate);
+
+                    // Menghitung selisih dalam menit
+                    var selisihWaktu = Math.floor((absensiDate - shiftStartTime) / 60000);
+
+                    // Jika selisih waktu negatif, artinya tidak terlambat
+                    selisihWaktu = selisihWaktu > 0 ? selisihWaktu : 0;
+
+                    // Debug untuk melihat nilai selisihWaktu
+                    console.log("Selisih Waktu: ", selisihWaktu);
+
+                    detailHtml += `
             <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
                 <strong>Tanggal:</strong> ${tanggalList[i]}<br>
                 <strong>Waktu In:</strong> ${waktuList[i]}<br>
-               
-                <strong>Shif:</strong> ${shift}<br>
-                 <strong>Keterlambatan :</strong> ${selisihWaktu} menit
+                <strong>Shift:</strong> ${shift}<br>
+                <strong>Keterlambatan:</strong> ${selisihWaktu} menit
             </div>`;
-                    }
                 }
 
                 $('#detailNama').text(nama);
@@ -317,26 +318,27 @@
                 $('#detailTanggalWaktu').html(detailHtml);
                 $('#detailModal').modal('show');
             });
-
-
-
-            $('#filterYear').change(function() {
-                var year = $(this).val();
-
-                // Muat data chart dengan tahun yang baru
-                loadChartData(year);
-
-                // Reset tabel untuk menampilkan data tahun yang dipilih
-                if (table1) {
-                    table1.ajax.url('{{ route('data.table1') }}?tahun=' + encodeURIComponent(year)).load();
-                }
-            });
-
-
-            $('.btnReset').on('click', function() {
-                resetChartAndTable();
-            });
         });
+
+
+
+
+
+
+        $('#filterYear').change(function() {
+            var year = $(this).val();
+
+            loadChartData(year);
+            if (table1) {
+                table1.ajax.url('{{ route('data.table1') }}?tahun=' + encodeURIComponent(year)).load();
+            }
+        });
+
+
+        $('.btnReset').on('click', function() {
+            resetChartAndTable();
+        });
+
 
         function resetChartAndTable() {
             myChart.data.labels = @json($labels);

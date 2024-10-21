@@ -235,62 +235,56 @@
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                         data-accordion="false">
-                        <!-- Add icons to the links using the .nav-icon class
-                    with font-awesome or any other icon font library -->
+                        <!-- Dashboard Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ url('/') }}" class="nav-link {{ Request::is('/') ? 'active' : '' }}">
+                            <a href="{{ route('dashboard.index') }}"
+                                class="nav-link {{ Request::routeIs('dashboard.index') ? 'active' : '' }} {{ $roleId == 2 ? 'disabled' : '' }}"
+                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
                                 <i class="nav-icon fas fa-users"></i>
-                                <p>
-                                    Dashboard
-                                    {{-- <i class="right fas fa-angle-left"></i> --}}
-                                </p>
+                                <p>Dashboard</p>
                             </a>
                         </li>
 
+
+                        <!-- Absensi Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ url('/rekap') }}"
-                                class="nav-link {{ Request::is('rekap') ? 'active' : '' }}">
+                            <a href="{{ route('rekap.index') }}"
+                                class="nav-link  {{ Request::routeIs('rekap.index') ? 'active' : '' }} {{ $roleId == 2 ? 'disabled' : '' }}"
+                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
                                 <i class="nav-icon fas fa-user-check"></i>
-                                <p>
-                                    Absensi Karyawan
-                                    <i class=""></i>
-                                </p>
+                                <p>Absensi Karyawan</p>
                             </a>
                         </li>
 
+                        <!-- Performa Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ url('/performa') }}"
-                                class="nav-link {{ Request::is('performa') ? 'active' : '' }}">
+                            <a href="{{ route('performa.index') }}"
+                                class="nav-link {{ Request::routeIs('performa.index') ? 'active' : '' }} {{ $roleId == 2 ? 'disabled' : '' }}"
+                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
                                 <i class="nav-icon fas fa-chart-line"></i>
-                                <p>
-                                    Performa karyawan
-                                    {{-- <i class="right fas fa-angle-left"></i> --}}
-                                </p>
+                                <p>Performa Karyawan</p>
                             </a>
                         </li>
+
+                        <!-- Shift Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ url('/shift') }}"
-                                class="nav-link {{ Request::is('shift') ? 'active' : '' }}">
+                            <a href="{{ route('shift.index') }}"
+                                class="nav-link  {{ Request::routeIs('shift.index') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-clock"></i>
-                                <p>
-                                    Shift Karyawan
-                                    {{-- <i class="right fas fa-angle-left"></i> --}}
-                                </p>
+                                <p>Shift Karyawan</p>
                             </a>
                         </li>
+
+                        <!-- Data Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ url('/user') }}"
-                                class="nav-link {{ Request::is('user') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-clock"></i>
-                                <p>
-                                    Data Karyawan
-                                    {{-- <i class="right fas fa-angle-left"></i> --}}
-                                </p>
+                            <a href="{{ route('karyawan.index') }}"
+                                class="nav-link  {{ Request::routeIs('karyawan.index') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Data Karyawan</p>
                             </a>
                         </li>
                     </ul>
                 </nav>
-                <!-- /.sidebar-menu -->
             </div>
             <!-- /.sidebar -->
         </aside>

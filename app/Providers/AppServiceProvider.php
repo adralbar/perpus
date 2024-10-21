@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth; // Pastikan Auth juga diimpor
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('*', function ($view) {
+            if (Auth::check()) {
+                $user = Auth::user();
+                $roleId = $user->role_id; // Ambil role ID dari pengguna yang terautentikasi
+                $view->with('roleId', $roleId);
+            }
+        });
     }
 }

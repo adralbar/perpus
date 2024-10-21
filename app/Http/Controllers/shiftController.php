@@ -14,18 +14,30 @@ use App\Models\DivisionModel;
 use App\Models\RoleModel;
 use App\Models\SectionModel;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class shiftController extends Controller
 {
     public function index()
     {
-        return view('shift.shift');
+        $user = Auth::user();
+        $roleId = $user->role_id;
+        $sectionId = $user->section_id;
+
+        $query = User::select('nama', 'npk');
+
+        if ($roleId == 2) {
+            $query->where('section_id', $sectionId);
+        }
+
+        $userData = $query->get();
+        return view('shift.shift', compact('userData'));
     }
 
     public function getData(Request $request)
     {
-        $npk = $request->input('npk');
-        $date = $request->input('date');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
 
         $data = Shift::select([
             'kategorishift.id',
@@ -37,27 +49,31 @@ class shiftController extends Controller
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             ->orderBy('kategorishift.date', 'DESC');
 
-        // Filter berdasarkan npk dan date
-        if (!empty($npk)) {
-            $data->where('kategorishift.npk', $npk);
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        if ($request->has('selected_npk') && !empty($request->selected_npk)) {
+            $selectedNPKs = explode(',', $request->selected_npk);
+            $data->whereIn('users.npk', $selectedNPKs);
         }
-        if (!empty($date)) {
-            $data->where('kategorishift.date', $date);
+
+        if (!empty($startDate) && !empty($endDate)) {
+            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
+        }
+
+        // Pengecekan role_id
+        if ($roleId == 2) {
+            $sectionId = $user->section_id;
+            $data->where('users.section_id', $sectionId);
         }
 
         return DataTables::of($data)
             ->addIndexColumn()
             ->setRowId(function ($data) {
-                return $data->id; // Set ID baris jika diperlukan
+                return $data->id;
             })
             ->make(true);
     }
-
-
-
-
-
-
 
     public function store(Request $request)
     {
@@ -155,14 +171,13 @@ class shiftController extends Controller
 
         return redirect()->back()->with('success', 'File berhasil diunggah.');
     }
-    public function getKaryawan()
-    {
-        $userData = User::select('nama', 'npk')->get();
 
-        return view('shift.shift', compact('userData'));
-    }
+
+
     public function getShiftHistory(Request $request)
     {
+        $date = $request->query('date');
+        $npk = $request->query('npk');
 
         $data = shift::select([
             'kategorishift.id',
@@ -172,14 +187,9 @@ class shiftController extends Controller
             'users.nama'
         ])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
-            ->orderBy('kategorishift.date', 'DESC');
-
-        $date = $request->query('date');
-        $npk = $request->query('npk');
-
-        // Ambil data shift berdasarkan tanggal dan npk
-        $data = shift::where('date', $date)
-            ->where('npk', $npk)
+            ->where('kategorishift.date', $date)
+            ->where('kategorishift.npk', $npk)
+            ->orderBy('kategorishift.date', 'DESC')
             ->get();
 
         return response()->json([

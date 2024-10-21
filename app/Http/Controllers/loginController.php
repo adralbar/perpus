@@ -17,7 +17,6 @@ class loginController extends Controller
 
     public function authenticate(Request $request)
     {
-
         // Validasi input
         Session::flash('username', $request->username);
         $credentials = $request->validate([
@@ -31,6 +30,16 @@ class loginController extends Controller
         // Coba autentikasi
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+
+            $user = Auth::user();
+            $roleId = $user->role_id;
+
+            $request->session()->put('role_id', $roleId);
+
+            // Redirect berdasarkan role_id
+            if ($roleId == 2) {
+                return redirect()->intended('/shift');
+            }
             return redirect()->intended('/');
         } else {
             return back()->withErrors([
@@ -38,6 +47,8 @@ class loginController extends Controller
             ]);
         }
     }
+
+
 
     public function logout(Request $request)
     {
