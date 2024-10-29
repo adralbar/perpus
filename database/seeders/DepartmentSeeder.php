@@ -83,12 +83,8 @@ class DepartmentSeeder extends Seeder
                 'division_id' => '2'
             ],
             [
-                'nama' => 'MOLD & TOOLING',
+                'nama' => 'MOLD & TOOLING DEVELOPMENT',
                 'division_id' => '2'
-            ],
-            [
-                'nama' => 'PROCUREMENT',
-                'division_id' => '3'
             ],
             [
                 'nama' => 'PROCUREMENT',

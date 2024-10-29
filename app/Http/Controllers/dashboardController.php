@@ -12,9 +12,10 @@ use App\Models\DivisionModel;
 
 class dashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Mengambil daftar tahun yang ada di tabel absensici
+        $year = $request->query('year');
+
         $years = DB::table('absensici')
             ->select(DB::raw('YEAR(tanggal) as year'))
             ->distinct()
@@ -61,8 +62,11 @@ class dashboardController extends Controller
             // Filter keterlambatan dengan membandingkan waktuci dan shift1
             ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
             ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->get();
+            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'));
+        if ($request->has('year') && !empty($request->year)) {
+            $data->whereIn('absensici.tanggal', $year);
+        }
+
 
         $labels = $data->pluck('month');
         $totals = $data->pluck('total_keterlambatan');
@@ -70,9 +74,61 @@ class dashboardController extends Controller
         return view('dashboard.dashboard', compact('labels', 'totals', 'years'));
     }
 
+    public function getChartData(Request $request)
+    {
+        $year = $request->query('year');
 
+        $subqueryCheckIn = DB::table('absensici as a')
+            ->select(
+                'a.npk',
+                'a.tanggal',
+                DB::raw('MIN(a.waktuci) as awal_waktuci') // Mengambil waktu check-in terawal
+            )
+            ->groupBy('a.npk', 'a.tanggal');
 
+        // Subquery untuk mendapatkan shift1 terbaru dari kategorishift per tanggal untuk setiap karyawan
+        $subqueryShift = DB::table('kategorishift as ks')
+            ->select(
+                'ks.npk',
+                'ks.date',
+                'ks.shift1'
+            )
+            ->whereIn('ks.id', function ($query) {
+                $query->select(DB::raw('MAX(id)'))
+                    ->from('kategorishift as inner_ks')
+                    ->whereColumn('inner_ks.npk', 'ks.npk')
+                    ->whereColumn('inner_ks.date', 'ks.date');
+            });
 
+        // Query utama untuk menghitung total keterlambatan per bulan
+        $data = DB::table('absensici')
+            ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
+                $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
+                    ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
+                    ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
+            })
+            ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
+                $join->on('absensici.npk', '=', 'subqueryShift.npk')
+                    ->on('absensici.tanggal', '=', 'subqueryShift.date');
+            })
+            ->select(
+                DB::raw('DATE_FORMAT(absensici.tanggal, "%b") AS month'),
+                DB::raw('COUNT(DISTINCT absensici.npk) AS total_keterlambatan')
+            )
+            ->whereYear('absensici.tanggal', $year)
+            ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
+            ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
+            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
+            ->get();
+
+        $labels = $data->pluck('month');
+        $totals = $data->pluck('total_keterlambatan');
+
+        return response()->json([
+            'labels' => $labels,
+            'totals' => $totals
+        ]);
+    }
 
     public function getTable1Data(Request $request)
     {
@@ -169,12 +225,10 @@ class dashboardController extends Controller
 
     public function getTable1bData(Request $request)
     {
-        $bulan = $request->query('bulan');
         $tahun = $request->query('tahun');
+        $bulan = $request->query('bulan');
+        Log::info('Received parameters:', ['tahun' => $tahun]);
 
-        Log::info('Received parameters:', ['bulan' => $bulan, 'tahun' => $tahun]); // Log received parameters for debugging purposes
-
-        // Subquery to get the earliest check-in time per date for each employee
         $subquery = DB::table('absensici as a')
             ->select(
                 'a.npk',
@@ -190,11 +244,19 @@ class dashboardController extends Controller
                     ->on('absensici.tanggal', '=', 'subquery.tanggal')
                     ->on('absensici.waktuci', '=', 'subquery.awal_waktuci');
             })
-            ->join('kategorishift', function ($join) {
-                $join->on('absensici.npk', '=', 'kategorishift.npk')
-                    ->whereRaw('absensici.tanggal = kategorishift.date');
+            ->join('kategorishift as k', function ($join) {
+                $join->on('absensici.npk', '=', 'k.npk')
+                    ->whereColumn('absensici.tanggal', 'k.date')
+                    ->whereRaw('k.shift1 = (
+                        SELECT ks.shift1 
+                        FROM kategorishift ks 
+                        WHERE ks.npk = absensici.npk 
+                        AND ks.date = absensici.tanggal 
+                        ORDER BY ks.created_at DESC 
+                        LIMIT 1
+                    )');
             })
-            ->join('users', 'absensici.npk', '=', 'users.npk') // Join ke tabel users
+            ->join('users', 'absensici.npk', '=', 'users.npk')
             ->select(
                 'absensici.npk',
                 'users.nama',
@@ -202,10 +264,11 @@ class dashboardController extends Controller
                 'users.department_id',
                 'users.section_id',
                 DB::raw('YEAR(absensici.tanggal) as tahun'),
-                DB::raw('COUNT(DISTINCT CASE WHEN TIME(absensici.waktuci) > TIME(REPLACE(SUBSTRING_INDEX(kategorishift.shift1, " - ", 1), ".", ":")) THEN absensici.tanggal END) as total_keterlambatan'),
+                // Hitung total keterlambatan
+                DB::raw('COUNT(DISTINCT CASE WHEN TIME(absensici.waktuci) > TIME(REPLACE(SUBSTRING_INDEX(k.shift1, " - ", 1), ".", ":")) THEN absensici.tanggal END) as total_keterlambatan'),
                 DB::raw('GROUP_CONCAT(DISTINCT absensici.tanggal ORDER BY absensici.tanggal) as tanggal'),
                 DB::raw('GROUP_CONCAT(DISTINCT absensici.waktuci ORDER BY absensici.tanggal) as waktu'),
-                'kategorishift.shift1' // Tambahkan shift1 ke dalam query
+                DB::raw('GROUP_CONCAT(DISTINCT k.shift1 ORDER BY absensici.tanggal) as shift1')
             )
             ->when($tahun, function ($query) use ($tahun) {
                 $query->whereYear('absensici.tanggal', $tahun);
@@ -213,7 +276,8 @@ class dashboardController extends Controller
             ->when($bulan, function ($query) use ($bulan) {
                 $query->whereMonth('absensici.tanggal', $bulan);
             })
-            ->groupBy('absensici.npk', DB::raw('YEAR(absensici.tanggal)'), 'kategorishift.shift1', 'users.nama')
+            ->groupBy('absensici.npk', DB::raw('YEAR(absensici.tanggal)'), 'users.nama')
+            ->having('total_keterlambatan', '>', 0) // Exclude rows with total_keterlambatan = 0
             ->orderBy(DB::raw('YEAR(absensici.tanggal)'), 'desc')
             ->get();
 
@@ -223,7 +287,7 @@ class dashboardController extends Controller
             $department = $section ? DepartmentModel::find($section->department_id) : null;
             $division = $department ? DivisionModel::find($department->division_id) : null;
 
-            // Tambahkan data section, department, dan division ke setiap item
+            // Add section, department, and division names to each item
             $item->section_nama = $section ? $section->nama : 'Unknown';
             $item->department_nama = $department ? $department->nama : 'Unknown';
             $item->division_nama = $division ? $division->nama : 'Unknown';
@@ -234,71 +298,20 @@ class dashboardController extends Controller
             ->addIndexColumn()
             ->addColumn('aksi', function ($row) {
                 $btn = '<button class="btn btn-primary btn-sm btnDetail"
-                data-nama="' . e($row->nama) . '"
-                data-npk="' . e($row->npk) . '"
-                data-total="' . e($row->total_keterlambatan) . '"
-                data-tanggal="' . e($row->tanggal) . '"  
-                data-waktu="' . e($row->waktu) . '"
-                data-shift1="' . e($row->shift1) . '"
-                data-section="' . e($row->section_nama) . '"
-                data-department="' . e($row->department_nama) . '"
-                data-division="' . e($row->division_nama) . '"> 
-                Detail
-            </button>';
+                    data-nama="' . e($row->nama) . '"
+                    data-npk="' . e($row->npk) . '"
+                    data-total="' . e($row->total_keterlambatan) . '"
+                    data-tanggal="' . e($row->tanggal) . '"  
+                    data-waktu="' . e($row->waktu) . '"
+                    data-shift1="' . e($row->shift1) . '"
+                    data-section="' . e($row->section_nama) . '"
+                    data-department="' . e($row->department_nama) . '"
+                    data-division="' . e($row->division_nama) . '"> 
+                    Detail
+                    </button>';
                 return $btn;
             })
             ->rawColumns(['aksi'])
             ->make(true);
-    }
-
-
-    public function getChartData(Request $request)
-    {
-        $year = $request->query('year');
-
-        // Subquery to get the earliest check-in time per date for each employee
-        $subquery = DB::table('absensici as a')
-            ->select(
-                'a.npk',
-                'a.tanggal',
-                DB::raw('MIN(a.waktuci) as awal_waktuci')
-            )
-            ->groupBy('a.npk', 'a.tanggal');
-
-        // Main query to calculate lateness count per month
-        $data = DB::table('absensici')
-            ->joinSub($subquery, 'subquery', function ($join) {
-                $join->on('absensici.npk', '=', 'subquery.npk')
-                    ->on('absensici.tanggal', '=', 'subquery.tanggal')
-                    ->on('absensici.waktuci', '=', 'subquery.awal_waktuci');
-            })
-            ->join('kategorishift', function ($join) {
-                $join->on('absensici.npk', '=', 'kategorishift.npk')
-                    ->whereRaw('absensici.tanggal = kategorishift.date');
-            })
-            ->select(
-                DB::raw('DATE_FORMAT(absensici.tanggal, "%b") AS month'),
-                DB::raw('COUNT(DISTINCT absensici.npk) AS total_keterlambatan')
-            )
-            ->whereYear('absensici.tanggal', $year)
-            ->whereRaw("
-                CASE 
-                    WHEN kategorishift.shift1 LIKE '07:00 - 16:00' THEN TIME(subquery.awal_waktuci) > '07:00:00'
-                    WHEN kategorishift.shift1 LIKE '14:00 - 23:00' THEN TIME(subquery.awal_waktuci) > '14:00:00'    
-                    WHEN kategorishift.shift1 LIKE '21:00 - 06:00' THEN TIME(subquery.awal_waktuci) > '21:00:00'
-                    ELSE 1=1 
-                END
-            ")
-            ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->get();
-
-        $labels = $data->pluck('month');
-        $totals = $data->pluck('total_keterlambatan');
-
-        return response()->json([
-            'labels' => $labels,
-            'totals' => $totals
-        ]);
     }
 }

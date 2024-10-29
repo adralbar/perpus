@@ -16,17 +16,24 @@ class ShiftsImport implements ToCollection
     {
         $indexKe = 1;
         foreach ($collection as $row) {
-            if ($indexKe > 1) { // Skip header row
+            if ($indexKe > 1) { // Lewati baris header
 
-                // Persiapkan data
-                $data['npk'] = !empty($row[1]) ? $row[1] : '';
-                $data['shift1'] = !empty($row[3]) ? $row[3] : '';
-                $startDate = !empty($row[4]) ? Carbon::createFromFormat('Y-m-d', str_replace("'", "", $row[4])) : null;
-                $endDate = !empty($row[5]) ? Carbon::createFromFormat('Y-m-d', str_replace("'", "", $row[5])) : null;
+                $data['npk'] = !empty($row[0]) ? $row[0] : '';
+                $data['shift1'] = !empty($row[2]) ? $row[2] : '';
+                $startDate = !empty($row[3]) ? Carbon::createFromFormat('Y-m-d', str_replace("'", "", $row[3])) : null;
+                $endDate = !empty($row[4]) ? Carbon::createFromFormat('Y-m-d', str_replace("'", "", $row[4])) : null;
 
                 if ($startDate && $endDate) {
-
                     while ($startDate->lte($endDate)) {
+                        // Cek apakah hari adalah Sabtu (6) atau Minggu (0)
+                        if ($startDate->isSaturday() || $startDate->isSunday()) {
+                            // Jika hari Sabtu atau Minggu, set shift sebagai 'off'
+                            $data['shift1'] = 'OFF';
+                        } else {
+                            // Jika bukan Sabtu atau Minggu, set shift sesuai data yang diambil
+                            $data['shift1'] = !empty($row[2]) ? $row[2] : '';
+                        }
+
                         $data['date'] = $startDate->toDateString();
 
                         // Simpan data ke tabel Shift

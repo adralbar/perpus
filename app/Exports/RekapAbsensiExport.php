@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use App\Models\Absensici;
+use App\Models\Absensico;
+use App\Models\Shift;
 
 class RekapAbsensiExport implements FromCollection, WithHeadings
 {
@@ -22,76 +25,147 @@ class RekapAbsensiExport implements FromCollection, WithHeadings
 
     public function collection(): Collection
     {
-        $query = DB::table('absensici')
-            ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) as waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
-                $join->on('absensici.npk', '=', 'first_checkin.npk')
-                    ->on('absensici.tanggal', '=', 'first_checkin.tanggal')
-                    ->on('absensici.waktuci', '=', 'first_checkin.waktuci');
-            })
-            ->leftJoin(DB::raw('(SELECT npk, tanggal, MAX(waktuco) as waktuco FROM absensico GROUP BY npk, tanggal) as last_checkout_today'), function ($join) {
-                $join->on('absensici.npk', '=', 'last_checkout_today.npk')
-                    ->on('absensici.tanggal', '=', 'last_checkout_today.tanggal');
-            })
-            ->leftJoin(DB::raw('(SELECT npk, tanggal, MAX(waktuco) as waktuco FROM absensico GROUP BY npk, tanggal) as last_checkout_tomorrow'), function ($join) {
-                $join->on('absensici.npk', '=', 'last_checkout_tomorrow.npk')
-                    ->on(DB::raw('DATE_ADD(absensici.tanggal, INTERVAL 1 DAY)'), '=', 'last_checkout_tomorrow.tanggal')
-                    ->whereNotExists(function ($query) {
-                        $query->select(DB::raw(1))
-                            ->from('absensici as next_checkin')
-                            ->whereRaw('next_checkin.npk = absensici.npk')
-                            ->whereRaw('next_checkin.tanggal = DATE_ADD(absensici.tanggal, INTERVAL 1 DAY)')
-                            ->whereRaw('next_checkin.waktuci < last_checkout_tomorrow.waktuco');
-                    });
-            })
-            ->join('kategorishift', 'absensici.npk', '=', 'kategorishift.npk')
-            ->select(
-                'kategorishift.nama',
-                'kategorishift.npkSistem',
-                'absensici.npk',
-                'kategorishift.divisi',
-                'kategorishift.departement',
-                'kategorishift.section',
+        // Query check-in data
+        $today = date('Y-m-d', strtotime('-1 day'));
 
-                'absensici.tanggal',
-                'first_checkin.waktuci as waktuci',
-                DB::raw('COALESCE(last_checkout_tomorrow.waktuco, last_checkout_today.waktuco) as waktuco')
-            )
-            ->distinct()
-            ->groupBy('absensici.npk', 'absensici.tanggal', 'kategorishift.nama', 'kategorishift.npkSistem', 'kategorishift.divisi', 'kategorishift.departement', 'kategorishift.section', 'first_checkin.waktuci', 'last_checkout_today.waktuco', 'last_checkout_tomorrow.waktuco')
-            ->orderBy('absensici.tanggal', 'desc');
-
-        if (!empty($this->search)) {
-            // Terapkan filter search ke query
-            $query->where(function ($query) {
-                $query->where('kategorishift.nama', 'LIKE', "%{$this->search}%")
-                    ->orWhere('kategorishift.npkSistem', 'LIKE', "%{$this->search}%")
-                    ->orWhere('kategorishift.divisi', 'LIKE', "%{$this->search}%")
-                    ->orWhere('kategorishift.departement', 'LIKE', "%{$this->search}%")
-                    ->orWhere('kategorishift.section', 'LIKE', "%{$this->search}%")
-                    ->orWhere('absensici.npk', 'LIKE', "%{$this->search}%")
-                    ->orWhere('absensici.tanggal', 'LIKE', "%{$this->search}%");
-            });
-        }
+        $checkinQuery = Absensici::with(['user', 'shift'])
+            ->select('npk', 'tanggal', DB::raw('MIN(waktuci) as waktuci'))
+            ->groupBy('npk', 'tanggal');
 
         if (!empty($this->startDate) && !empty($this->endDate)) {
-            $query->whereBetween('absensici.tanggal', [$this->startDate, $this->endDate]);
+            $checkinQuery->whereBetween('tanggal', [$this->startDate, $this->endDate]);
         }
 
-        return $query->get();
+        $checkinResults = $checkinQuery->get();
+
+        // Query check-out data
+        $checkoutQuery = Absensico::with(['user', 'shift'])
+            ->select('npk', 'tanggal', DB::raw('MAX(waktuco) as waktuco'))
+            ->groupBy('npk', 'tanggal');
+
+        if (!empty($this->startDate) && !empty($this->endDate)) {
+            $checkoutQuery->whereBetween('tanggal', [$this->startDate, $this->endDate]);
+        }
+
+        $checkoutResults = $checkoutQuery->get();
+
+        // Combine check-in and check-out data
+        $results = [];
+
+        foreach ($checkinResults as $checkin) {
+            $key = "{$checkin->npk}-{$checkin->tanggal}";
+            $section = $checkin->user->section;
+            $department = $section ? $section->department : null;
+            $division = $department ? $department->division : null;
+
+            // Get latest shift
+            $latestShift = $checkin->shift()->latest()->first();
+            $shift1 = $latestShift ? $latestShift->shift1 : null;
+            $shiftIn = $shift1 ? explode(' - ', str_replace('.', ':', $shift1))[0] : null;
+            $shiftInFormatted = $shiftIn ? date('H:i:s', strtotime($shiftIn)) : null;
+
+            $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
+
+            $results[$key] = [
+                'nama' => $checkin->user->nama,
+                'npk' => $checkin->npk,
+                'tanggal' => $checkin->tanggal,
+                'waktuci' => $checkin->waktuci,
+                'waktuco' => null,
+                'shift1' => $shift1,
+                'section_nama' => $section ? $section->nama : 'Unknown',
+                'department_nama' => $department ? $department->nama : 'Unknown',
+                'division_nama' => $division ? $division->nama : 'Unknown',
+                'status' => $status
+            ];
+        }
+
+        foreach ($checkoutResults as $checkout) {
+            $key = "{$checkout->npk}-{$checkout->tanggal}";
+            if (isset($results[$key])) {
+                $results[$key]['waktuco'] = $checkout->waktuco;
+            } else {
+                $previousDay = date('Y-m-d', strtotime("{$checkout->tanggal} -1 day"));
+                $previousKey = "{$checkout->npk}-{$previousDay}";
+
+                if (isset($results[$previousKey]) && !$results[$previousKey]['waktuco']) {
+                    $results[$previousKey]['waktuco'] = $checkout->waktuco;
+                } else {
+                    $results[$key] = [
+                        'nama' => $checkout->user->nama,
+                        'npk' => $checkout->npk,
+                        'tanggal' => $checkout->tanggal,
+                        'waktuci' => 'NO IN',
+                        'waktuco' => $checkout->waktuco,
+                        'shift1' => optional($checkout->shift)->shift1,
+                        'section_nama' => $checkout->user->section ? $checkout->user->section->nama : 'Unknown',
+                        'department_nama' => $checkout->user->section->department ? $checkout->user->section->department->nama : 'Unknown',
+                        'division_nama' => $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : 'Unknown',
+                        'status' => 'Unknown'
+                    ];
+                }
+            }
+        }
+
+        // Handle cases where employees neither checked in nor out
+        $noCheckData = Shift::with(['user.section.department.division'])
+            ->leftJoin('absensici', function ($join) {
+                $join->on('absensici.npk', '=', 'kategorishift.npk')
+                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            })
+            ->leftJoin('absensico', function ($join) {
+                $join->on('absensico.npk', '=', 'kategorishift.npk')
+                    ->on('absensico.tanggal', '=', 'kategorishift.date');
+            })
+            ->select(
+                'kategorishift.npk',
+                'kategorishift.date as tanggal',
+                'kategorishift.shift1',
+                DB::raw('IFNULL(DATE_FORMAT(MIN(absensici.waktuci), "%H:%i"), "NO IN") as waktuci'),
+                DB::raw('IFNULL(DATE_FORMAT(MAX(absensico.waktuco), "%H:%i"), "NO OUT") as waktuco')
+            )
+            ->whereNull('absensici.waktuci')
+            ->whereNull('absensico.waktuco')
+            ->where('kategorishift.date', '<=', $today)
+            ->where('kategorishift.shift1', '!=', 'OFF')
+            ->groupBy('kategorishift.npk', 'kategorishift.date', 'kategorishift.shift1')
+            ->get();
+
+        foreach ($noCheckData as $noCheck) {
+            $key = "{$noCheck->npk}-{$noCheck->tanggal}";
+            if (!isset($results[$key])) {
+                $results[$key] = [
+                    'nama' => $noCheck->user ? $noCheck->user->nama : 'Unknown',
+                    'npk' => $noCheck->npk,
+                    'tanggal' => $noCheck->tanggal,
+                    'waktuci' => 'NO IN',
+                    'waktuco' => 'NO OUT',
+                    'shift1' => $noCheck->shift1,
+                    'section_nama' => $noCheck->user->section ? $noCheck->user->section->nama : 'Unknown',
+                    'department_nama' => $noCheck->user->section->department ? $noCheck->user->section->department->nama : 'Unknown',
+                    'division_nama' => $noCheck->user->section->department->division ? $noCheck->user->section->department->division->nama : 'Unknown',
+                    'status' => 'Mangkir'
+                ];
+            }
+        }
+
+        // Convert to collection and return
+        return collect($results);
     }
 
     public function headings(): array
     {
         return [
             'Nama',
-            'NPK Sistem',
-            'NPK API',
-            'Divisi',
-            'Departemen',
-            'Section',
+            'NPK',
             'Tanggal',
             'Waktu Check-In',
             'Waktu Check-Out',
+            'Shift',
+            'Section',
+            'Departemen',
+            'Divisi',
+            'Status'
         ];
     }
 }

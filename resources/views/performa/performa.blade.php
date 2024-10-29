@@ -4,7 +4,7 @@
 @section('content')
     <div class="content-wrapper">
         <div class="p-3">
-            <p class="pl-3 pb-3 font-weight-bold h3">Data Absensi Karyawan</p>
+            <p class="pl-3 pb-3 font-weight-bold h3">Performa Karyawan</p>
             <div class="p-3 ml-3 text-black card">
                 <div class="mb-3">
                     <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
@@ -103,10 +103,7 @@
 
                             </datalist>
                         </div>
-                        <div class="form-group">
-                            <label for="nama">Nama</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                        </div>
+
 
 
 

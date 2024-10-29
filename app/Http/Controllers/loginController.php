@@ -17,7 +17,6 @@ class loginController extends Controller
 
     public function authenticate(Request $request)
     {
-        // Validasi input
         Session::flash('username', $request->username);
         $credentials = $request->validate([
             'npk' => 'required|string',
@@ -27,7 +26,6 @@ class loginController extends Controller
             'password.required' => 'Password wajib diisi',
         ]);
 
-        // Coba autentikasi
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
@@ -36,11 +34,13 @@ class loginController extends Controller
 
             $request->session()->put('role_id', $roleId);
 
-            // Redirect berdasarkan role_id
             if ($roleId == 2) {
                 return redirect()->intended('/shift');
+            } elseif (in_array($roleId, [1, 6])) {
+                return redirect()->intended('/rekap');
             }
-            return redirect()->intended('/');
+
+            return redirect()->intended('/home'); // atau halaman default lain
         } else {
             return back()->withErrors([
                 'login' => 'Username atau password salah.',

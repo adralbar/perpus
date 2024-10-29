@@ -5,7 +5,8 @@
     
 }
 <style>
-<style>#myTable {
+<style>
+#myTable {
     table-layout: fixed;
     width: 100%;
 }
@@ -53,7 +54,7 @@
 
 .table-wrapper {
     overflow-x: auto; /* Agar tabel bisa digulir horizontal */
-}
+} 
   
 #dt-length-0{
     margin-right: 10px;

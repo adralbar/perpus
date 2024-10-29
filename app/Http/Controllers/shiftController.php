@@ -15,6 +15,8 @@ use App\Models\RoleModel;
 use App\Models\SectionModel;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\ShiftExport;
+use App\Exports\templateExport;
 
 class shiftController extends Controller
 {
@@ -39,6 +41,7 @@ class shiftController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
+        // Mengambil data `shift1` dengan `created_at` terbaru untuk setiap `npk` dan `tanggal`
         $data = Shift::select([
             'kategorishift.id',
             'kategorishift.npk',
@@ -47,7 +50,19 @@ class shiftController extends Controller
             'users.nama'
         ])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
-            ->orderBy('kategorishift.date', 'DESC');
+            ->where(function ($query) use ($startDate, $endDate) {
+                if (!empty($startDate) && !empty($endDate)) {
+                    $query->whereBetween('kategorishift.date', [$startDate, $endDate]);
+                }
+            })
+            ->whereIn('kategorishift.created_at', function ($query) {
+                $query->selectRaw('MAX(created_at)')
+                    ->from('kategorishift as ks')
+                    ->whereColumn('ks.npk', 'kategorishift.npk')
+                    ->whereColumn('ks.date', 'kategorishift.date')
+                    ->groupBy('ks.npk', 'ks.date');
+            })
+            ->orderBy('kategorishift.date', 'ASC');
 
         $user = Auth::user();
         $roleId = $user->role_id;
@@ -55,10 +70,6 @@ class shiftController extends Controller
         if ($request->has('selected_npk') && !empty($request->selected_npk)) {
             $selectedNPKs = explode(',', $request->selected_npk);
             $data->whereIn('users.npk', $selectedNPKs);
-        }
-
-        if (!empty($startDate) && !empty($endDate)) {
-            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
         }
 
         // Pengecekan role_id
@@ -75,54 +86,111 @@ class shiftController extends Controller
             ->make(true);
     }
 
+
+    public function exportData(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $selectedNPKs = $request->input('selected_npk') ? explode(',', $request->input('selected_npk')) : [];
+
+
+        $dataQuery = Shift::with(['user.section', 'user.department', 'user.division'])
+            ->select(['kategorishift.id', 'kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            ->orderBy('kategorishift.date', 'ASC');
+
+        if (!empty($selectedNPKs)) {
+            $dataQuery->whereIn('users.npk', $selectedNPKs);
+        }
+
+        // Tambahkan filter untuk rentang tanggal
+        if (!empty($startDate) && !empty($endDate)) {
+            $dataQuery->whereBetween('kategorishift.date', [$startDate, $endDate]);
+        }
+
+
+        $data = $dataQuery->get();
+
+        if ($data->isEmpty()) {
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        }
+
+        // Siapkan data untuk ekspor
+        $exportData = [];
+        foreach ($data as $shift) {
+            $user = $shift->user;
+            $exportData[] = [
+                'NPK' => $shift->npk,
+                'Nama' => $user->nama,
+                'Tanggal' => $shift->date,
+                'Shift' => $shift->shift1,
+                'Section' => $user->section ? $user->section->nama : 'Tidak Ada',
+                'Department' => $user->department ? $user->department->nama : 'Tidak Ada',
+                'Division' => $user->division ? $user->division->nama : 'Tidak Ada',
+            ];
+        }
+
+        return Excel::download(new ShiftExport($exportData), 'shift_data.xlsx');
+    }
+
+    public function templateExport()
+    {
+        $user = Auth::user();
+        $roleId = $user->role_id;
+        $sectionId = $user->section_id;
+
+        $query = User::select('npk', 'nama');
+
+        if ($roleId == 2) {
+            $query->where('section_id', $sectionId);
+        }
+
+        $userData = $query->get();
+
+        return Excel::download(new templateExport($userData), 'template.xlsx');
+    }
+
+
     public function store(Request $request)
     {
+        if (Auth::user()->role_id != 1) {
+            $startDate = Carbon::parse($request->input('start_date'));
+
+            if ($startDate->lt(Carbon::today())) {
+                return response()->json(['error' => 'Anda tidak diizinkan membuat shift untuk hari ini atau sebelumnya.'], 403);
+            }
+        }
 
         $request->validate([
-            'npk' => 'required|array', // Memastikan npk adalah array
-            'shift1' => 'required', // Minimal input untuk shift hari kerja
+            'npk' => 'required|array',
+            'shift1' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        // Parse tanggal dari input
         $startDate = Carbon::parse($request->input('start_date'));
         $endDate = Carbon::parse($request->input('end_date'));
 
-        // Loop untuk setiap hari antara start_date dan end_date
+        // Loop melalui tanggal dan buat shift
         while ($startDate->lte($endDate)) {
-            foreach ($request->input('npk') as $npk) { // Loop untuk setiap NPK yang dipilih
-                $data = $request->except(['start_date', 'end_date']); // Mengabaikan kolom start_date dan end_date
-                $data['npk'] = $npk; // Menyimpan NPK yang dipilih
-                $data['date'] = $startDate->toDateString(); // Set tanggal harian
+            foreach ($request->input('npk') as $npk) {
+                $data = $request->except(['start_date', 'end_date']);
+                $data['npk'] = $npk;
+                $data['date'] = $startDate->toDateString();
 
-                // Simpan data ke tabel Shift
+                // Set shift1 sebagai 'OFF' di akhir pekan
+                if ($startDate->isWeekend()) {
+                    $data['shift1'] = 'OFF';
+                }
+
                 Shift::create($data);
             }
-            // Lanjut ke hari berikutnya
             $startDate->addDay();
         }
 
-        // Cek hari setelah end_date untuk menambahkan Sabtu dan Minggu sebagai off
-        while ($startDate->dayOfWeek == 6 || $startDate->dayOfWeek == 0) {
-            foreach ($request->input('npk') as $npk) { // Loop untuk setiap NPK yang dipilih
-                $data = [
-                    'npk' => $npk,
-                    'date' => $startDate->toDateString(),
-                    'shift1' => 'OFF', // Menyimpan status OFF untuk akhir pekan
-                ];
-
-                // Simpan data untuk hari Sabtu atau Minggu setelah end_date
-                Shift::create($data);
-            }
-
-            // Lanjut ke hari berikutnya
-            $startDate->addDay();
-        }
-
-        // Return response success
         return response()->json(['success' => 'Data berhasil disimpan']);
     }
+
 
     public function edit($id)
     {
@@ -137,24 +205,30 @@ class shiftController extends Controller
 
     public function store2(Request $request)
     {
+        if (Auth::user()->role_id != 1) {
+            $date = Carbon::parse($request->input('date'));
+
+            if ($date->lt(Carbon::today())) {
+                return response()->json(['error' => 'Anda tidak diizinkan untuk menyimpan shift yang sudah atau sedang berjalan'], 403);
+            }
+        }
 
         $request->validate([
-            'npk' => 'required', // Memastikan npk adalah array
-            'shift1' => 'required', // Minimal input untuk shift hari kerja
-            'date' => 'required'
+            'npk' => 'required',
+            'shift1' => 'required',
+            'date' => 'required|date'
         ]);
 
-
-        shift::create([
-
+        // Buat data shift baru
+        Shift::create([
             'npk' => $request->input('npk'),
             'shift1' => $request->input('shift1'),
             'date' => $request->input('date'),
         ]);
 
-        // Return response success
         return response()->json(['success' => 'Data berhasil disimpan']);
     }
+
 
     public function destroy($id)
     {
@@ -198,5 +272,62 @@ class shiftController extends Controller
             'recordsFiltered' => $data->count(),
             'data' => $data,
         ]);
+    }
+    public function shiftApi(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        $data = Shift::select([
+            'kategorishift.id',
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama'
+        ])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            ->orderBy('kategorishift.date', 'DESC');
+
+        $user = Auth::user();
+        $roleId = $user->role_id;
+
+        if ($request->has('selected_npk') && !empty($request->selected_npk)) {
+            $selectedNPKs = explode(',', $request->selected_npk);
+            $data->whereIn('users.npk', $selectedNPKs);
+        }
+
+        if (!empty($startDate) && !empty($endDate)) {
+            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
+        }
+
+        if ($roleId == 2) {
+            $sectionId = $user->section_id;
+            $data->where('users.section_id', $sectionId);
+        }
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->setRowId(function ($data) {
+                return $data->id;
+            })
+            ->editColumn('shift1', function ($data) {
+                if (strpos($data->shift1, ' - ') !== false) {
+                    list($starttime, $endtime) = explode(' - ', $data->shift1);
+
+                    $starttime = date('H:i:s', strtotime($starttime));
+                    $endtime = date('H:i:s', strtotime($endtime));
+
+                    return [
+                        'starttime' => $starttime,
+                        'endtime' => $endtime
+                    ];
+                }
+
+                return [
+                    'starttime' => null,
+                    'endtime' => null
+                ];
+            })
+            ->make(true);
     }
 }

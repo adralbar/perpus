@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('npk');
+            $table->string('npk_sistem')->nullable();
             $table->date('tanggal');
             $table->time('waktuci');
             $table->timestamps();

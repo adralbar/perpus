@@ -46,4 +46,13 @@ class User extends Authenticatable
     {
         return $this->belongsTo(RoleModel::class);
     }
+    public function sistemUser()
+    {
+        return $this->hasOne(User::class, 'npk', 'npk_sistem');
+    }
+
+    public function originalUser()
+    {
+        return $this->belongsTo(User::class, 'npk_sistem', 'npk');
+    }
 }

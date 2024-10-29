@@ -35,7 +35,7 @@
     <link rel="stylesheet"href="{{ asset('/dist/css/app.css') }}"><!-- overlayScrollbars -->
 
     <link rel="stylesheet"href="{{ asset('/lte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
-    <!-- Daterange picker -->
+    <!--     Daterange picker -->
     <link rel="stylesheet"href="{{ asset('/lte/plugins/daterangepicker/daterangepicker.css') }}">
     <!-- summernote -->
     <link rel="stylesheet"href="{{ asset('/lte/plugins/summernote/summernote-bs4.min.css') }}">

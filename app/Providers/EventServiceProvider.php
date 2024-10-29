@@ -20,9 +20,7 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        FileUploaded::class => [  // Mendaftarkan event FileUploaded
-            SendFileUploadedNotification::class, // Mendaftarkan listener untuk event tersebut
-        ],
+
     ];
 
     /**

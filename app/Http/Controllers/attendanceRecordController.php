@@ -173,20 +173,7 @@ class AttendanceSummaryController extends Controller
             })
             ->make(true);
     }
-    <?php
 
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\Log;
-use App\Models\SectionModel;
-use App\Models\DepartmentModel;
-use App\Models\DivisionModel;
-
-class dashboardController extends Controller
-{
     public function index()
     {
         // Mengambil daftar tahun yang ada di tabel absensici
@@ -476,6 +463,4 @@ class dashboardController extends Controller
             'totals' => $totals
         ]);
     }
-}
-
 }

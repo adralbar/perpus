@@ -30,8 +30,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/data-table2', [dashboardController::class, 'getTable2Data'])->name('data.table2');
         Route::get('/data-table1/details', [dashboardController::class, 'getTable1Details'])->name('data.table1.details');
         Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard');
-        Route::get('/data/chart', [dashboardController::class, 'getChartData'])->name('data.chart');
-        Route::get('/getChartData', [dashboardController::class, 'getChartData'])->name('getChartData');
+        Route::get('/data/chart', [dashboardController::class, 'getChartData'])->name('data.chart'); //gakepake
         Route::get('data/table1', [dashboardController::class, 'getTable1bData'])->name('data.table1b');
 
         //route rekap
@@ -39,10 +38,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
         Route::post('/rekap/checkin', [rekapController::class, 'storeCheckin'])->name('rekap.storeCheckin');
         Route::post('/rekap/checkout', [rekapController::class, 'storeCheckout'])->name('rekap.storeCheckout');
-        Route::get('/rekap/export', [rekapController::class, 'exp   ortAbsensi'])->name('rekap.export');
+        Route::get('/rekap/export', [rekapController::class, 'exportAbsensi'])->name('rekap.export');
         Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
         Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
-
+        Route::post('/update-data/{npk}/{tanggal}', [rekapController::class, 'updateData'])->name('edit.data');
 
         //route performa
         Route::get('/performa', [performaController::class, 'index'])->name('performa.index');
@@ -67,6 +66,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/fileupload', [shiftController::class, 'importProcess'])->name('shift.import');
         Route::post('/shift/update', [ShiftController::class, 'update'])->name('shift.update');
         Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
+        Route::get('/shiftapi', [shiftController::class, 'shiftApi'])->name('shiftapi');
+        Route::get('/export-data', [shiftController::class, 'exportData'])->name('exportData');
+        Route::get('/exporttemplate', [shiftController::class, 'templateExport'])->name('exportTemplate');
 
 
         //route data karyawan

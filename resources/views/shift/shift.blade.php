@@ -10,23 +10,32 @@
     @section('content')
         <div class="content-wrapper">
             <div class="p-3">
-                <p class="pl-3 pb-3 font-weight-bold h3">Data Absensi Karyawan</p>
+                <p class="pl-3 pb-3 font-weight-bold h3">Shift Karyawan</p>
                 <div class="p-3 ml-3 text-black card">
                     <div class="mb-3">
-                        <!-- Button to trigger the modal -->
                         <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
                             data-bs-target="#shiftModal" onclick="resetForm()">
                             Tambah Shift Karyawan
                         </button>
+
                         <button type="button" class="btn btn-secondary btn-sm mr-2" data-bs-toggle="modal"
                             data-bs-target="#uploadModal">
                             Upload File
                         </button>
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
+
+                        <button type="button" class="btn btn-secondary btn-sm mr-2" data-bs-toggle="modal"
                             data-bs-target="#filterModal">
                             Filter
                         </button>
+
+                        <button type="button" class="btn btn-success btn-sm mr-2" id="exportButton">
+                            Download Template
+                        </button>
+
+                        <button type="button" class="btn btn-success btn-sm" id="exportShift">Export to Excel</button>
+
                     </div>
+
                     <div class="table-wrapper   table-responsive">
                         <table id="myTable" class="table table-light table-bordered " style="width:100%">
                             <thead id="data-table-head">
@@ -66,7 +75,23 @@
 
                             <div class="form-group">
                                 <label for="shift1">Waktu Shift</label>
-                                <input type="text" class="form-control" id="shift1" name="shift1" required>
+                                <select class="form-control" id="shift1" name="shift1" required>
+                                    <option value="06:00 - 15:00">06:00 - 15:00</option>
+                                    <option value="07:00 - 16:00">07:00 - 16:00</option>
+                                    <option value="14:00 - 23:00">14:00 - 23:00</option>
+                                    <option value="13:00 - 22:00">13:00 - 22:00</option>
+                                    <option value="21:00 - 06:00">21:00 - 06:00</option>
+                                    <option value="22:00 - 07:00">22:00 - 07:00</option>
+                                    <option value="23:00 - 08:00">23:00 - 08:00</option>
+                                    <option value="06:00 - 15:20">06:00 - 15:20 (Fri)</option>
+                                    <option value="07:00 - 16:30">07:00 - 16:30 (Fri)</option>
+                                    <option value="15:00 - 00:00">15:00 - 00:00</option>
+                                    <option value="16:00 - 01:00">16:00 - 01:00</option>
+                                    <option value="08:00 - 17:20">08:00 - 17:20 (Fri)</option>
+                                    <option value="09:00 - 18:20">09:00 - 18:20 (Fri)</option>
+                                    <option value="08:00 - 17:00">08:00 - 17:00 (Fri)</option>
+                                    <option value="OFF">OFF</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="start_date">Start Date</label>
@@ -154,16 +179,32 @@
                         <form id="editShiftForm">
                             @csrf
                             <div class="form-group">
-                                <label for="shift1">Shift</label>
-                                <input type="text" class="form-control" id="shift1" name="shift1">
+                                <label for="shift1">Waktu Shift</label>
+                                <select class="form-control" id="shift1" name="shift1" required>
+                                    <option value="06:00 - 15:00">06:00 - 15:00</option>
+                                    <option value="07:00 - 16:00">07:00 - 16:00</option>
+                                    <option value="14:00 - 23:00">14:00 - 23:00</option>
+                                    <option value="13:00 - 22:00">13:00 - 22:00</option>
+                                    <option value="21:00 - 06:00">21:00 - 06:00</option>
+                                    <option value="22:00 - 07:00">22:00 - 07:00</option>
+                                    <option value="23:00 - 08:00">23:00 - 08:00</option>
+                                    <option value="06:00 - 15:20">06:00 - 15:20 (Fri)</option>
+                                    <option value="07:00 - 16:30">07:00 - 16:30 (Fri)</option>
+                                    <option value="15:00 - 00:00">15:00 - 00:00</option>
+                                    <option value="16:00 - 01:00">16:00 - 01:00</option>
+                                    <option value="08:00 - 17:20">08:00 - 17:20 (Fri)</option>
+                                    <option value="09:00 - 18:20">09:00 - 18:20 (Fri)</option>
+                                    <option value="08:00 - 17:00">08:00 - 17:00 (Fri)</option>
+                                    <option value="OFF">OFF</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="date">Tanggal</label>
-                                <input type="date" class="form-control" id="date" name="date" required>
+                                <input type="date" class="form-control" id="date" name="date" readonly>
                             </div>
                             <div class="form-group">
                                 <label for="npk">NPK</label>
-                                <input type="text" class="form-control" id="npk" name="npk">
+                                <input type="text" class="form-control" id="npk" name="npk" readonly>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -221,7 +262,7 @@
                             d.startDate = $('#startDate').val();
                             d.endDate = $('#endDate').val();
                             d.selected_npk = $('#selectedNPK')
-                                .val(); // Pastikan ini sesuai dengan parameter yang digunakan
+                                .val();
                         }
                     },
                     pageLength: -1,
@@ -271,7 +312,17 @@
                     });
                 });
 
-                // Filter button click event
+                $('#exportButton').on('click', function() {
+                    var startDate = $('#startDate').val();
+                    var endDate = $('#endDate').val();
+                    var search = $('#dt-search-0').val();
+                    window.location.href = "{{ route('exportTemplate') }}?startDate=" + encodeURIComponent(
+                            startDate) +
+                        "&endDate=" + encodeURIComponent(endDate) +
+                        "&search=" + encodeURIComponent(search);
+
+                });
+
                 $('#filterButton').click(function(e) {
                     e.preventDefault();
                     var selectedNPK = $('#selected_npk').val() || []; // Ambil nilai NPK yang dipilih
@@ -281,14 +332,13 @@
                         console.log('Menutup modal dan menyimpan NPK: ', selectedNPK.join(','));
                         $('#filterModal').modal('hide');
                         $('#selectedNPK').val(selectedNPK.join(',')); // Simpan NPK yang dipilih
-                        table.ajax.reload(); // Reload data table
+                        table.ajax.reload();
                     } else {
                         alert('Silakan pilih karyawan terlebih dahulu.');
                         console.log('Tidak ada karyawan yang dipilih.');
                     }
                 });
 
-                // Reload DataTable on date change
                 $('#startDate, #endDate').on('change', function() {
                     table.ajax.reload();
                 });
@@ -388,7 +438,6 @@
                                     .replace(/&amp;/g, '&');
                                 console.log(shiftHistoryUrl);
 
-                                // Fetch shift history
                                 $.ajax({
                                     url: shiftHistoryUrl,
                                     method: 'GET',
@@ -484,14 +533,18 @@
                             .serialize(),
                         success: function(response) {
                             $('#shiftModal').modal('hide');
-                            table.ajax.reload();
+                            // table.ajax.reload();
                             alert(response.success);
                         },
                         error: function(xhr, status, error) {
-
-                            console.error(xhr.responseText);
-                            alert('Terjadi kesalahan: ' + xhr.responseJSON
-                                .message);
+                            if (xhr.status === 403) {
+                                // Menangkap pesan error khusus untuk status 403
+                                alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
+                            } else {
+                                console.error('Error:', xhr.responseText);
+                                alert('Terjadi kesalahan: ' + xhr.responseJSON.message ||
+                                    'Silakan coba lagi.');
+                            }
                         }
                     });
 
@@ -561,10 +614,29 @@
                         alert('Shift berhasil diperbarui!');
                     },
                     error: function(xhr, status, error) {
-                        console.error('Error:', xhr
-                            .responseText);
-                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                        if (xhr.status === 403) {
+                            // Menangkap pesan error khusus untuk status 403
+                            alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
+                        } else {
+                            console.error('Error:', xhr.responseText);
+                            alert('Terjadi kesalahan: ' + xhr.responseJSON.message || 'Silakan coba lagi.');
+                        }
                     }
+                });
+            });
+
+            $(document).ready(function() {
+                $('#exportShift').on('click', function() {
+                    console.log('saya diklik');
+
+                    var startDate = $('#startDate').val();
+                    var endDate = $('#endDate').val();
+                    var selectedNPK = $('#selectedNPK').val();
+
+                    window.location.href = "{{ route('exportData') }}?startDate=" + encodeURIComponent(
+                            startDate) +
+                        "&endDate=" + encodeURIComponent(endDate) +
+                        "&selected_npk=" + encodeURIComponent(selectedNPK);
                 });
             });
         </script>

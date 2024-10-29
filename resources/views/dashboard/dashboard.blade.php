@@ -10,7 +10,6 @@
         <div class="p-3">
             <p class="pl-3 pb-3 font-weight-bold h3">Dashboard</p>
 
-            <!-- Filter Tahun -->
             <div class="d-flex align-items-center mb-3">
                 <select id="filterYear" class="form-select" style="width: 150px; margin-right: 20px;">
                     <option value="">Pilih Tahun</option>
@@ -30,7 +29,6 @@
             </div>
         </div>
 
-        <!-- Tabel berdampingan dengan margin yang sama seperti chart -->
         <div class="p-3" style="margin: 20px;">
             <div class="row">
                 <div class="col-12">
@@ -52,7 +50,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- Data akan diisi melalui AJAX -->
                                     </tbody>
                                 </table>
                             </div>
@@ -62,7 +59,6 @@
             </div>
         </div>
 
-        <!-- Modal untuk detail keterlambatan -->
         <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -153,11 +149,9 @@
                 },
                 onClick: function(event, elements) {
                     if (elements.length > 0) {
-                        const index = elements[0].index; // Get the index of the clicked bar
+                        const index = elements[0].index;
                         const selectedMonthName = this.data.labels[
-                            index]; // Get the label (month name or abbreviation) of the clicked bar
-
-                        // Map both full and abbreviated month names to numeric values
+                            index];
                         const monthMap = {
                             'January': '01',
                             'Jan': '01',
@@ -186,10 +180,10 @@
                         };
 
                         const selectedMonth = monthMap[selectedMonthName] ||
-                            ''; // Convert month name to numeric format
-                        const year = $('#filterYear').val(); // Get the year from the filter input
+                            '';
+                        const year = $('#filterYear').val();
 
-                        const url1 = '{{ route('data.table1b') }}' + // Build the URL for the AJAX request
+                        const url1 = '{{ route('data.table1b') }}' +
                             '?bulan=' + encodeURIComponent(selectedMonth) +
                             '&tahun=' + encodeURIComponent(year);
 
@@ -199,8 +193,8 @@
                         console.log('Year:', year);
                         console.log('Request URL:', url1);
 
-                        if (typeof table1 !== 'undefined') { // Check if table1 is defined
-                            table1.ajax.url(url1).load(); // Update DataTable with new URL and reload data
+                        if (typeof table1 !== 'undefined') {
+                            table1.ajax.url(url1).load();
                         } else {
                             console.error('table1 is not defined.');
                         }
@@ -281,10 +275,8 @@
                     var shift = shiftList[i] ? shiftList[i].trim() : '';
                     var absensiTime = waktuList[i].trim(); // Ambil waktu masuk
 
-                    // Mengambil waktu mulai shift (hanya bagian awal sebelum ' - ')
                     var shiftStartTimeStr = shift.split(' - ')[0].replace('.', ':'); // Ubah '.' menjadi ':'
-                    shiftStartTimeStr += ':00'; // Tambahkan detik
-
+                    shiftStartTimeStr += ':00';
                     var shiftStartTime = new Date('1970-01-01T' + shiftStartTimeStr +
                         'Z'); // Ubah ke format Date
 
@@ -361,7 +353,7 @@
                              <li>{{ $error }}</li>
                          @endforeach
                      </ul>
-                 `, // Tampilkan semua pesan error dalam bentuk list
+                 `,
             });
         @endif
     </script>

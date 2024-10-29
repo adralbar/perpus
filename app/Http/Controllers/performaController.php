@@ -117,13 +117,13 @@ class performaController extends Controller
     {
         $request->validate([
             'id' => 'required',
-            'nama' => 'required',
+            // 'nama' => 'required',
             'npk' => 'required',
         ]);
 
         PcdMasterUser::create([
             'id' => $request->id,
-            'nama' => $request->nama,
+            // 'nama' => $request->nama,
             'npk' => $request->npk,
         ]);
 
