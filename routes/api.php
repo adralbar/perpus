@@ -38,6 +38,7 @@ Route::post('/uploadrekapbyapi', [rekapController::class, 'uploadapi'])->name('u
 
 Route::get('/karyawandataapi', [UsersController::class, 'karyawandata'])->name('karyawandataapi');
 
-Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
+Route::get('/get-data', [rekapController::class, 'getDataApi'])->name('rekap.getData');
+Route::get('/getRecapDataApi', [rekapController::class, 'getRecapDataApi'])->name('rekap.getRecapDataApi');
 
 Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');

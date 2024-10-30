@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Absensici extends Model
+class absensici extends Model
 {
     protected $table = 'absensici';
     protected $fillable = ['npk_sistem', 'npk', 'tanggal', 'waktuci'];
@@ -13,7 +13,7 @@ class Absensici extends Model
 
     public function shift()
     {
-        return $this->hasOne(shift::class, 'date', 'tanggal');
+        return $this->hasOne(Shift::class, 'date', 'tanggal');
     }
     public function user()
     {

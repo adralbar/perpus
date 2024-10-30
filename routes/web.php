@@ -21,6 +21,7 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/login', [loginController::class, 'loginForm'])->name('login');
     Route::post('/login', [loginController::class, 'authenticate']);
 });
+Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
 
 Route::middleware(['auth'])->group(function () {
     //route dashboard
@@ -39,7 +40,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/rekap/checkin', [rekapController::class, 'storeCheckin'])->name('rekap.storeCheckin');
         Route::post('/rekap/checkout', [rekapController::class, 'storeCheckout'])->name('rekap.storeCheckout');
         Route::get('/rekap/export', [rekapController::class, 'exportAbsensi'])->name('rekap.export');
-        Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
+        // Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
         Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
         Route::post('/update-data/{npk}/{tanggal}', [rekapController::class, 'updateData'])->name('edit.data');
 
