@@ -2,8 +2,7 @@
 
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
-
-
+<link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}">
 
 @section('content')
     <div class="container-fluid">
@@ -25,8 +24,27 @@
                                 data-bs-target="#uploadModal">
                                 Upload File
                             </button>
+                            <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
+                                data-bs-target="#filterModal">
+                                Buka Filter export
+                            </button>
                         </div>
                         <button type="button" class="btn btn-success btn-sm" id="exportButton">Export to Excel</button>
+
+                    </div>
+
+                    <!-- Gabungkan Status Filter dan Selected NPK dalam satu kolom -->
+
+
+                    <div class="mb-3">
+                        <select class="dualistbox form-control" multiple="multiple" size="10" name="selected_npk[]"
+                            id="selected_npk">
+                            @foreach ($userData as $user)
+                                <option value="{{ $user->npk }}">
+                                    {{ $user->nama }} ({{ $user->npk }})
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -38,8 +56,15 @@
                             <input type="date" id="endDate" class="form-control">
                         </div>
                     </div>
+                    <div class="text-center  mb-3">
+                        <button id="submitFilters" type="button" class="btn btn-primary btn-sm"
+                            style="border-radius: 5px;">
+                            Tampilkan Data
+                        </button>
+                    </div>
+
                     <div class="table-responsive">
-                        <table id="myTable" class="table table-light table-striped ">
+                        <table id="myTable" class="table table-light table-striped">
                             <thead>
                                 <tr>
                                     <th>No</th>
@@ -55,7 +80,6 @@
                                     <th>Waktu Check-out</th>
                                     <th>Status</th>
                                     <th>Api Time</th>
-                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                         </table>
@@ -63,6 +87,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Modal untuk Check-in -->
         <div class="modal fade" id="checkinModal" tabindex="-1" aria-labelledby="checkinModalLabel" aria-hidden="true">
@@ -158,7 +183,7 @@
             </div>
         </div>
     </div>
-    {{-- <div class="modal fade" id="penyimpanganModal" tabindex="-1" aria-labelledby="penyimpanganModalLabel"
+    <div class="modal fade" id="penyimpanganModal" tabindex="-1" aria-labelledby="penyimpanganModalLabel"
         aria-hidden="true">
         <div class="modal-dialog" style="max-width: 90%; margin: auto; margin-top: 10%;">
 
@@ -183,6 +208,10 @@
                                 <th>Keterangan</th>
                                 <th>Foto</th>
                                 <th>Status</th>
+                                <th>Tanggal Pengajuan</th>
+                                <th>Tanggal Approval</th>
+
+
                             </tr>
                         </thead>
                         <tbody>
@@ -192,31 +221,32 @@
                 </div>
             </div>
         </div>
-    </div> --}}
-    <div class="modal fade" id="penyimpanganModal" tabindex="-1" aria-labelledby="penyimpanganModalLabel"
-        aria-hidden="true">
+    </div>
+
+    <div class="modal fade" id="cutiModal" tabindex="-1" aria-labelledby="cutiModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="penyimpanganModalLabel">Detail Penyimpangan</h5>
+                    <h5 class="modal-title" id="cutiModalLabel">Detail cuti</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped table-hover" id="penyimpanganTable">
+                        <table class="table table-bordered table-striped table-hover" id="cutiTable">
                             <thead class="table-light">
                                 <tr>
                                     <th>No</th>
                                     <th>Nama</th>
+                                    <th>NPK</th>
                                     <th>Kategori</th>
-                                    <th>Kondisi Absen</th>
+                                    <th>Jenis Keperluan</th>
                                     <th>Tanggal Mulai</th>
                                     <th>Tanggal Selesai</th>
-                                    <th>Jam Mulai</th>
-                                    <th>Jam Selesai</th>
-                                    <th>Keterangan</th>
-                                    <th>Foto</th>
                                     <th>Status</th>
+                                    <th>Reason</th>
+                                    <th>Tanggal Pengajuan</th>
+                                    <th>Tanggal Approval</th>
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -228,11 +258,6 @@
             </div>
         </div>
     </div>
-
-
-
-
-
 
     <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
         aria-hidden="true">
@@ -305,17 +330,79 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
 
-
+                    <div class="row">
+                        <div class="mb-3">
+                            <select id="statusFilter" multiple class="form-control">
+                                <option value="Cuti Tahunan">Cuti Tahunan</option>
+                                <option value="Cuti Pengganti">Cuti Pengganti</option>
+                                <option value="Cuti Haid">Cuti Haid</option>
+                                <option value="Cuti Lainnya">Cuti Lainnya</option>
+                                <option value="Cuti Keluarga Inti Meninggal">Cuti Keluarga Inti Meninggal</option>
+                                <option value="Cuti Keluarga Serumah Meninggal">Cuti Keluarga Serumah Meninggal</option>
+                                <option value="Cuti Bencana Alam">Cuti Bencana Alam</option>
+                                <option value="Cuti 5 Tahunan">Cuti 5 Tahunan</option>
+                                <option value="Cuti Melahirkan">Cuti Melahirkan</option>
+                                <option value="Cuti Menikah">Cuti Menikah</option>
+                                <option value="Pulang awal">Pulang awal</option>
+                                <option value="Sakit">Sakit</option>
+                                <option value="Dinas">Dinas</option>
+                                <option value="Terlambat hadir">Terlambat hadir</option>
+                                <option value="Tidak absen">Tidak absen</option>
+                                <option value="Terlambat">Terlambat</option>
+                                <option value="Tepat Waktu">Tepat waktu</option>
+                                <option value="Mangkir">Mangkir</option>
+                                <option value="Unknown">Unknown</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <select class="dualistbox form-control" multiple="multiple" size="10"
+                                name="selected_npk[]" id="selected_npk_modal">
+                                @foreach ($userData as $user)
+                                    <option value="{{ $user->npk }}">{{ $user->nama }} ({{ $user->npk }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="modalStartDate" class="form-label">Tanggal Mulai</label>
+                                <input type="date" id="modalStartDate" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="modalEndDate" class="form-label">Tanggal Selesai</label>
+                                <input type="date" id="modalEndDate" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button id="submitFiltersModal" type="button" class="btn btn-primary">Tampilkan Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
+    <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
+    <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script>
+
     <script>
         window.onload = function() {
             alert('Silahkan isi Filter tanggal terlebih dahulu!');
         };
+
         document.getElementById('uploadForm').onsubmit = function(e) {
             const fileInput = document.getElementById('file');
             const file = fileInput.files[0];
@@ -325,120 +412,244 @@
                 e.preventDefault(); // Mencegah form dari pengiriman
             }
         };
+        var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+            nonSelectedListLabel: 'Available NPK',
+            selectedListLabel: 'Selected NPK',
+            preserveSelectionOnMove: 'moved',
+            moveOnSelect: false,
+            nonSelectedFilter: '',
+
+        });
+        $('#statusFilter').bootstrapDualListbox({
+            selectorMinimalHeight: 200,
+            nonSelectedListLabel: 'Status Tersedia',
+            selectedListLabel: 'Status Dipilih',
+            moveOnSelect: false,
+            preserveSelectionOnMove: 'moved',
+            // Tambahkan opsi lain sesuai kebutuhan
+        });
+
+        // $('select[name="selected_npk[]"]').attr('multiple', 'multiple');
+
         $(document).ready(function() {
-
-            function loadDataTable() {
-                var table = $('#myTable').DataTable({
-                    processing: true,
-                    serverSide: false,
-                    paging: false,
-                    ajax: {
-                        url: "{{ route('rekap.getData') }}",
-                        type: 'GET',
-                        data: function(d) {
-                            d.startDate = $('#startDate').val();
-                            d.endDate = $('#endDate').val();
-                        },
-                        error: function(xhr, error, code) {
-                            console.error("Error occurred while fetching data:", xhr.responseText);
+            function loadDataTable(filteredData) {
+                if ($.fn.dataTable.isDataTable('#myTable')) {
+                    $('#myTable').DataTable().clear().rows.add(filteredData).draw();
+                } else {
+                    $('#myTable').DataTable({
+                        data: filteredData,
+                        processing: true,
+                        columns: [{
+                                data: null,
+                                orderable: false,
+                                searchable: false
+                            },
+                            {
+                                data: 'npk_sistem',
+                                name: 'npk_sistem'
+                            },
+                            {
+                                data: 'npk',
+                                name: 'npk'
+                            },
+                            {
+                                data: 'nama',
+                                name: 'nama'
+                            },
+                            {
+                                data: 'division_nama',
+                                name: 'division_nama'
+                            },
+                            {
+                                data: 'department_nama',
+                                name: 'department_nama'
+                            },
+                            {
+                                data: 'section_nama',
+                                name: 'section_nama'
+                            },
+                            {
+                                data: 'tanggal',
+                                name: 'tanggal'
+                            },
+                            {
+                                data: 'shift1',
+                                name: 'shift1'
+                            },
+                            {
+                                data: 'waktuci',
+                                name: 'waktuci',
+                                render: function(data, type, row) {
+                                    return data ? data.slice(0, -3) : '';
+                                }
+                            },
+                            {
+                                data: 'waktuco',
+                                name: 'waktuco',
+                                render: function(data, type, row) {
+                                    return data ? data.slice(0, -3) : '';
+                                }
+                            },
+                            {
+                                data: 'status',
+                                name: 'status'
+                            },
+                            {
+                                data: 'api_time',
+                                name: 'api_time',
+                                orderable: false,
+                                searchable: false
+                            }
+                        ],
+                        order: [
+                            [6, 'asc']
+                        ],
+                        rowCallback: function(row, data, index) {
+                            $('td:eq(0)', row).html(index + 1);
                         }
-                    },
-                    columns: [{
-                            data: null, // Set data menjadi null untuk kolom nomor urut
-                            orderable: false, // Nonaktifkan pengurutan untuk kolom ini
-                            searchable: false // Nonaktifkan pencarian untuk kolom ini
-                        },
-                        {
-                            data: 'npk_sistem',
-                            name: 'npk_sistem'
-                        },
-                        {
-                            data: 'npk',
-                            name: 'npk'
-                        },
-                        {
-                            data: 'nama',
-                            name: 'nama'
-                        },
-                        {
-                            data: 'division_nama',
-                            name: 'division_nama'
-                        },
-                        {
-                            data: 'department_nama',
-                            name: 'department_nama'
-                        },
-                        {
-                            data: 'section_nama',
-                            name: 'section_nama'
-                        },
-                        {
-                            data: 'tanggal',
-                            name: 'tanggal'
-                        },
-                        {
-                            data: 'shift1',
-                            name: 'shift1'
-                        },
-                        {
-                            data: 'waktuci',
-                            name: 'waktuci'
-                        },
-                        {
-                            data: 'waktuco',
-                            name: 'waktuco'
-                        },
-                        {
-                            data: 'status',
-                            name: 'status'
-                        },
-                        {
-                            data: 'api_time',
-                            name: 'api_time',
-                            orderable: false,
-                            searchable: false
-                        },
-                        {
-                            data: 'aksi',
-                            name: 'aksi'
-                        }
-                    ],
-                    order: [
-                        [6, 'asc']
-                    ],
-
-                    rowCallback: function(row, data, index) {
-                        // Mengupdate nomor urut di sel pertama
-                        $('td:eq(0)', row).html(index + 1); // Menampilkan nomor urut
-                    }
-                });
+                    });
+                }
             }
 
+            function checkFilters() {
+                // Periksa apakah setidaknya satu set tanggal diisi
+                const outsideStartDate = $('#startDate').val();
+                const outsideEndDate = $('#endDate').val();
+                const modalStartDate = $('#modalStartDate').val();
+                const modalEndDate = $('#modalEndDate').val();
 
-            $('#startDate, #endDate').on('change', function() {
-                if ($('#startDate').val() && $('#endDate').val()) {
-                    if ($.fn.dataTable.isDataTable('#myTable')) {
-                        table.destroy();
-                        table.ajax.reload();
-                    }
-                    loadDataTable();
+                const isOutsideDateValid = outsideStartDate && outsideEndDate;
+                const isModalDateValid = modalStartDate && modalEndDate;
+
+                return (isOutsideDateValid || isModalDateValid) &&
+                    ($('#selected_npk').val().length > 0 || $('#selected_npk_modal').val().length > 0);
+            }
+
+            $('#submitFilters').on('click', function() {
+                console.log('Submit Filters clicked'); // Debugging log
+                if (checkFilters()) {
+                    $.ajax({
+                        url: "{{ route('rekap.getData') }}",
+                        type: 'GET',
+                        processing: true,
+                        data: {
+                            startDate: $('#startDate').val(),
+                            endDate: $('#endDate').val(),
+                            selectedNpk: [
+                                ...($('#selected_npk').val() || [])
+                            ],
+                        },
+                        success: function(response) {
+                            let filteredData = response.data;
+
+                            // Filter berdasarkan status jika ada
+                            if ($('#statusFilter').val().length > 0) {
+                                filteredData = filteredData.filter(item => {
+                                    return $('#statusFilter').val().includes(item
+                                        .status);
+                                });
+                            }
+
+                            loadDataTable(filteredData); // Tampilkan data di DataTable
+
+                            // Tutup modal jika ada
+                            if ($('#filterModal').hasClass('show')) {
+                                $('#filterModal').modal('hide');
+                            }
+                        },
+                        error: function(xhr, error, code) {
+                            console.error("Error occurred while fetching data:", xhr
+                                .responseText);
+                        }
+                    });
                 } else {
-                    if ($.fn.dataTable.isDataTable('#myTable')) {
-                        table.clear().draw();
-                    }
+                    alert('Silakan isi semua filter sebelum menampilkan data.');
                 }
             });
 
-            $('#exportButton').on('click', function() {
-                var startDate = $('#startDate').val();
-                var endDate = $('#endDate').val();
-                var search = $('#dt-search-0').val();
-                window.location.href = "{{ route('rekap.export') }}?startDate=" + encodeURIComponent(
-                        startDate) +
-                    "&endDate=" + encodeURIComponent(endDate) +
-                    "&search=" + encodeURIComponent(search);
 
+            // Deklarasikan `filteredData` di luar fungsi AJAX
+            let filteredData = [];
+
+            $('#submitFiltersModal').on('click', function() {
+                console.log('Submit Filters clicked'); // Debugging log
+                if (checkFilters()) {
+                    $.ajax({
+                        url: "{{ route('rekap.getData') }}",
+                        type: 'GET',
+                        processing: true,
+                        data: {
+                            startDate: $('#modalStartDate').val(),
+                            endDate: $('#modalEndDate').val(),
+                            selectedNpk: [
+                                ...($('#selected_npk_modal').val() || [])
+                            ],
+                            status: $('#statusFilter').val() || [],
+                        },
+                        success: function(response) {
+                            console.log("Response received:", response); // Debugging log
+                            // Simpan data yang diterima ke `filteredData` agar dapat diakses di luar fungsi
+                            filteredData = response.data;
+
+                            // Filter berdasarkan status jika ada
+                            if ($('#statusFilter').val().length > 0) {
+                                filteredData = filteredData.filter(item => {
+                                    return $('#statusFilter').val().includes(item
+                                        .status);
+                                });
+                            }
+
+                            loadDataTable(filteredData); // Tampilkan data di DataTable
+
+                            // Tutup modal jika ada
+                            if ($('#filterModal').hasClass('show')) {
+                                $('#filterModal').modal('hide');
+                            }
+                        },
+                        error: function(xhr, error, code) {
+                            console.error("Error occurred while fetching data:", xhr
+                                .responseText);
+                        }
+                    });
+                } else {
+                    alert('Silakan isi semua filter sebelum menampilkan data.');
+                }
             });
+
+            // Fungsi ekspor XLSX
+            $('#exportButton').on('click', function() {
+                // Pastikan `filteredData` sudah ada
+                if (filteredData && filteredData.length > 0) {
+                    // Mengonversi `filteredData` ke format yang dapat diterima oleh SheetJS
+                    const data = filteredData.map(row => ({
+                        NPK_Sistem: row.npk_sistem,
+                        NPK: row.npk,
+                        Nama: row.nama,
+                        Divisi: row.division_nama,
+                        Departemen: row.department_nama,
+                        Section: row.section_nama,
+                        Tanggal: row.tanggal,
+                        Shift1: row.shift1,
+                        WaktuCheckIn: row.waktuci ? row.waktuci.slice(0, -3) : '',
+                        WaktuCheckOut: row.waktuco ? row.waktuco.slice(0, -3) : '',
+                        Status: row.status,
+                    }));
+
+                    // Membuat worksheet dari data
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+
+                    // Membuat workbook dan menambahkan worksheet
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "FilteredData");
+
+                    // Menyimpan workbook sebagai file XLSX
+                    XLSX.writeFile(workbook, "filtered_data.xlsx");
+                } else {
+                    alert("Tidak ada data untuk diekspor.");
+                }
+            });
+
+
 
 
             $('#checkinForm').on('submit', function(e) {
@@ -501,6 +712,7 @@
                     var tableBody = $('#penyimpanganTable tbody');
                     tableBody.empty();
                     $.each(response.data, function(index, item) {
+
                         tableBody.append(`
                     <tr>
                         <td>${index + 1}</td>
@@ -514,6 +726,9 @@
                         <td>${item.keterangan}</td>
                         <td>${item.file_upload || ''}</td>
                         <td>${item.approved_by|| ''}</td>
+                        <td>${moment(item.created_at).format('YYYY-MM-DD')}</td>
+                        <td>${item.updated_at ? moment(item.updated_at).format('YYYY-MM-DD') : ''}</td>
+
                     </tr>
                 `);
                     });
@@ -525,7 +740,46 @@
             });
         })
 
+        $(document).on('click', '.view-cuti', function() {
+            var npk = $(this).data('npk');
+            var tanggal = $(this).data('tanggal');
+            let url = "{{ route('getCuti') }}";
+            console.log('URL yang diakses:', url);
+            $.ajax({
+                url: "{{ route('getCuti') }}",
+                method: 'GET',
+                data: {
+                    npk: npk,
+                    tanggal: tanggal
+                },
+                success: function(response) {
+                    var tableBody = $('#cutiTable tbody');
+                    tableBody.empty();
+                    $.each(response.data, function(index, item) {
+                        tableBody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.nama}</td>
+                        <td>${item.npk}</td>
+                        <td>${item.kategori}</td>
+                        <td>${item.keperluan || ''}</td>
+                        <td>${item.tanggal_mulai}</td>
+                        <td>${item.tanggal_selesai || ''}</td>
+                        <td>${item.approved_by|| ''}</td>
+                        <td>${item.reason|| ''}</td>
+                        <td>${moment(item.created_at).format('YYYY-MM-DD')}</td>
+                        <td>${item.updated_at ? moment(item.updated_at).format('YYYY-MM-DD') : ''}</td>
 
+                    </tr>
+                `);
+                    });
+                    $('#cutiModal').modal('show');
+                },
+                error: function() {
+                    alert('Error fetching data.');
+                }
+            });
+        })
 
         $(document).ready(function() {
             $.ajax({
@@ -537,8 +791,6 @@
 
                     if (response.data && Array.isArray(response.data)) {
                         $.each(response.data, function(index, item) {
-                            console.log("Menambahkan item:", item.npk, item
-                                .nama); // Debugging tiap item
                             $('#npkList').append('<option value="' + item.npk + '">' + item
                                 .nama + ' (' + item.npk + ')</option>');
                         });

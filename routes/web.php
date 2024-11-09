@@ -17,10 +17,8 @@ use App\Http\Controllers\dashboardController;
 use App\Http\Controllers\PenyimpanganController;
 
 
-Route::middleware(['guest'])->group(function () {
-    Route::get('/login', [loginController::class, 'loginForm'])->name('login');
-    Route::post('/login', [loginController::class, 'authenticate']);
-});
+Route::get('/login', [loginController::class, 'loginForm'])->name('login');
+Route::post('/login', [loginController::class, 'authenticate']);
 
 Route::middleware(['auth'])->group(function () {
     //route dashboard
@@ -38,7 +36,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
         Route::post('/rekap/checkin', [rekapController::class, 'storeCheckin'])->name('rekap.storeCheckin');
         Route::post('/rekap/checkout', [rekapController::class, 'storeCheckout'])->name('rekap.storeCheckout');
-        Route::get('/rekap/export', [rekapController::class, 'exportAbsensi'])->name('rekap.export');
+        Route::get('/rekap/export', [RekapController::class, 'exportAbsensi'])->name('rekap.exportFilteredData');
         Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
         Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
         Route::post('/update-data/{npk}/{tanggal}', [rekapController::class, 'updateData'])->name('edit.data');
@@ -50,9 +48,26 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/performa/storeuserid', [performaController::class, 'storeUserId'])->name('performa.storeUserId');
         Route::get('/performa/export', [performaController::class, 'performaExport'])->name('performa.export');
         Route::get('/get-penyimpangan', [rekapController::class, 'getPenyimpangan'])->name('getPenyimpangan');
+        Route::get('/get-cuti', [rekapController::class, 'getCuti'])->name('getCuti');
+
+        Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
+        Route::post('/user', [UsersController::class, 'store']);
+        Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
+        Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
+        Route::put('/user/update/{npk}', [UsersController::class, 'update']);
+        Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
+        Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
+        Route::get('/departments/{divisionId}', [UsersController::class, 'getDepartments']);
+        Route::get('/sections/{departmentId}', [UsersController::class, 'getSections']);
+
+        //trash
+        Route::resource('absensiControllerAjax', absensiController::class);
+        Route::resource('absensiCoControllerAjax', absensiCoController::class);
+
+        Route::get('/users/export',  [UsersController::class, 'export'])->name('exportUsers');
     });
 
-    Route::middleware(['userAksesMenu:6,1,2'])->group(function () {
+    Route::middleware(['userAksesMenu:6,1,2,9'])->group(function () {
 
         //route shift
         Route::get('/shift', [ShiftController::class, 'index'])->name('shift.index');
@@ -72,19 +87,7 @@ Route::middleware(['auth'])->group(function () {
 
 
         //route data karyawan
-        Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
-        Route::post('/user', [UsersController::class, 'store']);
-        Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
-        Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
-        Route::put('/user/update/{npk}', [UsersController::class, 'update']);
-        Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
-        Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
-        Route::get('/departments/{divisionId}', [UsersController::class, 'getDepartments']);
-        Route::get('/sections/{departmentId}', [UsersController::class, 'getSections']);
 
-        //trash
-        Route::resource('absensiControllerAjax', absensiController::class);
-        Route::resource('absensiCoControllerAjax', absensiCoController::class);
     });
 });
 
@@ -117,7 +120,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
 Route::post('/registerperformaapi123', [registController::class, 'register'])->name('register');
-Route::get('/sanctum/csrf-cookie', function (Request $request) {
-    return response()->json(['csrfToken' => csrf_token()]);
-});
+// Route::get('/sanctum/csrf-cookie', function (Request $request) {
+//     return response()->json(['csrfToken' => csrf_token()]);
+// });
 Route::post('/logout', [loginController::class, 'logout'])->name('logout');

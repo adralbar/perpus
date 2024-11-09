@@ -37,6 +37,7 @@
                                 <th>Divisi</th>
                                 <th>Departemen</th>
                                 <th>Section</th>
+                                <th>Station Id</th>
                                 <th>Tanggal</th>
                                 <th>Waktu Check in</th>
                                 <th>Waktu Login Dashboard</th>

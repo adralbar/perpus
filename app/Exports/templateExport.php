@@ -39,6 +39,7 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
             '',
             '',
             'Contoh Shift yang terdaftar',
+            'Format Tanggal (startdate & enddate)',
         ];
     }
 
@@ -64,6 +65,12 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
                     'startColor' => ['argb' => 'FFFF00'], // Background kuning untuk kolom H
                 ],
             ],
+            'I1' => [
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFFF00'],
+                ],
+            ],
         ];
     }
 
@@ -73,10 +80,11 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
             \Maatwebsite\Excel\Events\AfterSheet::class => function (\Maatwebsite\Excel\Events\AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
-                $sheet->getStyle('A1:H' . ($this->userData->count() + 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                // Mengatur penyelarasan kolom
+                $sheet->getStyle('A1:I' . ($this->userData->count() + 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
                 // Atur lebar kolom
-                $sheet->getColumnDimension('A')->setWidth(15); // Lebar kolom 
+                $sheet->getColumnDimension('A')->setWidth(15);
                 $sheet->getColumnDimension('B')->setWidth(25);
                 $sheet->getColumnDimension('C')->setWidth(15);
                 $sheet->getColumnDimension('D')->setWidth(15);
@@ -84,6 +92,7 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
                 $sheet->getColumnDimension('F')->setWidth(15);
                 $sheet->getColumnDimension('G')->setWidth(15);
                 $sheet->getColumnDimension('H')->setWidth(30);
+                $sheet->getColumnDimension('I')->setWidth(30);
 
                 // Jadwal shift yang terdaftar sebagai array
                 $shiftSchedules = [
@@ -103,22 +112,30 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
                     '08:00 - 17:00',
                 ];
 
-                $rowIndex = 2; // Mulai dari baris kedua (setelah header)
+                $rowIndex = 2;
                 foreach ($shiftSchedules as $schedule) {
                     $sheet->setCellValue('H' . $rowIndex, $schedule);
                     $rowIndex++;
                 }
 
-                // Menambahkan catatan di bawah jadwal shift terakhir
-                $noteRow = $rowIndex + 1;
+                // Menambahkan catatan format tanggal di bawah jadwal shift terakhir
+                $noteRow = 2; // Baris setelah jadwal shift terakhir
+                $sheet->setCellValue('I' . $noteRow, 'YYYY-MM-DD (contoh: 2024-11-29)');
+
+
+                $noteRow += 13;
                 $sheet->setCellValue('H' . $noteRow, 'NB : Pastikan number format text');
 
+                // Mengatur gaya untuk catatan
                 $sheet->getStyle('H' . $noteRow)->getFont()->getColor()->setARGB(Color::COLOR_RED);
                 $sheet->getStyle('H' . $noteRow)->getFont()->setBold(true);
                 $sheet->getStyle('H' . $noteRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             },
         ];
     }
+
+
+
 
     public function columnFormats(): array
     {

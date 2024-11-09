@@ -16,6 +16,8 @@
                                 Tambah Karyawan
                             </button>
                         </div>
+                        <div><a href="{{ route('exportUsers') }}" class="btn btn-primary">Ekspor Data Pengguna</a>
+                        </div>
                     </div>
 
 
@@ -84,6 +86,7 @@
                             <h5 class="modal-title" id="tambahUserLabel">Tambah Karyawan</h5>
                             <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
                         </div>
+
                         <div class="modal-body">
                             <div class="modal-body">
                                 <form action="{{ url('user') }}" method="POST">

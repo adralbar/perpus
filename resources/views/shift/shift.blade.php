@@ -31,9 +31,7 @@
                         <button type="button" class="btn btn-success btn-sm mr-2" id="exportButton">
                             Download Template
                         </button>
-
                         <button type="button" class="btn btn-success btn-sm" id="exportShift">Export to Excel</button>
-
                     </div>
 
                     <div class="table-wrapper   table-responsive">
@@ -91,6 +89,7 @@
                                     <option value="09:00 - 18:20">09:00 - 18:20 (Fri)</option>
                                     <option value="08:00 - 17:00">08:00 - 17:00 (Fri)</option>
                                     <option value="OFF">OFF</option>
+                                    <option value="Dinas Luar Stand By">Dinas Luar Stand By</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -196,6 +195,7 @@
                                     <option value="09:00 - 18:20">09:00 - 18:20 (Fri)</option>
                                     <option value="08:00 - 17:00">08:00 - 17:00 (Fri)</option>
                                     <option value="OFF">OFF</option>
+                                    <option value="Dinas Luar Stand By">Dinas Luar Stand By</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -238,9 +238,12 @@
         <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
         <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
-        <script src="{{ asset('dist/js/daterangepicker.js') }}"></script>
 
         <script>
+            window.onload = function() {
+                alert('Silahkan isi Filter terlebih dahulu!');
+            };
+
             let shiftHistoryUrl;
             var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox();
 
@@ -266,6 +269,7 @@
                         }
                     },
                     pageLength: -1,
+                    deferLoading: 0,
                     columns: [{
                             data: 'nama',
                             name: 'nama'
@@ -363,7 +367,7 @@
                     tableHead.innerHTML = '';
                     tableBody.innerHTML = '';
 
-                    tableHead.innerHTML = '<th class="sticky-header">Nama (NPK)</th>';
+                    tableHead.innerHTML = `<th class="sticky-header">Nama (NPK)</th>`;
 
                     const uniqueDates = [...new Set(data.map(entry => entry.date))];
 
@@ -553,6 +557,35 @@
                     console.log('Method:', method);
                     console.log('data:', $(this).serialize());
                 });
+                $('#editShiftForm').submit(function(e) {
+                    e.preventDefault();
+
+                    const shift1 = $('#shift1').val();
+                    const date = $('#date').val();
+                    const npk = $('#npk').val();
+
+                    $.ajax({
+                        url: '{{ route('shift.store2') }}',
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            $('#editShiftModal').modal('hide');
+                            $('#myTable').DataTable().ajax.reload();
+                            alert('Shift berhasil diperbarui!');
+                        },
+
+                        error: function(xhr, status, error) {
+                            if (xhr.status === 403) {
+                                // Menangkap pesan error khusus untuk status 403
+                                alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
+                            } else {
+                                console.error('Error:', xhr.responseText);
+                                alert('Terjadi kesalahan: ' + xhr.responseJSON.message ||
+                                    'Silakan coba lagi.');
+                            }
+                        }
+                    });
+                });
 
                 $('#showEditShift').on('click', function() {
                     $('#shiftHistory').hide();
@@ -597,33 +630,7 @@
 
             $('#reservation').daterangepicker()
 
-            $('#editShiftForm').submit(function(e) {
-                e.preventDefault();
 
-                const shift1 = $('#shift1').val();
-                const date = $('#date').val();
-                const npk = $('#npk').val();
-
-                $.ajax({
-                    url: '{{ route('shift.store2') }}',
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        $('#editShiftModal').modal('hide');
-                        $('#myTable').DataTable().ajax.reload();
-                        alert('Shift berhasil diperbarui!');
-                    },
-                    error: function(xhr, status, error) {
-                        if (xhr.status === 403) {
-                            // Menangkap pesan error khusus untuk status 403
-                            alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
-                        } else {
-                            console.error('Error:', xhr.responseText);
-                            alert('Terjadi kesalahan: ' + xhr.responseJSON.message || 'Silakan coba lagi.');
-                        }
-                    }
-                });
-            });
 
             $(document).ready(function() {
                 $('#exportShift').on('click', function() {

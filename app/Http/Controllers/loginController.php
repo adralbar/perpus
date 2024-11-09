@@ -34,13 +34,14 @@ class loginController extends Controller
 
             $request->session()->put('role_id', $roleId);
 
-            if ($roleId == 2) {
+            if (in_array($roleId, [2, 9])) {
                 return redirect()->intended('/shift');
             } elseif (in_array($roleId, [1, 6])) {
                 return redirect()->intended('/rekap');
             }
 
-            return redirect()->intended('/home'); // atau halaman default lain
+
+            return redirect()->intended('/'); // atau halaman default lain
         } else {
             return back()->withErrors([
                 'login' => 'Username atau password salah.',

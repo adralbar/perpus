@@ -15,14 +15,70 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $usersData = [
+            // AKUN DIGITAL FOR TESTING
+            [
+                'npk_sistem' => 'KARYAWAN',
+                'npk' => 'KARYAWAN',
+                'nama' => 'Arip Dwi Sulistyo',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '7',  // default
+            ],
+            [
+                'npk_sistem' => 'PLANT',
+                'npk' => 'PLANT',
+                'nama' => 'Arip Dwi Sulistyo',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '5',  // default
+            ],
+            [
+                'npk_sistem' => 'TECHSUPPORT',
+                'npk' => 'TECHSUPPORT',
+                'nama' => 'Arip Dwi Sulistyo',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '4',  // default
+            ],
+            [
+                'npk_sistem' => 'DIGITALISASI',
+                'npk' => 'DIGITALISASI',
+                'nama' => 'Arip Dwi Sulistyo',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '3',  // default
+            ],
+            [
+                'npk_sistem' => 'ADMINDIGI',
+                'npk' => 'ADMINDIGI',
+                'nama' => 'Arip Dwi Sulistyo',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '2',  // default
+            ],
             [
                 'npk_sistem' => 'SUPERADMIN',
                 'npk' => 'SUPERADMIN',
                 'nama' => 'Arif superadmin',
                 'password' => bcrypt('1234'),
                 'no_telp' => '081329964278',
-                'section_id' => '1',
-                'department_id' => '1',
+                'section_id' => '6',
+                'department_id' => '13',
                 'division_id' => '1',
                 'role_id' => '1',
             ],
@@ -32,8 +88,8 @@ class UserSeeder extends Seeder
                 'nama' => 'Arif admin',
                 'password' => bcrypt('1234'),
                 'no_telp' => '081329964278',
-                'section_id' => '1',
-                'department_id' => '1',
+                'section_id' => '6',
+                'department_id' => '13',
                 'division_id' => '1',
                 'role_id' => '2',
             ],
@@ -43,8 +99,8 @@ class UserSeeder extends Seeder
                 'nama' => 'Arif section',
                 'password' => bcrypt('1234'),
                 'no_telp' => '081329964278',
-                'section_id' => '1',
-                'department_id' => '1',
+                'section_id' => '6',
+                'department_id' => '13',
                 'division_id' => '1',
                 'role_id' => '3',
             ],
@@ -54,8 +110,8 @@ class UserSeeder extends Seeder
                 'nama' => 'Arif department',
                 'password' => bcrypt('1234'),
                 'no_telp' => '081329964278',
-                'section_id' => '1',
-                'department_id' => '1',
+                'section_id' => '6',
+                'department_id' => '13',
                 'division_id' => '1',
                 'role_id' => '4',
             ],
@@ -65,8 +121,8 @@ class UserSeeder extends Seeder
                 'nama' => 'Arif division',
                 'password' => bcrypt('1234'),
                 'no_telp' => '081329964278',
-                'section_id' => '1',
-                'department_id' => '1',
+                'section_id' => '6',
+                'department_id' => '13',
                 'division_id' => '1',
                 'role_id' => '5',
             ],
@@ -76,12 +132,33 @@ class UserSeeder extends Seeder
                 'nama' => 'Arif hrd',
                 'password' => bcrypt('1234'),
                 'no_telp' => '081329964278',
-                'section_id' => '1',
-                'department_id' => '1',
+                'section_id' => '6',
+                'department_id' => '13',
                 'division_id' => '1',
                 'role_id' => '6',
             ],
-
+            [
+                'npk_sistem' => 'DIREKSI',
+                'npk' => 'DIREKSI',
+                'nama' => 'Arif DIREKSI',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '8',
+            ],
+            [
+                'npk_sistem' => 'ADMINDEP',
+                'npk' => 'ADMINDEP',
+                'nama' => 'Arif ADMINDEP',
+                'password' => bcrypt('1234'),
+                'no_telp' => '081329964278',
+                'section_id' => '6',
+                'department_id' => '13',
+                'division_id' => '1',
+                'role_id' => '9',
+            ],
             [
                 'npk_sistem' => '0706',
                 'npk' => '0706',
@@ -201,7 +278,7 @@ class UserSeeder extends Seeder
                 'section_id' => '4',
                 'department_id' => '15',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '2',  // default
             ],
             [
                 'npk_sistem' => '1675',
@@ -597,7 +674,7 @@ class UserSeeder extends Seeder
                 'section_id' => '8',
                 'department_id' => '16',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '91403',
@@ -630,7 +707,7 @@ class UserSeeder extends Seeder
                 'section_id' => '9',
                 'department_id' => '15',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '4',  // default
             ],
             [
                 'npk_sistem' => '1658',
@@ -652,7 +729,7 @@ class UserSeeder extends Seeder
                 'section_id' => '11',
                 'department_id' => '15',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '1013',
@@ -707,7 +784,7 @@ class UserSeeder extends Seeder
                 'section_id' => '12',
                 'department_id' => '16',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '8',  // default
             ],
             [
                 'npk_sistem' => '1659',
@@ -740,7 +817,7 @@ class UserSeeder extends Seeder
                 'section_id' => '13',
                 'department_id' => '16',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '1591',
@@ -751,7 +828,7 @@ class UserSeeder extends Seeder
                 'section_id' => '13',
                 'department_id' => '16',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '6',  // default
             ],
             [
                 'npk_sistem' => '91739',
@@ -1345,7 +1422,7 @@ class UserSeeder extends Seeder
                 'section_id' => '18',
                 'department_id' => '17',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '4',  // default
             ],
             [
                 'npk_sistem' => '1660',
@@ -1356,7 +1433,7 @@ class UserSeeder extends Seeder
                 'section_id' => '18',
                 'department_id' => '17',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '0024',
@@ -1367,7 +1444,7 @@ class UserSeeder extends Seeder
                 'section_id' => '18',
                 'department_id' => '17',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '0957',
@@ -1422,7 +1499,7 @@ class UserSeeder extends Seeder
                 'section_id' => '20',
                 'department_id' => '18',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '8',  // default
             ],
             [
                 'npk_sistem' => '0216',
@@ -1433,7 +1510,7 @@ class UserSeeder extends Seeder
                 'section_id' => '20',
                 'department_id' => '18',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '0883',
@@ -1455,7 +1532,7 @@ class UserSeeder extends Seeder
                 'section_id' => '20',
                 'department_id' => '18',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '0062',
@@ -1466,7 +1543,7 @@ class UserSeeder extends Seeder
                 'section_id' => '21',
                 'department_id' => '2',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '2',  // default
             ],
             [
                 'npk_sistem' => '0285',
@@ -1477,7 +1554,7 @@ class UserSeeder extends Seeder
                 'section_id' => '21',
                 'department_id' => '2',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '0320',
@@ -1719,7 +1796,7 @@ class UserSeeder extends Seeder
                 'section_id' => '25',
                 'department_id' => '2',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '2',  // default
             ],
             [
                 'npk_sistem' => '0030',
@@ -4029,7 +4106,7 @@ class UserSeeder extends Seeder
                 'section_id' => '27',
                 'department_id' => '13',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '0046',
@@ -4073,7 +4150,7 @@ class UserSeeder extends Seeder
                 'section_id' => '28',
                 'department_id' => '13',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '2',  // default
             ],
             [
                 'npk_sistem' => '0375',
@@ -4084,7 +4161,7 @@ class UserSeeder extends Seeder
                 'section_id' => '28',
                 'department_id' => '13',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '0575',
@@ -5492,7 +5569,7 @@ class UserSeeder extends Seeder
                 'section_id' => '33',
                 'department_id' => '3',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '0647',
@@ -5514,7 +5591,7 @@ class UserSeeder extends Seeder
                 'section_id' => '33',
                 'department_id' => '3',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '1611',
@@ -5525,7 +5602,7 @@ class UserSeeder extends Seeder
                 'section_id' => '33',
                 'department_id' => '3',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '1617',
@@ -5536,7 +5613,7 @@ class UserSeeder extends Seeder
                 'section_id' => '33',
                 'department_id' => '3',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '2',  // default
             ],
             [
                 'npk_sistem' => '1513',
@@ -5811,7 +5888,7 @@ class UserSeeder extends Seeder
                 'section_id' => '35',
                 'department_id' => '5',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '5',  // default
             ],
             [
                 'npk_sistem' => '0106',
@@ -5822,7 +5899,7 @@ class UserSeeder extends Seeder
                 'section_id' => '35',
                 'department_id' => '5',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '1569',
@@ -6537,7 +6614,7 @@ class UserSeeder extends Seeder
                 'section_id' => '36',
                 'department_id' => '5',
                 'division_id' => '1',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '0033',
@@ -6713,7 +6790,7 @@ class UserSeeder extends Seeder
                 'section_id' => '37',
                 'department_id' => '3',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '1618',
@@ -6724,7 +6801,7 @@ class UserSeeder extends Seeder
                 'section_id' => '37',
                 'department_id' => '3',
                 'division_id' => '2',
-                'role_id' => '7',  // default
+                'role_id' => '2',  // default
             ],
             [
                 'npk_sistem' => '1648',
@@ -6746,7 +6823,7 @@ class UserSeeder extends Seeder
                 'section_id' => '38',
                 'department_id' => '16',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '3',  // default
             ],
             [
                 'npk_sistem' => '0813',
@@ -6757,7 +6834,7 @@ class UserSeeder extends Seeder
                 'section_id' => '38',
                 'department_id' => '16',
                 'division_id' => '3',
-                'role_id' => '7',  // default
+                'role_id' => '9',  // default
             ],
             [
                 'npk_sistem' => '90921',

@@ -45,6 +45,10 @@
                     name: 'section_nama'
                 },
                 {
+                    data: 'section_id',
+                    name: 'section_id'
+                },
+                {
                     data: 'tanggal',
                     name: 'tanggal'
                 },

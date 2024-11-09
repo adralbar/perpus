@@ -26,7 +26,7 @@
 
 .bootstrap-duallistbox-container .move,
 .bootstrap-duallistbox-container .remove {
-  width: 100%;
+  width: 60%;
 }
 
 .bootstrap-duallistbox-container .btn-group .btn {
@@ -69,11 +69,10 @@
 
 .bootstrap-duallistbox-container.moveonselect .move,
 .bootstrap-duallistbox-container.moveonselect .remove {
-  display:block;
+  display:none;
 }
 
 .bootstrap-duallistbox-container.moveonselect .moveall,
 .bootstrap-duallistbox-container.moveonselect .removeall {
   width: 100%;
 }
-

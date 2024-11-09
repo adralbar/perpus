@@ -35,6 +35,12 @@ class RoleSeeder extends Seeder
             [
                 'nama' => 'karyawan'
             ],
+            [
+                'nama' => 'Direksi'
+            ],
+            [
+                'nama' => 'Admin Department'
+            ],
         ];
         foreach ($roleData as $key => $val) {
             RoleModel::create($val);

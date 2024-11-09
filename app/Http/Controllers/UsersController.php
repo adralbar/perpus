@@ -10,6 +10,8 @@ use App\Models\DivisionModel;
 use App\Models\DepartmentModel;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\UsersExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UsersController extends Controller
 {
@@ -191,5 +193,11 @@ class UsersController extends Controller
     {
         $sections = SectionModel::where('department_id', $departmentId)->get();
         return response()->json($sections);
+    }
+
+    public function export()
+    {
+        $user = Auth::user();
+        return Excel::download(new UsersExport($user->role_id, $user->section_id), 'users.xlsx');
     }
 }

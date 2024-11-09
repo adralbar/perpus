@@ -46,6 +46,7 @@ class performaController extends Controller
                 'absensici.tanggal',
                 'first_checkin.waktuci AS waktuci_checkin',
                 DB::raw('TIME(pcd_login_logs.created_at) AS waktu_login_dashboard'),
+                DB::raw('TIME(pcd_login_logs.station_id)'),
                 DB::raw('TIMEDIFF(TIME(pcd_login_logs.created_at), TIME(first_checkin.waktuci)) AS selisih_waktu'),
                 'user2.division_id',
                 'user2.department_id',
