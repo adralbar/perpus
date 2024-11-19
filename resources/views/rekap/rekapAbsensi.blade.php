@@ -2,8 +2,8 @@
 
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
-<link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}">
-
+{{-- <link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}"> --}}
+<link rel="stylesheet" href="{{ asset('lte/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css') }}">
 @section('content')
     <div class="container-fluid">
         <div class="content-wrapper">
@@ -56,7 +56,7 @@
                             <input type="date" id="endDate" class="form-control">
                         </div>
                     </div>
-                    <div class="text-center  mb-3">
+                    <div class="text-center mb-3">
                         <button id="submitFilters" type="button" class="btn btn-primary btn-sm"
                             style="border-radius: 5px;">
                             Tampilkan Data
@@ -395,9 +395,9 @@
     <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
-    <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
+    {{-- <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script> --}}
     <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script>
-
+    <script src="{{ asset('lte/plugins/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js') }}"></script>
     <script>
         window.onload = function() {
             alert('Silahkan isi Filter tanggal terlebih dahulu!');
@@ -429,10 +429,10 @@
             // Tambahkan opsi lain sesuai kebutuhan
         });
 
-        // $('select[name="selected_npk[]"]').attr('multiple', 'multiple');
 
         $(document).ready(function() {
             function loadDataTable(filteredData) {
+
                 if ($.fn.dataTable.isDataTable('#myTable')) {
                     $('#myTable').DataTable().clear().rows.add(filteredData).draw();
                 } else {
@@ -480,16 +480,17 @@
                                 data: 'waktuci',
                                 name: 'waktuci',
                                 render: function(data, type, row) {
-                                    return data ? data.slice(0, -3) : '';
+                                    return data && data !== 'NO IN' ? data.slice(0, -3) : data;
                                 }
                             },
                             {
                                 data: 'waktuco',
                                 name: 'waktuco',
                                 render: function(data, type, row) {
-                                    return data ? data.slice(0, -3) : '';
+                                    return data && data !== 'NO OUT' ? data.slice(0, -3) : data;
                                 }
                             },
+
                             {
                                 data: 'status',
                                 name: 'status'
@@ -532,6 +533,7 @@
                         url: "{{ route('rekap.getData') }}",
                         type: 'GET',
                         processing: true,
+
                         data: {
                             startDate: $('#startDate').val(),
                             endDate: $('#endDate').val(),
@@ -630,8 +632,11 @@
                         Section: row.section_nama,
                         Tanggal: row.tanggal,
                         Shift1: row.shift1,
-                        WaktuCheckIn: row.waktuci ? row.waktuci.slice(0, -3) : '',
-                        WaktuCheckOut: row.waktuco ? row.waktuco.slice(0, -3) : '',
+                        WaktuCheckIn: (row.waktuci && row.waktuci !== 'NO IN') ? row.waktuci
+                            .slice(0, -3) : (row.waktuci || ''),
+                        WaktuCheckOut: (row.waktuco && row.waktuco !== 'NO OUT') ? row.waktuco
+                            .slice(0, -3) : (row.waktuco || ''),
+
                         Status: row.status,
                     }));
 

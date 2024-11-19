@@ -208,8 +208,14 @@ class shiftController extends Controller
     {
         if (Auth::user()->role_id != 1) {
             $startDate = Carbon::parse($request->input('start_date'));
+            $endDate = Carbon::parse($request->input('end_date'));
 
-            if ($startDate->lt(Carbon::today())) {
+            $maxEndDate = $startDate->copy()->addDays(14);
+            if ($endDate->gt($maxEndDate)) {
+                return response()->json(['error' => 'Rentang tanggal tidak boleh lebih dari 2 minggu.'], 403);
+            }
+
+            if ($startDate->lte(Carbon::today())) {
                 return response()->json(['error' => 'Anda tidak diizinkan membuat shift untuk hari ini atau sebelumnya.'], 403);
             }
         }

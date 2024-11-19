@@ -11,18 +11,14 @@
             <p class="pl-3 pb-3 font-weight-bold h3">Dashboard</p>
 
             <div class="d-flex align-items-center mb-3">
-                <select id="filterYear" class="form-select" style="width: 150px; margin-right: 20px;">
+                <select id="filterYear" class="form-select" style="width: 150px; margin-right: 20px;  margin-left: 20px;">
                     <option value="">Pilih Tahun</option>
                     @foreach ($years as $year)
                         <option value="{{ $year }}">{{ $year }}</option>
                     @endforeach
                 </select>
-                <button type="button" class="btn btn-light border btnReset fw-normal" data-toggle="modal"
-                    data-target="#checkinModal">
-                    Reset chart & table
-                </button>
-            </div>
 
+            </div>
             <!-- Chart Area -->
             <div class="chart-container" style="margin: 20px; border-radius: 8px; overflow: hidden;">
                 <canvas id="myChart" style="width: 100%; height: 400px; background-color: #ffffff;"></canvas>
@@ -100,7 +96,8 @@
             }
         });
 
-        // Function to load chart data
+        //Function to load chart data
+
         function loadChartData(year) {
             $.ajax({
                 url: '{{ route('data.chart') }}',
@@ -123,11 +120,22 @@
             data: {
                 labels: @json($labels),
                 datasets: [{
-                    label: 'Total keterlambatan',
-                    backgroundColor: '#3f6791',
-                    data: @json($totals),
-                    borderWidth: 1
-                }]
+                        label: 'Total keterlambatan',
+                        backgroundColor: '#3f6791',
+                        data: @json($totals),
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Target 0.8%',
+                        type: 'line', // Tambahkan sebagai garis
+                        data: Array(@json($labels).length).fill(
+                        0.8), // Isi dengan nilai target 0.8
+                        borderColor: '#ff6347',
+                        backgroundColor: 'rgba(255, 99, 71, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.4 // Untuk membuat garis lebih halus
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -150,8 +158,7 @@
                 onClick: function(event, elements) {
                     if (elements.length > 0) {
                         const index = elements[0].index;
-                        const selectedMonthName = this.data.labels[
-                            index];
+                        const selectedMonthName = this.data.labels[index];
                         const monthMap = {
                             'January': '01',
                             'Jan': '01',
@@ -179,8 +186,7 @@
                             'Dec': '12'
                         };
 
-                        const selectedMonth = monthMap[selectedMonthName] ||
-                            '';
+                        const selectedMonth = monthMap[selectedMonthName] || '';
                         const year = $('#filterYear').val();
 
                         const url1 = '{{ route('data.table1b') }}' +
@@ -203,12 +209,13 @@
             }
         });
 
+
         $(document).ready(function() {
             table1 = $('#table1').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route('data.table1') }}',
+                    url: '{{ route('data.table1b') }}',
                     type: 'GET',
                     data: function(d) {
                         d.tahun = $('#filterYear').val();
@@ -322,26 +329,13 @@
 
             loadChartData(year);
             if (table1) {
-                table1.ajax.url('{{ route('data.table1') }}?tahun=' + encodeURIComponent(year)).load();
+                table1.ajax.url('{{ route('data.table1b') }}?tahun=' + encodeURIComponent(year)).load();
             }
         });
 
 
-        $('.btnReset').on('click', function() {
-            resetChartAndTable();
-        });
 
 
-        function resetChartAndTable() {
-            myChart.data.labels = @json($labels);
-            myChart.data.datasets[0].data = @json($totals);
-            myChart.update();
-
-            $('#filterYear').val('');
-            if (table1) {
-                table1.ajax.url('{{ route('data.table1') }}').load();
-            }
-        }
 
         @if ($errors->any())
             Swal.fire({

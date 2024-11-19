@@ -45,12 +45,16 @@
                     name: 'section_nama'
                 },
                 {
-                    data: 'section_id',
-                    name: 'section_id'
+                    data: 'station_id',
+                    name: 'station_id'
                 },
                 {
                     data: 'tanggal',
                     name: 'tanggal'
+                },
+                {
+                    data: 'shift1',
+                    name: 'shift1'
                 },
                 {
                     data: 'waktuci_checkin',

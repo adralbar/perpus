@@ -39,6 +39,7 @@
                                 <th>Section</th>
                                 <th>Station Id</th>
                                 <th>Tanggal</th>
+                                <th>Shift</th>
                                 <th>Waktu Check in</th>
                                 <th>Waktu Login Dashboard</th>
                                 <th>Selisih Waktu</th>
@@ -104,10 +105,6 @@
 
                             </datalist>
                         </div>
-
-
-
-
                         <button type="submit" class="btn btn-primary">Simpan</button>
                     </form>
                 </div>

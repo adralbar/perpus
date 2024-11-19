@@ -20,6 +20,79 @@ class performaController extends Controller
     {
         return view('performa.performa');
     }
+    // public function getData(Request $request)
+    // {
+    //     $startDate = $request->input('startDate');
+    //     $endDate = $request->input('endDate');
+
+    //     $query = DB::table('absensici')
+    //         ->leftJoin('users as user1', function ($join) {
+    //             $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(user1.npk USING utf8mb4)'));
+    //         })
+    //         ->join('pcd_master_users', function ($join) {
+    //             $join->on(DB::raw('CONVERT(user1.npk USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_master_users.npk USING utf8mb4)'));
+    //         })
+    //         ->join('pcd_login_logs', function ($join) {
+    //             $join->on(DB::raw('CONVERT(pcd_master_users.id USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_login_logs.user_id USING utf8mb4)'))
+    //                 ->on('absensici.tanggal', '=', DB::raw('DATE(pcd_login_logs.created_at)'));
+    //         })
+    //         ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
+    //             $join->on(DB::raw('CONVERT(first_checkin.npk USING utf8mb4)'), '=', DB::raw('CONVERT(absensici.npk USING utf8mb4)'))
+    //                 ->on('first_checkin.tanggal', '=', 'absensici.tanggal');
+    //         })
+    //         ->join('users as user2', function ($join) {
+    //             $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(user2.npk USING utf8mb4)'));
+    //         })
+    //         ->select(
+    //             'user2.nama',
+    //             'absensici.npk',
+    //             'absensici.tanggal',
+    //             'first_checkin.waktuci AS waktuci_checkin',
+    //             DB::raw('TIME(pcd_login_logs.created_at) AS waktu_login_dashboard'),
+    //             DB::raw('TIME(pcd_login_logs.station_id)'),
+    //             DB::raw('TIMEDIFF(TIME(pcd_login_logs.created_at), TIME(first_checkin.waktuci)) AS selisih_waktu'),
+    //             'user2.division_id',
+    //             'user2.department_id',
+    //             'user2.section_id'
+    //         )
+    //         ->distinct()
+    //         ->orderBy('absensici.tanggal', 'desc');
+
+    //     if (!empty($startDate) && !empty($endDate)) {
+    //         $query->whereBetween('absensici.tanggal', [$startDate, $endDate]);
+    //     }
+
+    //     $data = $query->get();
+    //     foreach ($data as $item) {
+    //         $section = SectionModel::find($item->section_id);
+    //         $department = $section ? DepartmentModel::find($section->department_id) : null;
+    //         $division = $department ? DivisionModel::find($department->division_id) : null;
+
+    //         // Tambahkan data section, department, dan division ke setiap item
+    //         $item->section_nama = $section ? $section->nama : 'Unknown';
+    //         $item->department_nama = $department ? $department->nama : 'Unknown';
+    //         $item->division_nama = $division ? $division->nama : 'Unknown';
+    //     }
+
+    //     // Prepare the data for DataTables
+    //     return DataTables::of($data)
+    //         ->addIndexColumn()
+    //         ->addColumn('aksi', function ($row) {
+    //             $btn = '<button class="btn btn-primary btn-sm btnDetail"
+    //         data-nama="' . e($row->nama) . '"
+    //         data-npk="' . e($row->npk) . '"
+    //         data-tanggal="' . e($row->tanggal) . '"  
+    //         data-section="' . e($row->section_nama) . '"
+    //         data-department="' . e($row->department_nama) . '"
+    //         data-division="' . e($row->division_nama) . '"> 
+    //         Detail
+    //         </button>';
+    //             return $btn;
+    //         })
+    //         ->rawColumns(['aksi'])
+    //         ->make(true);
+    // }
+
     public function getData(Request $request)
     {
         $startDate = $request->input('startDate');
@@ -29,9 +102,18 @@ class performaController extends Controller
             ->leftJoin('users as user1', function ($join) {
                 $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(user1.npk USING utf8mb4)'));
             })
-            ->join('pcd_login_logs', function ($join) {
-                $join->on(DB::raw('CONVERT(user1.id USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_login_logs.user_id USING utf8mb4)'))
-                    ->on('absensici.tanggal', '=', DB::raw('DATE(pcd_login_logs.created_at)'));
+            ->leftJoin('kategorishift', function ($join) {
+                $join->on(DB::raw('CONVERT(absensici.npk USING utf8mb4)'), '=', DB::raw('CONVERT(kategorishift.npk USING utf8mb4)'))
+                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            })
+            ->join('pcd_master_users', function ($join) {
+                $join->on(DB::raw('CONVERT(user1.npk USING utf8mb4)'), '=', DB::raw('CONVERT(pcd_master_users.npk USING utf8mb4)'));
+            })
+            ->join(DB::raw('(SELECT user_id, DATE(created_at) as tanggal, MIN(created_at) AS first_login_time, MAX(station_id) AS station_id 
+                         FROM pcd_login_logs 
+                         GROUP BY user_id, DATE(created_at)) as first_login'), function ($join) {
+                $join->on(DB::raw('CONVERT(pcd_master_users.id USING utf8mb4)'), '=', DB::raw('CONVERT(first_login.user_id USING utf8mb4)'))
+                    ->on('absensici.tanggal', '=', 'first_login.tanggal');
             })
             ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci FROM absensici GROUP BY npk, tanggal) as first_checkin'), function ($join) {
                 $join->on(DB::raw('CONVERT(first_checkin.npk USING utf8mb4)'), '=', DB::raw('CONVERT(absensici.npk USING utf8mb4)'))
@@ -45,13 +127,20 @@ class performaController extends Controller
                 'absensici.npk',
                 'absensici.tanggal',
                 'first_checkin.waktuci AS waktuci_checkin',
-                DB::raw('TIME(pcd_login_logs.created_at) AS waktu_login_dashboard'),
-                DB::raw('TIME(pcd_login_logs.station_id)'),
-                DB::raw('TIMEDIFF(TIME(pcd_login_logs.created_at), TIME(first_checkin.waktuci)) AS selisih_waktu'),
+                'kategorishift.shift1',
+                DB::raw('TIME(first_login.first_login_time) AS waktu_login_dashboard'),
+                'first_login.station_id', // Ambil station_id langsung dari subquery
+                DB::raw("
+                TIMEDIFF(
+                    TIME(first_login.first_login_time), 
+                    STR_TO_DATE(SUBSTRING_INDEX(kategorishift.shift1, ' - ', 1), '%H:%i')
+                ) AS selisih_waktu
+            "),
                 'user2.division_id',
                 'user2.department_id',
-                'user2.section_id',
+                'user2.section_id'
             )
+            ->whereIn('user2.section_id', [31, 25])
             ->distinct()
             ->orderBy('absensici.tanggal', 'desc');
 
@@ -65,13 +154,11 @@ class performaController extends Controller
             $department = $section ? DepartmentModel::find($section->department_id) : null;
             $division = $department ? DivisionModel::find($department->division_id) : null;
 
-            // Tambahkan data section, department, dan division ke setiap item
             $item->section_nama = $section ? $section->nama : 'Unknown';
             $item->department_nama = $department ? $department->nama : 'Unknown';
             $item->division_nama = $division ? $division->nama : 'Unknown';
         }
 
-        // Prepare the data for DataTables
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('aksi', function ($row) {

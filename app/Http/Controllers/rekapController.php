@@ -99,9 +99,14 @@ class rekapController extends Controller
                 ->first();
             $shift1 = $latestShift ? $latestShift->shift1 : null;
 
-            // Tentukan status
             $status = 'No Shift';
-            if ($latestShift) {
+            $role = $checkin->user ? $checkin->user->role : null;
+
+            // Cek jika role adalah 5 atau 8, maka status langsung 'Tepat Waktu'
+            if ($role && in_array($role->id, [5, 8])) {
+                $status = 'Tepat Waktu';
+            } elseif ($latestShift) {
+                // Jika tidak, cek apakah terlambat atau tepat waktu berdasarkan shift
                 $shiftIn = explode(' - ', str_replace('.', ':', $shift1))[0];
                 $shiftInFormatted = date('H:i:s', strtotime($shiftIn));
                 $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
@@ -122,13 +127,21 @@ class rekapController extends Controller
             ];
         }
 
-        // Proses hasil check-out
         foreach ($checkoutResults as $checkout) {
             $key = "{$checkout->npk}-{$checkout->tanggal}";
+            $role = $checkout->user ? $checkout->user->role : null;
+
+            // Tentukan status default
+            $status = 'NO IN';
+
+            // Jika user dengan role tertentu (misal 5 atau 8), berikan status "Tepat Waktu" secara default
+            if ($role && in_array($role->id, [5, 8])) {
+                $status = 'Tepat Waktu';
+            }
 
             // Cek apakah ada check-in untuk tanggal ini
             if (isset($results[$key])) {
-                // Jika waktu check-in lebih besar dari waktu check-out, maka masukkan waktu checkout ke hari sebelumnya
+                // Jika waktu check-in lebih besar dari waktu check-out, masukkan waktu checkout ke hari sebelumnya
                 if ($results[$key]['waktuci'] > $checkout->waktuco) {
                     // Hari sebelumnya
                     $previousDay = date('Y-m-d', strtotime("{$checkout->tanggal} -1 day"));
@@ -149,7 +162,7 @@ class rekapController extends Controller
                             'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                             'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                             'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                            'status' => 'No Check-in' // Status No Check-in untuk entri tanpa check-in
+                            'status' => $status // Status untuk entri tanpa check-in
                         ];
                     }
                 } else {
@@ -176,13 +189,13 @@ class rekapController extends Controller
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                         'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                         'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                        'status' => 'Unknown' // Status unknown untuk entri tanpa check-in
+                        'status' => $status
                     ];
                 }
             }
         }
 
-        $noCheckData = Shift::with(['user.section.department.division'])
+        $noCheckData = Shift::with(['user.section.department.division', 'user.role'])
             ->leftJoin('absensici', function ($join) {
                 $join->on('absensici.npk', '=', 'kategorishift.npk')
                     ->on('absensici.tanggal', '=', 'kategorishift.date');
@@ -203,12 +216,12 @@ class rekapController extends Controller
             ->where('kategorishift.date', '<=', $today)
             ->where('kategorishift.shift1', '!=', 'OFF');
 
-        // Menambahkan filter tanggal jika $startDate dan $endDate tidak kosong
+        // Tambahkan filter tanggal jika $startDate dan $endDate tidak kosong
         if (!empty($startDate) && !empty($endDate)) {
             $noCheckData->whereBetween('kategorishift.date', [$startDate, $endDate]);
         }
 
-        // Menambahkan filter NPK jika terdapat NPK yang dipilih
+        // Tambahkan filter NPK jika terdapat NPK yang dipilih
         if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
             $selectedNPK = $request->selectedNpk;
             $noCheckData->whereIn('kategorishift.npk', $selectedNPK);
@@ -219,27 +232,88 @@ class rekapController extends Controller
             ->get();
 
 
+        $noCheckData = Shift::with(['user.section.department.division', 'user.role'])
+            ->leftJoin('absensici', function ($join) {
+                $join->on('absensici.npk', '=', 'kategorishift.npk')
+                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            })
+            ->leftJoin('absensico', function ($join) {
+                $join->on('absensico.npk', '=', 'kategorishift.npk')
+                    ->on('absensico.tanggal', '=', 'kategorishift.date');
+            })
+            ->select(
+                'kategorishift.npk',
+                'kategorishift.date as tanggal',
+                'kategorishift.shift1',
+                DB::raw('IFNULL(DATE_FORMAT(MIN(absensici.waktuci), "%H:%i"), "NO IN") as waktuci'),
+                DB::raw('IFNULL(DATE_FORMAT(MAX(absensico.waktuco), "%H:%i"), "NO OUT") as waktuco')
+            )
+            ->whereNull('absensici.waktuci')
+            ->whereNull('absensico.waktuco')
+            ->where('kategorishift.date', '<=', $today)
+            ->where('kategorishift.shift1', '!=', 'OFF');
+
+        // Tambahkan filter tanggal jika $startDate dan $endDate tidak kosong
+        if (!empty($startDate) && !empty($endDate)) {
+            $noCheckData->whereBetween('kategorishift.date', [$startDate, $endDate]);
+        }
+
+        // Tambahkan filter NPK jika terdapat NPK yang dipilih
+        if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
+            $selectedNPK = $request->selectedNpk;
+            $noCheckData->whereIn('kategorishift.npk', $selectedNPK);
+        }
+
+        $noCheckData = $noCheckData
+            ->groupBy('kategorishift.npk', 'kategorishift.date', 'kategorishift.shift1')
+            ->get();
+
         foreach ($noCheckData as $noCheck) {
             $key = "{$noCheck->npk}-{$noCheck->tanggal}";
+            $role = $noCheck->user ? $noCheck->user->role : null;
 
-            // Mengambil shift terakhir berdasarkan date atau kolom lain yang relevan
+            // Ambil shift terakhir berdasarkan date atau kolom lain yang relevan
             $latestShift = Shift::where('npk', $noCheck->npk)
                 ->where('date', $noCheck->tanggal)
-                ->orderBy('date', 'desc') // Pastikan date diurutkan dari terbaru
-                ->latest('created_at')    // Jika ada kolom updated_at, tambahkan latest berdasarkan kolom ini
+                ->orderBy('date', 'desc')
+                ->latest('created_at') // Jika ada kolom updated_at, tambahkan latest berdasarkan kolom ini
                 ->first();
             $shift1 = $latestShift ? $latestShift->shift1 : null;
 
-            if (!isset($results[$key])) {
-                $status = ($shift1 === "Dinas Luar Stand By") ? "Dinas Luar Stand By" : "Mangkir";
+            // Dapatkan waktu saat ini
+            $currentTime = now();
+            $shiftStartTime = null;
 
+            // Tentukan waktu mulai shift jika formatnya valid
+            if ($shift1 && !in_array($shift1, ['Dinas Luar Stand By', 'OFF']) && strpos($shift1, ' - ') !== false) {
+                $shiftTimes = explode(' - ', $shift1);
+                if (count($shiftTimes) == 2 && preg_match('/^\d{2}:\d{2}$/', $shiftTimes[0])) {
+                    $shiftStartTime = Carbon::createFromFormat('H:i', $shiftTimes[0]);
+                } else {
+                    $shiftStartTime = null;
+                    Log::warning("Format shift tidak valid: " . $shift1);
+                }
+            }
+
+            // Tentukan status berdasarkan kondisi yang relevan
+            if ($role && in_array($role->id, [5, 8])) {
+                $status = 'Tepat Waktu';
+            } elseif (!isset($results[$key])) {
+                $status = ($shift1 === "DINAS LUAR STAND BY") ? "DINAS LUAR STAND BY" : "Mangkir";
+            } elseif ($shiftStartTime && $currentTime->gt($shiftStartTime) && $noCheck->waktuci === 'NO IN' && $noCheck->waktuco === 'NO OUT') {
+                $status = "Mangkir";
+            }
+
+            // Isi array results jika belum ada entri untuk key ini
+            if (!isset($results[$key])) {
                 $results[$key] = [
                     'nama' => $noCheck->user ? $noCheck->user->nama : '',
                     'npk' => $noCheck->npk,
                     'tanggal' => $noCheck->tanggal,
                     'waktuci' => 'NO IN',
                     'waktuco' => 'NO OUT',
-                    'shift1' => $shift1, // Menggunakan shift terbaru
+                    'shift1' => $shift1,
+                    'role' => $role,
                     'section_nama' => $noCheck->user && $noCheck->user->section ? $noCheck->user->section->nama : '',
                     'department_nama' => $noCheck->user && $noCheck->user->section && $noCheck->user->section->department ? $noCheck->user->section->department->nama : '',
                     'division_nama' => $noCheck->user && $noCheck->user->section && $noCheck->user->section->department && $noCheck->user->section->department->division ? $noCheck->user->section->department->division->nama : '',
@@ -258,42 +332,54 @@ class rekapController extends Controller
             }
 
             $user = User::where('npk', $npk)->first();
-
             $npkSistem = $user->npk_sistem;
 
-            $penyimpanganCount = Penyimpanganmodel::where('npk', $npk)
-                ->where('tanggal_mulai', $tanggalMulai)
+            // Cuti Model
+            $cutiModels = CutiModel::where('npk', $npk)
+                ->where(function ($query) use ($tanggalMulai) {
+                    $query->where('tanggal_mulai', '<=', $tanggalMulai)
+                        ->where(function ($query) use ($tanggalMulai) {
+                            $query->where('tanggal_selesai', '>=', $tanggalMulai)
+                                ->orWhereNull('tanggal_selesai'); // Untuk cuti 1 hari
+                        });
+                })
                 ->whereIn('approved_by', [2, 3, 4, 5])
-                ->count();
+                ->get();
 
-            $kategoriPenyimpangan = Penyimpanganmodel::where('npk', $npk)
-                ->where('tanggal_mulai', $tanggalMulai)
+            $cutiCount = $cutiModels->count();
+            $kategoriCuti = $cutiModels->pluck('kategori')->first();
+
+            // Penyimpangan Model
+            $penyimpangan = Penyimpanganmodel::where('npk', $npk)
+                ->where(function ($query) use ($tanggalMulai) {
+                    $query->where('tanggal_mulai', '<=', $tanggalMulai)
+                        ->where(function ($query) use ($tanggalMulai) {
+                            $query->where('tanggal_selesai', '>=', $tanggalMulai)
+                                ->orWhereNull('tanggal_selesai'); // Untuk penyimpangan 1 hari
+                        });
+                })
                 ->whereIn('approved_by', [2, 3, 4, 5])
-                ->pluck('kategori')
                 ->first();
 
-            $cutiCount = CutiModel::where('npk', $npk)
-                ->where('tanggal_mulai', $tanggalMulai)
-                ->whereIn('approved_by', [2, 3, 4, 5])
-                ->count();
+            $penyimpanganCount = $penyimpangan ? 1 : 0;
+            $kategoriPenyimpangan = $penyimpangan->kategori ?? null;
 
-            $kategoriCuti = CutiModel::where('npk', $npk)
-                ->where('tanggal_mulai', $tanggalMulai)
-                ->whereIn('approved_by', [2, 3, 4, 5])
-                ->pluck('kategori')
-                ->first();
-
-
+            // Implementasi logika untuk status dan API Time
             $apiTime = null;
 
+            // Menambahkan tombol Cuti untuk setiap tanggal dalam rentang cuti
             if ($cutiCount > 0) {
-                $apiTime .= ' <button class="btn btn-info view-cuti" data-npk="' . $npk . '" data-tanggal="' . $tanggalMulai . '">Lihat Cuti</button>';
+                foreach ($cutiModels as $cuti) {
+                    $apiTime .= ' <button class="btn btn-info view-cuti" data-npk="' . $npk . '" data-tanggal="' . $cuti->tanggal_mulai . '">Lihat Cuti</button>';
+                }
             }
+
+            // Menambahkan tombol Penyimpangan jika ada
             if ($penyimpanganCount > 0) {
-                $apiTime .= '<button class="btn btn-warning view-penyimpangan" data-npk="' . $npk . '" data-tanggal="' . $tanggalMulai . '">Lihat Penyimpangan</button>';
+                $apiTime .= '<button class="btn btn-warning view-penyimpangan" data-npk="' . $npk . '" data-tanggal="' . $penyimpangan->tanggal_mulai . '">Lihat Penyimpangan</button>';
             }
 
-
+            // Memperbarui data
             $finalResults->put($key, array_merge($row, [
                 'has_penyimpangan' => $penyimpanganCount > 0,
                 'has_cuti' => $cutiCount > 0,
@@ -302,18 +388,12 @@ class rekapController extends Controller
                 'status' => !empty($kategoriCuti) ? $kategoriCuti : (!empty($kategoriPenyimpangan) ? $kategoriPenyimpangan : $row['status']),
             ]));
         }
-        $currentId = 1;
-        $finalResults = $finalResults->map(function ($row) use (&$currentId) {
-            $row['id'] = $currentId++;
-            $row['waktuci'] = $row['waktuci'] ?: 'NO IN';
-            $row['waktuco'] = $row['waktuco'] ?: 'NO OUT';
-            return $row;
-        });
 
         $data = [];
         foreach ($finalResults as $item) {
             $data[] = $item;
         }
+
         return response()->json([
             "data" => $data,
         ]);
@@ -500,21 +580,19 @@ class rekapController extends Controller
                     if ($user) {
                         // Simpan atau update ke dalam tabel yang sesuai dengan mengisi npk otomatis
                         if ($status == 'P10') {
-                            Absensici::updateOrCreate(
-                                ['npk_sistem' => $npk_sistem, 'tanggal' => $formattedDate],
-                                [
-                                    'waktuci' => $time,
-                                    'npk' => $user->npk // Isi npk dari relasi User
-                                ]
-                            );
+                            Absensici::create([
+                                'npk_sistem' => $npk_sistem,
+                                'tanggal' => $formattedDate,
+                                'waktuci' => $time,
+                                'npk' => $user->npk, // Isi npk dari relasi User
+                            ]);
                         } elseif ($status == 'P20') {
-                            Absensico::updateOrCreate(
-                                ['npk_sistem' => $npk_sistem, 'tanggal' => $formattedDate],
-                                [
-                                    'waktuco' => $time,
-                                    'npk' => $user->npk // Isi npk dari relasi User
-                                ]
-                            );
+                            Absensico::create([
+                                'npk_sistem' => $npk_sistem,
+                                'tanggal' => $formattedDate,
+                                'waktuco' => $time,
+                                'npk' => $user->npk, // Isi npk dari relasi User
+                            ]);
                         }
                     } else {
                         Log::error('User dengan npk_sistem tidak ditemukan', ['npk_sistem' => $npk_sistem]);

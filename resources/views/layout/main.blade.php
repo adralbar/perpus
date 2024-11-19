@@ -238,7 +238,7 @@
                         <!-- Dashboard Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                             <a href="{{ route('dashboard.index') }}"
-                                class="nav-link {{ Request::routeIs('dashboard.index') ? 'active' : '' }} {{ $roleId == 2 ? 'disabled' : '' }}"
+                                class="nav-link {{ Request::routeIs('dashboard.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
                                 {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
                                 <i class="nav-icon fas fa-users"></i>
                                 <p>Dashboard</p>
@@ -249,8 +249,8 @@
                         <!-- Absensi Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                             <a href="{{ route('rekap.index') }}"
-                                class="nav-link  {{ Request::routeIs('rekap.index') ? 'active' : '' }} {{ $roleId == 2 ? 'disabled' : '' }}"
-                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
+                                class="nav-link {{ Request::routeIs('rekap.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
+                                {{ !in_array($roleId, [1, 6]) ? 'onclick=event.preventDefault()' : '' }}>
                                 <i class="nav-icon fas fa-user-check"></i>
                                 <p>Absensi Karyawan</p>
                             </a>
@@ -259,7 +259,7 @@
                         <!-- Performa Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                             <a href="{{ route('performa.index') }}"
-                                class="nav-link {{ Request::routeIs('performa.index') ? 'active' : '' }} {{ $roleId == 2 ? 'disabled' : '' }}"
+                                class="nav-link {{ Request::routeIs('performa.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
                                 {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
                                 <i class="nav-icon fas fa-chart-line"></i>
                                 <p>Performa Karyawan</p>
@@ -278,11 +278,15 @@
                         <!-- Data Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                             <a href="{{ route('karyawan.index') }}"
-                                class="nav-link  {{ Request::routeIs('karyawan.index') ? 'active' : '' }}">
+                                class="nav-link {{ Request::routeIs('karyawan.index') ? 'active' : '' }} {{ !in_array(auth()->user()->role_id, [1, 6]) ? 'disabled' : '' }}"
+                                {{ !in_array(auth()->user()->role_id, [1, 6]) ? 'aria-disabled=true tabindex=-1' : '' }}>
                                 <i class="nav-icon fas fa-users"></i>
                                 <p>Data Karyawan</p>
                             </a>
                         </li>
+
+
+
                     </ul>
                 </nav>
             </div>

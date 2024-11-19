@@ -66,7 +66,9 @@
                                 <select multiple="multiple" size="10" name="npk[]" id="npk"
                                     class="form-control">
                                     @foreach ($userData as $user)
-                                        <option value="{{ $user->npk }}">{{ $user->nama }}</option>
+                                        <option value="{{ $user->npk }}">
+                                            {{ $user->nama }} ({{ $user->npk }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>

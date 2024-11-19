@@ -41,7 +41,9 @@ class loginController extends Controller
             }
 
 
-            return redirect()->intended('/'); // atau halaman default lain
+            return redirect()->route('login')->withErrors([
+                'login' => 'Anda tidak diizinkan untuk mengakses halaman ini.',
+            ]);
         } else {
             return back()->withErrors([
                 'login' => 'Username atau password salah.',
