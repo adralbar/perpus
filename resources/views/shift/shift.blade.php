@@ -171,22 +171,9 @@
                             <div class="form-group">
                                 <label for="shift1">Waktu Shift</label>
                                 <select class="form-control" id="shift1" name="shift1" required>
-                                    <option value="06:00 - 15:00">06:00 - 15:00</option>
-                                    <option value="07:00 - 16:00">07:00 - 16:00</option>
-                                    <option value="14:00 - 23:00">14:00 - 23:00</option>
-                                    <option value="13:00 - 22:00">13:00 - 22:00</option>
-                                    <option value="21:00 - 06:00">21:00 - 06:00</option>
-                                    <option value="22:00 - 07:00">22:00 - 07:00</option>
-                                    <option value="23:00 - 08:00">23:00 - 08:00</option>
-                                    <option value="06:00 - 15:20">06:00 - 15:20 (Fri)</option>
-                                    <option value="07:00 - 16:30">07:00 - 16:30 (Fri)</option>
-                                    <option value="15:00 - 00:00">15:00 - 00:00</option>
-                                    <option value="16:00 - 01:00">16:00 - 01:00</option>
-                                    <option value="08:00 - 17:20">08:00 - 17:20 (Fri)</option>
-                                    <option value="09:00 - 18:20">09:00 - 18:20 (Fri)</option>
-                                    <option value="08:00 - 17:00">08:00 - 17:00 (Fri)</option>
-                                    <option value="OFF">OFF</option>
-                                    <option value="Dinas Luar Stand By">Dinas Luar Stand By</option>
+                                    @foreach ($masterShift as $shift)
+                                        <option value="{{ $shift }}">{{ $shift }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="form-group">
@@ -233,8 +220,14 @@
 
         <script>
             window.onload = function() {
-                alert('Silahkan isi Filter terlebih dahulu!');
+                Swal.fire({
+                    title: 'Peringatan!',
+                    text: 'Silahkan isi Filter terlebih dahulu untuk menampilkan data!',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
             };
+
 
             let shiftHistoryUrl;
             var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox();

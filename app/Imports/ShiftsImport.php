@@ -22,6 +22,9 @@ class ShiftsImport implements ToCollection
         $user = Auth::user();
         $roleId = $user->role_id; // Mendapatkan role_id dari pengguna
 
+        $userSectionId = $user->section_id;
+        $userDepartmentId = $user->department_id;
+
         $indexKe = 1;
         $errors = [];  // Menyimpan semua error yang ditemukan
 
@@ -39,6 +42,22 @@ class ShiftsImport implements ToCollection
                 if (in_array($roleId, [2, 9])) {
                     if ($startDate && $startDate->lte(Carbon::today())) {
                         $errors[] = "Start Date tidak boleh hari h atau sebelumnya untuk NPK: {$data['npk']} pada baris {$indexKe}";
+                        continue;
+                    }
+                }
+                if ($roleId == 2) {
+                    $user = User::where('npk', $data['npk'])->first();
+                    if ($user && $user->section_id !== $userSectionId) {
+                        $errors[] = "NPK: {$data['npk']} tidak sesuai dengan section Anda pada baris {$indexKe}";
+                        continue; // Lewatkan baris ini dan lanjut ke baris berikutnya
+                    }
+                }
+
+                // Jika role_id adalah 9, pastikan department_id sama dengan department_id user yang sedang login
+                if ($roleId == 9) {
+                    $user = User::where('npk', $data['npk'])->first();
+                    if ($user && $user->department_id !== $userDepartmentId) {
+                        $errors[] = "NPK: {$data['npk']} tidak sesuai dengan department Anda pada baris {$indexKe}";
                         continue; // Lewatkan baris ini dan lanjut ke baris berikutnya
                     }
                 }

@@ -8,24 +8,25 @@ use App\Models\User;
 use App\Models\shift;
 use App\Models\absensici;
 use App\Models\absensico;
+use App\Models\CutiModel;
 use App\Jobs\UploadFileJob;
+use App\Models\MasterShift;
 use App\Events\FileUploaded;
 use App\Models\SectionModel;
 use Illuminate\Http\Request;
 use App\Models\DivisionModel;
+use PhpParser\Node\Stmt\Else_;
 use App\Models\DepartmentModel;
 use App\Models\PenyimpanganModel;
 use Illuminate\Support\Facades\DB;
 use App\Exports\RekapAbsensiExport;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\attendanceRecordModel;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Artisan;
-use PhpParser\Node\Stmt\Else_;
-use Illuminate\Support\Facades\Auth;
-use App\Models\CutiModel;
+use Yajra\DataTables\Facades\DataTables;
 
 class rekapController extends Controller
 {
@@ -43,9 +44,10 @@ class rekapController extends Controller
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
         }
+        $masterShift = MasterShift::pluck('waktu');
 
         $userData = $query->get();
-        return view('rekap.rekapAbsensi', compact('userData'));
+        return view('rekap.rekapAbsensi', compact('userData', 'masterShift'));
     }
 
     public function getData(Request $request)

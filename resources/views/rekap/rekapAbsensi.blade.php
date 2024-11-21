@@ -35,17 +35,28 @@
 
                     <!-- Gabungkan Status Filter dan Selected NPK dalam satu kolom -->
 
-
-                    <div class="mb-3">
-                        <select class="dualistbox form-control" multiple="multiple" size="10" name="selected_npk[]"
-                            id="selected_npk">
-                            @foreach ($userData as $user)
-                                <option value="{{ $user->npk }}">
-                                    {{ $user->nama }} ({{ $user->npk }})
-                                </option>
-                            @endforeach
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <select class="dualistbox form-control" multiple="multiple" size="10" name="selected_npk[]"
+                                id="selected_npk">
+                                @foreach ($userData as $user)
+                                    <option value="{{ $user->npk }}">
+                                        {{ $user->nama }} ({{ $user->npk }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <select class="dualistbox form-control" id="shift" name="shift[]" multiple size="10"
+                                required>
+                                @foreach ($masterShift as $shift)
+                                    <option value="{{ $shift }}">{{ $shift }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
+
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="startDate" class="form-label">Tanggal Mulai</label>
@@ -124,7 +135,8 @@
         </div>
 
         <!-- Modal untuk Check-out -->
-        <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+        <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -367,9 +379,18 @@
                             <select class="dualistbox form-control" multiple="multiple" size="10"
                                 name="selected_npk[]" id="selected_npk_modal">
                                 @foreach ($userData as $user)
-                                    <option value="{{ $user->npk }}">{{ $user->nama }} ({{ $user->npk }})</option>
+                                    <option value="{{ $user->npk }}">{{ $user->nama }} ({{ $user->npk }})
+                                    </option>
                                 @endforeach
                             </select>
+                            <div class="col-md-6 mb-3">
+                                <select class="dualistbox form-control" id="shift_modal" name="shift[]" multiple
+                                    size="10" required>
+                                    @foreach ($masterShift as $shift)
+                                        <option value="{{ $shift }}">{{ $shift }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -413,8 +434,8 @@
             }
         };
         var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox({
-            nonSelectedListLabel: 'Available NPK',
-            selectedListLabel: 'Selected NPK',
+            nonSelectedListLabel: 'NPK Tersedia',
+            selectedListLabel: 'NPK Terpilih',
             preserveSelectionOnMove: 'moved',
             moveOnSelect: false,
             nonSelectedFilter: '',
@@ -424,6 +445,15 @@
             selectorMinimalHeight: 200,
             nonSelectedListLabel: 'Status Tersedia',
             selectedListLabel: 'Status Dipilih',
+            moveOnSelect: false,
+            preserveSelectionOnMove: 'moved',
+            // Tambahkan opsi lain sesuai kebutuhan
+        });
+
+        $('#shift').bootstrapDualListbox({
+            selectorMinimalHeight: 200,
+            nonSelectedListLabel: 'Shift Tersedia',
+            selectedListLabel: 'Shift Dipilih',
             moveOnSelect: false,
             preserveSelectionOnMove: 'moved',
             // Tambahkan opsi lain sesuai kebutuhan
@@ -538,7 +568,10 @@
                             startDate: $('#startDate').val(),
                             endDate: $('#endDate').val(),
                             selectedNpk: [
-                                ...($('#selected_npk').val() || [])
+                                ...($('#selected_npk').val() || []),
+                            ],
+                            selectedShift: [
+                                ...($('#shift').val() || [])
                             ],
                         },
                         success: function(response) {
@@ -549,6 +582,13 @@
                                 filteredData = filteredData.filter(item => {
                                     return $('#statusFilter').val().includes(item
                                         .status);
+                                });
+                            }
+                            if ($('#shift').val().length > 0) {
+                                filteredData = filteredData.filter(item => {
+                                    return $('#shift').val().includes(item
+                                        .shift1
+                                    );
                                 });
                             }
 
