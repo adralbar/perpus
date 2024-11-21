@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
 </head>
 
-<body class="hold-transition dark-mode login-page">
+<body class="hold-transition login-page">
     <div class="login-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">
@@ -36,7 +36,7 @@
                     @endif
 
                     <div class="input-group mb-3">
-                        <input type="text" name="npk" class="form-control" placeholder="npk"
+                        <input type="text" name="npk" class="form-control" placeholder="NPK"
                             value="{{ old('npk') }}" required>
                         <div class="input-group-append">
                             <div class="input-group-text">

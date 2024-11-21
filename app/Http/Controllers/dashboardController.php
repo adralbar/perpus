@@ -15,7 +15,73 @@ class dashboardController extends Controller
 {
     public function index(Request $request)
     {
-        set_time_limit(300);
+        //     set_time_limit(300);
+
+        // Ambil tahun dari parameter query, atau gunakan tahun saat ini jika tidak ada
+        $year = $request->query('year', date('Y'));
+
+        // Mendapatkan daftar tahun yang tersedia dalam tabel absensici
+        $years = DB::table('absensici')
+            ->select(DB::raw('YEAR(tanggal) as year'))
+            ->distinct()
+            ->pluck('year');
+
+        //     // Subquery untuk mendapatkan waktu check-in terawal per tanggal untuk setiap karyawan
+        //     $subqueryCheckIn = DB::table('absensici as a')
+        //         ->select(
+        //             'a.npk',
+        //             'a.tanggal',
+        //             DB::raw('MIN(a.waktuci) as awal_waktuci') // Mengambil waktu check-in terawal
+        //         )
+        //         ->groupBy('a.npk', 'a.tanggal');
+
+        //     // Subquery untuk mendapatkan shift1 terbaru dari kategorishift per tanggal untuk setiap karyawan
+        //     $subqueryShift = DB::table('kategorishift as ks')
+        //         ->select(
+        //             'ks.npk',
+        //             'ks.date',
+        //             'ks.shift1'
+        //         )
+        //         ->whereIn('ks.id', function ($query) {
+        //             $query->select(DB::raw('MAX(id)'))
+        //                 ->from('kategorishift as inner_ks')
+        //                 ->whereColumn('inner_ks.npk', 'ks.npk')
+        //                 ->whereColumn('inner_ks.date', 'ks.date');
+        //         });
+        //     // Query utama untuk menghitung total keterlambatan per bulan
+        //     $data = DB::table('absensici')
+        //         ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
+        //             $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
+        //                 ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
+        //                 ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
+        //         })
+        //         ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
+        //             $join->on('absensici.npk', '=', 'subqueryShift.npk')
+        //                 ->on('absensici.tanggal', '=', 'subqueryShift.date');
+        //         })
+        //         ->select(
+        //             DB::raw('DATE_FORMAT(absensici.tanggal, "%b") AS month'),
+        //             DB::raw('
+        //             (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users))AS total_keterlambatan
+        //         ')
+        //         )
+        //         // Filter keterlambatan dengan membandingkan waktuci dan shift1
+        //         ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
+        //         ->whereYear('absensici.tanggal', $year)
+        //         ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
+        //         ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'));
+
+        //     $labels = $data->pluck('month');
+        //     $totals = $data->pluck('total_keterlambatan');
+
+        return view('dashboard.dashboard', compact('years', 'year'));
+        // return view('dashboard.dashboard', compact('labels', 'totals', 'years', 'year'));
+    }
+
+
+    public function getChartData(Request $request)
+    {
+        set_time_limit(0);
 
         // Ambil tahun dari parameter query, atau gunakan tahun saat ini jika tidak ada
         $year = $request->query('year', date('Y'));
@@ -31,65 +97,7 @@ class dashboardController extends Controller
             ->select(
                 'a.npk',
                 'a.tanggal',
-                DB::raw('MIN(a.waktuci) as awal_waktuci') // Mengambil waktu check-in terawal
-            )
-            ->groupBy('a.npk', 'a.tanggal');
-
-        // Subquery untuk mendapatkan shift1 terbaru dari kategorishift per tanggal untuk setiap karyawan
-        $subqueryShift = DB::table('kategorishift as ks')
-            ->select(
-                'ks.npk',
-                'ks.date',
-                'ks.shift1'
-            )
-            ->whereIn('ks.id', function ($query) {
-                $query->select(DB::raw('MAX(id)'))
-                    ->from('kategorishift as inner_ks')
-                    ->whereColumn('inner_ks.npk', 'ks.npk')
-                    ->whereColumn('inner_ks.date', 'ks.date');
-            });
-
-        // Query utama untuk menghitung total keterlambatan per bulan
-        $data = DB::table('absensici')
-            ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
-                $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
-                    ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
-                    ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
-            })
-            ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
-                $join->on('absensici.npk', '=', 'subqueryShift.npk')
-                    ->on('absensici.tanggal', '=', 'subqueryShift.date');
-            })
-            ->select(
-                DB::raw('DATE_FORMAT(absensici.tanggal, "%b") AS month'),
-                DB::raw('
-                (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users))AS total_keterlambatan
-            ')
-            )
-            // Filter keterlambatan dengan membandingkan waktuci dan shift1
-            ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
-            ->whereYear('absensici.tanggal', $year)
-            ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'));
-
-        $labels = $data->pluck('month');
-        $totals = $data->pluck('total_keterlambatan');
-
-        return view('dashboard.dashboard', compact('labels', 'totals', 'years', 'year'));
-    }
-
-
-    public function getChartData(Request $request)
-    {
-        set_time_limit(300);
-
-        $year = $request->query('year');
-
-        $subqueryCheckIn = DB::table('absensici as a')
-            ->select(
-                'a.npk',
-                'a.tanggal',
-                DB::raw('MIN(a.waktuci) as awal_waktuci') // Mengambil waktu check-in terawal
+                DB::raw('MIN(a.waktuci) as awal_waktuci')
             )
             ->groupBy('a.npk', 'a.tanggal');
 
@@ -134,10 +142,81 @@ class dashboardController extends Controller
         $totals = $data->pluck('total_keterlambatan');
 
         return response()->json([
+            'years' => $years, // Daftar tahun yang tersedia
+            'year' => $year,   // Tahun yang sedang dipilih
             'labels' => $labels,
-            'totals' => $totals
+            'totals' => $totals,
         ]);
     }
+
+    public function getDataPerTanggal(Request $request)
+    {
+        $month = $request->query('month');
+        $year = $request->query('year');
+
+        $year = $request->query('year', date('Y'));
+
+        // Subquery untuk mendapatkan waktu check-in terawal per tanggal untuk setiap karyawan
+        $subqueryCheckIn = DB::table('absensici as a')
+            ->select(
+                'a.npk',
+                'a.tanggal',
+                DB::raw('MIN(a.waktuci) as awal_waktuci')
+            )
+            ->groupBy('a.npk', 'a.tanggal');
+
+        // Subquery untuk mendapatkan shift1 terbaru dari kategorishift per tanggal untuk setiap karyawan
+        $subqueryShift = DB::table('kategorishift as ks')
+            ->select(
+                'ks.npk',
+                'ks.date',
+                'ks.shift1'
+            )
+            ->whereIn('ks.id', function ($query) {
+                $query->select(DB::raw('MAX(id)'))
+                    ->from('kategorishift as inner_ks')
+                    ->whereColumn('inner_ks.npk', 'ks.npk')
+                    ->whereColumn('inner_ks.date', 'ks.date');
+            });
+
+        // Query untuk mendapatkan data per tanggal dengan menghitung keterlambatan
+        $data = DB::table('absensici')
+            ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
+                $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
+                    ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
+                    ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
+            })
+            ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
+                $join->on('absensici.npk', '=', 'subqueryShift.npk')
+                    ->on('absensici.tanggal', '=', 'subqueryShift.date');
+            })
+            ->select(
+                DB::raw('DATE_FORMAT(absensici.tanggal, "%d") AS day'),
+                DB::raw('
+                    (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users)) AS total_keterlambatan
+                ')
+            )
+            ->whereYear('absensici.tanggal', $year)
+            ->whereMonth('absensici.tanggal', $month)
+            ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
+            ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%d")'))
+            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%d")'))
+            ->get();
+
+        $days = $data->pluck('day');
+        $totals = $data->pluck('total_keterlambatan');
+
+        return response()->json([
+            'month' => $month,  // Bulan yang sedang dipilih
+            'year' => $year,    // Tahun yang sedang dipilih
+            'days' => $days,    // Daftar hari per bulan
+            'totals' => $totals // Persentase keterlambatan per hari
+        ]);
+    }
+
+
+
+
 
     // public function getTable1Data(Request $request)
     // {

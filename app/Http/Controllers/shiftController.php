@@ -17,6 +17,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\ShiftExport;
 use App\Exports\templateExport;
+use App\Models\MasterShift;
 
 class shiftController extends Controller
 {
@@ -36,7 +37,9 @@ class shiftController extends Controller
         }
 
         $userData = $query->get();
-        return view('shift.shift', compact('userData'));
+        $masterShift = MasterShift::pluck('waktu');
+
+        return view('shift.shift', compact('userData', 'masterShift'));
     }
 
     // public function getData(Request $request)
@@ -191,18 +194,20 @@ class shiftController extends Controller
         $user = Auth::user();
         $roleId = $user->role_id;
         $sectionId = $user->section_id;
+        $departmentId = $user->department_id; // Ambil department_id pengguna
 
         $query = User::select('npk', 'nama');
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
+        } elseif ($roleId == 9) {
+            $query->where('department_id', $departmentId);
         }
 
         $userData = $query->get();
 
         return Excel::download(new templateExport($userData), 'template.xlsx');
     }
-
 
     public function store(Request $request)
     {
@@ -315,10 +320,19 @@ class shiftController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx|max:2048', // validasi hanya menerima file xlsx dengan ukuran maksimal 2MB
         ]);
-        $file = $request->file('file');
-        Excel::import(new ShiftsImport, $file);
 
-        return redirect()->back()->with('success', 'File berhasil diunggah.');
+        try {
+            $file = $request->file('file');
+            Excel::import(new ShiftsImport, $file);
+
+            // Set message sukses jika tidak ada error
+            $successMessage = 'File berhasil diunggah.';
+            return redirect()->back()->with('success', $successMessage); // Kembalikan dengan pesan sukses
+        } catch (\Exception $e) {
+            // Tangkap error dan set pesan error
+            $errorMessage = $e->getMessage();
+            return redirect()->back()->with('error', $errorMessage); // Kembalikan dengan pesan error
+        }
     }
 
 
@@ -347,62 +361,5 @@ class shiftController extends Controller
             'recordsFiltered' => $data->count(),
             'data' => $data,
         ]);
-    }
-    public function shiftApi(Request $request)
-    {
-        $startDate = $request->input('startDate');
-        $endDate = $request->input('endDate');
-
-        $data = Shift::select([
-            'kategorishift.id',
-            'kategorishift.npk',
-            'kategorishift.shift1',
-            'kategorishift.date',
-            'users.nama'
-        ])
-            ->join('users', 'kategorishift.npk', '=', 'users.npk')
-            ->orderBy('kategorishift.date', 'DESC');
-
-        $user = Auth::user();
-        $roleId = $user->role_id;
-
-        if ($request->has('selected_npk') && !empty($request->selected_npk)) {
-            $selectedNPKs = explode(',', $request->selected_npk);
-            $data->whereIn('users.npk', $selectedNPKs);
-        }
-
-        if (!empty($startDate) && !empty($endDate)) {
-            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
-        }
-
-        if ($roleId == 2) {
-            $sectionId = $user->section_id;
-            $data->where('users.section_id', $sectionId);
-        }
-
-        return DataTables::of($data)
-            ->addIndexColumn()
-            ->setRowId(function ($data) {
-                return $data->id;
-            })
-            ->editColumn('shift1', function ($data) {
-                if (strpos($data->shift1, ' - ') !== false) {
-                    list($starttime, $endtime) = explode(' - ', $data->shift1);
-
-                    $starttime = date('H:i:s', strtotime($starttime));
-                    $endtime = date('H:i:s', strtotime($endtime));
-
-                    return [
-                        'starttime' => $starttime,
-                        'endtime' => $endtime
-                    ];
-                }
-
-                return [
-                    'starttime' => null,
-                    'endtime' => null
-                ];
-            })
-            ->make(true);
     }
 }

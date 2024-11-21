@@ -265,6 +265,14 @@
                                 <p>Performa Karyawan</p>
                             </a>
                         </li>
+                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
+                            <a href="{{ route('master-shift.index') }}"
+                                class="nav-link {{ Request::routeIs('master-shift.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
+                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
+                                <i class="nav-icon fas fa-clock"></i>
+                                <p>Master Shift</p>
+                            </a>
+                        </li>
 
                         <!-- Shift Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
@@ -347,9 +355,9 @@
     <script src="{{ asset('/dist/js/pages/dashboard.js') }}"></script>
 
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
-    <script src="{{ asset('/plugins/chart.js/Chart.min.js') }}"></script>
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     <script src="{{ asset('/dist/js/pages/dashboard3.js') }}"></script>
+
 
 </body>
 

@@ -185,7 +185,7 @@ class rekapController extends Controller
                         'tanggal' => $checkout->tanggal,
                         'waktuci' => null, // Tidak ada check-in
                         'waktuco' => $checkout->waktuco,
-                        'shift1' => optional($checkout->shift)->shift1,
+                        'shift1' => $shift1,
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                         'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                         'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
@@ -299,7 +299,7 @@ class rekapController extends Controller
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             } elseif (!isset($results[$key])) {
-                $status = ($shift1 === "DINAS LUAR STAND BY") ? "DINAS LUAR STAND BY" : "Mangkir";
+                $status = ($shift1 === "Dinas Luar Stand By") ? "Dinas Luar Stand By" : "Mangkir";
             } elseif ($shiftStartTime && $currentTime->gt($shiftStartTime) && $noCheck->waktuci === 'NO IN' && $noCheck->waktuco === 'NO OUT') {
                 $status = "Mangkir";
             }
@@ -332,15 +332,14 @@ class rekapController extends Controller
             }
 
             $user = User::where('npk', $npk)->first();
-            $npkSistem = $user->npk_sistem;
+            $npkSistem = $user->npk_sistem ?? 'tidak ditemukan';
 
             // Cuti Model
             $cutiModels = CutiModel::where('npk', $npk)
                 ->where(function ($query) use ($tanggalMulai) {
                     $query->where('tanggal_mulai', '<=', $tanggalMulai)
                         ->where(function ($query) use ($tanggalMulai) {
-                            $query->where('tanggal_selesai', '>=', $tanggalMulai)
-                                ->orWhereNull('tanggal_selesai'); // Untuk cuti 1 hari
+                            $query->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggalMulai]); // Gunakan COALESCE
                         });
                 })
                 ->whereIn('approved_by', [2, 3, 4, 5])
@@ -354,8 +353,7 @@ class rekapController extends Controller
                 ->where(function ($query) use ($tanggalMulai) {
                     $query->where('tanggal_mulai', '<=', $tanggalMulai)
                         ->where(function ($query) use ($tanggalMulai) {
-                            $query->where('tanggal_selesai', '>=', $tanggalMulai)
-                                ->orWhereNull('tanggal_selesai'); // Untuk penyimpangan 1 hari
+                            $query->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggalMulai]); // Gunakan COALESCE
                         });
                 })
                 ->whereIn('approved_by', [2, 3, 4, 5])
@@ -385,6 +383,8 @@ class rekapController extends Controller
                 'has_cuti' => $cutiCount > 0,
                 'api_time' => $apiTime,
                 'npk_sistem' => $npkSistem,
+                'waktuci' => $row['waktuci'] ?? 'NO IN',
+                'waktuco' => $row['waktuco'] ?? 'NO OUT',
                 'status' => !empty($kategoriCuti) ? $kategoriCuti : (!empty($kategoriPenyimpangan) ? $kategoriPenyimpangan : $row['status']),
             ]));
         }

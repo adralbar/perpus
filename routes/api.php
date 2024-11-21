@@ -1,17 +1,18 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\loginController;
+use App\Http\Controllers\rekapController;
+use App\Http\Controllers\shiftController;
+use App\Http\Controllers\UsersController;
+use App\Http\Controllers\registController;
+use App\Http\Controllers\uploadController;
 use App\Http\Controllers\absensiController;
+use App\Http\Controllers\performaController;
 use App\Http\Controllers\absensiCoController;
 use App\Http\Controllers\dashboardController;
-use App\Http\Controllers\rekapController;
-use App\Http\Controllers\loginController;
-use App\Http\Controllers\performaController;
-use App\Http\Controllers\registController;
-use App\Http\Controllers\shiftController;
-use App\Http\Controllers\uploadController;
-use App\Http\Controllers\UsersController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\api\MasterShiftApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,3 +42,4 @@ Route::get('/karyawandataapi', [UsersController::class, 'karyawandata'])->name('
 Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
 
 Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
+Route::get('/master-shifts', [MasterShiftApiController::class, 'getMasterShift']);

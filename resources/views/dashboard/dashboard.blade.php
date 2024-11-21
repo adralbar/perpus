@@ -86,252 +86,363 @@
         let table1;
         let selectedMonth = '';
 
-        document.getElementById('filterYear').addEventListener('change', function() {
-            const selectedYear = this.value;
-            if (selectedYear) {
-                for (let month in monthMap) {
-                    monthMap[month] = `${selectedYear}-${monthMap[month].split('-')[1]}`;
-                    console.log(monthMap[month]);
-                }
-            }
-        });
-
-        //Function to load chart data
-
-        function loadChartData(year) {
-            $.ajax({
-                url: '{{ route('data.chart') }}',
-                type: 'GET',
-                data: {
-                    year: year
-                },
-                success: function(response) {
-                    myChart.data.labels = response.labels;
-                    myChart.data.datasets[0].data = response.totals;
-                    myChart.update();
-                }
-            });
-        }
-
-        // Configure chart
-        const ctx = document.getElementById('myChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: @json($labels),
-                datasets: [{
-                        label: 'Total keterlambatan',
-                        backgroundColor: '#3f6791',
-                        data: @json($totals),
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Target 0.8%',
-                        type: 'line', // Tambahkan sebagai garis
-                        data: Array(@json($labels).length).fill(
-                        0.8), // Isi dengan nilai target 0.8
-                        borderColor: '#ff6347',
-                        backgroundColor: 'rgba(255, 99, 71, 0.2)',
-                        borderWidth: 2,
-                        tension: 0.4 // Untuk membuat garis lebih halus
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 10,
-                        grid: {
-                            drawBorder: false,
-                            borderDash: [5, 5]
-                        }
-                    }
-                },
-                onClick: function(event, elements) {
-                    if (elements.length > 0) {
-                        const index = elements[0].index;
-                        const selectedMonthName = this.data.labels[index];
-                        const monthMap = {
-                            'January': '01',
-                            'Jan': '01',
-                            'February': '02',
-                            'Feb': '02',
-                            'March': '03',
-                            'Mar': '03',
-                            'April': '04',
-                            'Apr': '04',
-                            'May': '05',
-                            'May': '05',
-                            'June': '06',
-                            'Jun': '06',
-                            'July': '07',
-                            'Jul': '07',
-                            'August': '08',
-                            'Aug': '08',
-                            'September': '09',
-                            'Sep': '09',
-                            'October': '10',
-                            'Oct': '10',
-                            'November': '11',
-                            'Nov': '11',
-                            'December': '12',
-                            'Dec': '12'
-                        };
-
-                        const selectedMonth = monthMap[selectedMonthName] || '';
-                        const year = $('#filterYear').val();
-
-                        const url1 = '{{ route('data.table1b') }}' +
-                            '?bulan=' + encodeURIComponent(selectedMonth) +
-                            '&tahun=' + encodeURIComponent(year);
-
-                        console.log('Selected Month Name:', selectedMonthName);
-                        console.log('Selected Month:', selectedMonth);
-                        console.log('Formatted Month:', selectedMonth);
-                        console.log('Year:', year);
-                        console.log('Request URL:', url1);
-
-                        if (typeof table1 !== 'undefined') {
-                            table1.ajax.url(url1).load();
-                        } else {
-                            console.error('table1 is not defined.');
-                        }
-                    }
-                }
-            }
-        });
 
 
         $(document).ready(function() {
-            table1 = $('#table1').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    url: '{{ route('data.table1b') }}',
+            const ctx = document.getElementById('myChart').getContext('2d');
+            let myChart;
+
+            function loadChartData(year) {
+                $.ajax({
+                    url: '{{ route('data.chart') }}',
                     type: 'GET',
-                    data: function(d) {
-                        d.tahun = $('#filterYear').val();
+                    data: {
+                        year: year
                     },
-                },
-                columns: [{
-                        data: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
+                    success: function(response) {
+                        const labels = response.labels || [];
+                        const totals = response.totals || [];
+                        const targetData = Array(labels.length).fill(0.8); // Nilai target 0.8%
+
+                        // Debugging data labels
+                        console.log("Labels received:", labels); // Log untuk melihat data labels
+
+                        if (myChart) myChart.destroy(); // Hancurkan chart sebelumnya jika ada
+
+                        myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'Total keterlambatan',
+                                        backgroundColor: '#3f6791',
+                                        data: totals,
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Target 0.8%',
+                                        type: 'line',
+                                        data: targetData,
+                                        borderColor: '#ff6347',
+                                        backgroundColor: 'rgba(255, 99, 71, 0.2)',
+                                        borderWidth: 2,
+                                        tension: 0.4
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        grid: {
+                                            drawBorder: false,
+                                            borderDash: [5, 5]
+                                        }
+                                    }
+                                },
+                                onClick: function(event, elements) {
+                                    if (elements.length > 0) {
+                                        const index = elements[0]
+                                            ._index; // Mengakses index dari elemen pertama
+                                        const selectedMonthName = this.data.labels[
+                                            index]; // Nama bulan berdasarkan index
+
+                                        console.log("Elements clicked:", elements);
+                                        console.log("Clicked element index:", index);
+                                        console.log("Selected month name:",
+                                            selectedMonthName);
+
+                                        const monthMap = {
+                                            'January': '01',
+                                            'Jan': '01',
+                                            'February': '02',
+                                            'Feb': '02',
+                                            'March': '03',
+                                            'Mar': '03',
+                                            'April': '04',
+                                            'Apr': '04',
+                                            'May': '05',
+                                            'Jun': '06',
+                                            'June': '06',
+                                            'July': '07',
+                                            'Jul': '07',
+                                            'August': '08',
+                                            'Aug': '08',
+                                            'September': '09',
+                                            'Sep': '09',
+                                            'October': '10',
+                                            'Oct': '10',
+                                            'November': '11',
+                                            'Nov': '11',
+                                            'December': '12',
+                                            'Dec': '12'
+                                        };
+
+                                        if (selectedMonthName && monthMap[
+                                                selectedMonthName]) {
+                                            const selectedMonth = monthMap[
+                                                selectedMonthName];
+                                            console.log("Mapped month:", selectedMonth);
+                                            loadDataPerTanggal(selectedMonth, year);
+                                        } else {
+                                            console.error("Month not found in monthMap:",
+                                                selectedMonthName);
+                                        }
+                                    } else {
+                                        console.log("No element clicked");
+                                    }
+                                }
+                            }
+                        });
                     },
-                    {
-                        data: 'nama',
-                        name: 'nama'
-                    },
-                    {
-                        data: 'npk',
-                        name: 'npk'
-                    },
-                    {
-                        data: 'division_nama',
-                        name: 'division_nama'
-                    },
-                    {
-                        data: 'department_nama',
-                        name: 'department_nama'
-                    },
-                    {
-                        data: 'section_nama',
-                        name: 'section_nama'
-                    },
-                    {
-                        data: 'tahun',
-                        name: 'tahun'
-                    },
-                    {
-                        data: 'total_keterlambatan',
-                        name: 'total_keterlambatan'
-                    },
-                    {
-                        data: 'aksi',
-                        orderable: false,
-                        searchable: false
+                    error: function(error) {
+                        console.error('Error loading chart data:', error);
                     }
-                ]
-            });
-
-            $('#table1').on('click', '.btnDetail', function(e) {
-                e.preventDefault();
-
-                var nama = $(this).data('nama');
-                var npk = $(this).data('npk');
-                var total = $(this).data('total');
-                var tanggal = $(this).data('tanggal');
-                var waktu = $(this).data('waktu');
-                var shift1 = $(this).data('shift1');
-
-                var tanggalList = tanggal.split(',');
-                var waktuList = waktu.split(',');
-                var shiftList = shift1.split(',');
-
-                var detailHtml = '';
-
-                for (var i = 0; i < tanggalList.length; i++) {
-                    var shift = shiftList[i] ? shiftList[i].trim() : '';
-                    var absensiTime = waktuList[i].trim(); // Ambil waktu masuk
-
-                    var shiftStartTimeStr = shift.split(' - ')[0].replace('.', ':'); // Ubah '.' menjadi ':'
-                    shiftStartTimeStr += ':00';
-                    var shiftStartTime = new Date('1970-01-01T' + shiftStartTimeStr +
-                        'Z'); // Ubah ke format Date
-
-                    var absensiDate = new Date('1970-01-01T' + absensiTime + 'Z'); // Waktu absensi
-
-                    // Debug untuk melihat nilai shiftStartTime dan absensiDate
-                    console.log("Shift Start Time: ", shiftStartTime);
-                    console.log("Absensi Time: ", absensiDate);
-
-                    // Menghitung selisih dalam menit
-                    var selisihWaktu = Math.floor((absensiDate - shiftStartTime) / 60000);
-
-                    // Jika selisih waktu negatif, artinya tidak terlambat
-                    selisihWaktu = selisihWaktu > 0 ? selisihWaktu : 0;
-
-                    // Debug untuk melihat nilai selisihWaktu
-                    console.log("Selisih Waktu: ", selisihWaktu);
-
-                    detailHtml += `
-            <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
-                <strong>Tanggal:</strong> ${tanggalList[i]}<br>
-                <strong>Waktu In:</strong> ${waktuList[i]}<br>
-                <strong>Shift:</strong> ${shift}<br>
-                <strong>Keterlambatan:</strong> ${selisihWaktu} menit
-            </div>`;
-                }
-
-                $('#detailNama').text(nama);
-                $('#detailNpk').text(npk);
-                $('#detailTotal').text(total);
-                $('#detailTanggalWaktu').html(detailHtml);
-                $('#detailModal').modal('show');
-            });
-        });
-
-
-
-
-
-
-        $('#filterYear').change(function() {
-            var year = $(this).val();
-
-            loadChartData(year);
-            if (table1) {
-                table1.ajax.url('{{ route('data.table1b') }}?tahun=' + encodeURIComponent(year)).load();
+                });
             }
+
+            function loadDataPerTanggal(month, year) {
+                console.log("Loading data for month:", month, "and year:",
+                    year); // Cek apakah bulan dan tahun yang dikirim sudah benar
+
+                $.ajax({
+                    url: '{{ route('data.perTanggal') }}',
+                    type: 'GET',
+                    data: {
+                        month: month,
+                        year: year
+                    },
+                    success: function(response) {
+                        console.log(response); // Memeriksa respons yang diterima
+
+                        const labels = response.days || []; // Mengambil 'days' sebagai label
+                        const totals = response.totals ||
+                    []; // Mengambil 'totals' sebagai data keterlambatan
+
+                        const targetData = Array(labels.length).fill(0.8); // Nilai target 0.8%
+
+                        if (myChart) myChart.destroy(); // Hancurkan chart sebelumnya jika ada
+
+                        // Membuat chart baru dengan data per tanggal
+                        myChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'Total Keterlambatan',
+                                        backgroundColor: '#3f6791',
+                                        data: totals,
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Target 0.8%',
+                                        type: 'line',
+                                        data: targetData,
+                                        borderColor: '#ff6347',
+                                        backgroundColor: 'rgba(255, 99, 71, 0.2)',
+                                        borderWidth: 2,
+                                        tension: 0.4
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        grid: {
+                                            drawBorder: false,
+                                            borderDash: [5, 5]
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+
+            // Muat data chart saat halaman pertama kali dimuat
+            const initialYear = $('#filterYear').val();
+            loadChartData(initialYear);
+
+            // Perbarui data chart jika filter tahun berubah
+            $('#filterYear').change(function() {
+                const selectedYear = $(this).val();
+                loadChartData(selectedYear);
+            });
         });
+
+
+
+
+
+        // document.getElementById('filterYear').addEventListener('change', function() {
+        //     const selectedYear = this.value;
+        //     if (selectedYear) {
+        //         for (let month in monthMap) {
+        //             monthMap[month] = `${selectedYear}-${monthMap[month].split('-')[1]}`;
+        //             console.log(monthMap[month]);
+        //         }
+        //     }
+        // });
+
+        //Function to load chart data
+
+        // function loadChartData(year) {
+        //     $.ajax({
+        //         url: '{{ route('data.chart') }}',
+        //         type: 'GET',
+        //         data: {
+        //             year: year
+        //         },
+        //         success: function(response) {
+        //             myChart.data.labels = response.labels;
+        //             myChart.data.datasets[0].data = response.totals;
+        //             myChart.update();
+        //         }
+        //     });
+        // }
+
+
+        // $(document).ready(function() {
+        //     table1 = $('#table1').DataTable({
+        //         processing: true,
+        //         serverSide: true,
+        //         ajax: {
+        //             url: '{{ route('data.table1b') }}',
+        //             type: 'GET',
+        //             data: function(d) {
+        //                 d.tahun = $('#filterYear').val();
+        //             },
+        //         },
+        //         columns: [{
+        //                 data: 'DT_RowIndex',
+        //                 orderable: false,
+        //                 searchable: false
+        //             },
+        //             {
+        //                 data: 'nama',
+        //                 name: 'nama'
+        //             },
+        //             {
+        //                 data: 'npk',
+        //                 name: 'npk'
+        //             },
+        //             {
+        //                 data: 'division_nama',
+        //                 name: 'division_nama'
+        //             },
+        //             {
+        //                 data: 'department_nama',
+        //                 name: 'department_nama'
+        //             },
+        //             {
+        //                 data: 'section_nama',
+        //                 name: 'section_nama'
+        //             },
+        //             {
+        //                 data: 'tahun',
+        //                 name: 'tahun'
+        //             },
+        //             {
+        //                 data: 'total_keterlambatan',
+        //                 name: 'total_keterlambatan'
+        //             },
+        //             {
+        //                 data: 'aksi',
+        //                 orderable: false,
+        //                 searchable: false
+        //             }
+        //         ]
+        //     });
+
+        //     $('#table1').on('click', '.btnDetail', function(e) {
+        //         e.preventDefault();
+
+        //         var nama = $(this).data('nama');
+        //         var npk = $(this).data('npk');
+        //         var total = $(this).data('total');
+        //         var tanggal = $(this).data('tanggal');
+        //         var waktu = $(this).data('waktu');
+        //         var shift1 = $(this).data('shift1');
+
+        //         var tanggalList = tanggal.split(',');
+        //         var waktuList = waktu.split(',');
+        //         var shiftList = shift1.split(',');
+
+        //         var detailHtml = '';
+
+        //         for (var i = 0; i < tanggalList.length; i++) {
+        //             var shift = shiftList[i] ? shiftList[i].trim() : '';
+        //             var absensiTime = waktuList[i].trim(); // Ambil waktu masuk
+
+        //             var shiftStartTimeStr = shift.split(' - ')[0].replace('.', ':'); // Ubah '.' menjadi ':'
+        //             shiftStartTimeStr += ':00';
+        //             var shiftStartTime = new Date('1970-01-01T' + shiftStartTimeStr +
+        //                 'Z'); // Ubah ke format Date
+
+        //             var absensiDate = new Date('1970-01-01T' + absensiTime + 'Z'); // Waktu absensi
+
+        //             // Debug untuk melihat nilai shiftStartTime dan absensiDate
+        //             console.log("Shift Start Time: ", shiftStartTime);
+        //             console.log("Absensi Time: ", absensiDate);
+
+        //             // Menghitung selisih dalam menit
+        //             var selisihWaktu = Math.floor((absensiDate - shiftStartTime) / 60000);
+
+        //             // Jika selisih waktu negatif, artinya tidak terlambat
+        //             selisihWaktu = selisihWaktu > 0 ? selisihWaktu : 0;
+
+        //             // Debug untuk melihat nilai selisihWaktu
+        //             console.log("Selisih Waktu: ", selisihWaktu);
+
+        //             detailHtml += `
+    //     <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+    //         <strong>Tanggal:</strong> ${tanggalList[i]}<br>
+    //         <strong>Waktu In:</strong> ${waktuList[i]}<br>
+    //         <strong>Shift:</strong> ${shift}<br>
+    //         <strong>Keterlambatan:</strong> ${selisihWaktu} menit
+    //     </div>`;
+        //         }
+
+        //         $('#detailNama').text(nama);
+        //         $('#detailNpk').text(npk);
+        //         $('#detailTotal').text(total);
+        //         $('#detailTanggalWaktu').html(detailHtml);
+        //         $('#detailModal').modal('show');
+        //     });
+        // });
+
+
+
+
+
+
+        // $('#filterYear').change(function() {
+        //     var year = $(this).val();
+
+        //     loadChartData(year);
+        //     if (table1) {
+        //         table1.ajax.url('{{ route('data.table1b') }}?tahun=' + encodeURIComponent(year)).load();
+        //     }
+        // });
 
 
 
