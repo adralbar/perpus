@@ -222,8 +222,6 @@
                                 <th>Status</th>
                                 <th>Tanggal Pengajuan</th>
                                 <th>Tanggal Approval</th>
-
-
                             </tr>
                         </thead>
                         <tbody>
@@ -258,7 +256,6 @@
                                     <th>Reason</th>
                                     <th>Tanggal Pengajuan</th>
                                     <th>Tanggal Approval</th>
-
                                 </tr>
                             </thead>
                             <tbody>
@@ -383,7 +380,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="col-md-6 mb-3">
+                            <div class="mb-3">
                                 <select class="dualistbox form-control" id="shift_modal" name="shift[]" multiple
                                     size="10" required>
                                     @foreach ($masterShift as $shift)
@@ -451,6 +448,14 @@
         });
 
         $('#shift').bootstrapDualListbox({
+            selectorMinimalHeight: 200,
+            nonSelectedListLabel: 'Shift Tersedia',
+            selectedListLabel: 'Shift Dipilih',
+            moveOnSelect: false,
+            preserveSelectionOnMove: 'moved',
+            // Tambahkan opsi lain sesuai kebutuhan
+        });
+        $('#shift_modal').bootstrapDualListbox({
             selectorMinimalHeight: 200,
             nonSelectedListLabel: 'Shift Tersedia',
             selectedListLabel: 'Shift Dipilih',
@@ -626,7 +631,11 @@
                             selectedNpk: [
                                 ...($('#selected_npk_modal').val() || [])
                             ],
+                            selectedShift: [
+                                ...($('#shift_modal').val() || [])
+                            ],
                             status: $('#statusFilter').val() || [],
+
                         },
                         success: function(response) {
                             console.log("Response received:", response); // Debugging log
@@ -640,7 +649,13 @@
                                         .status);
                                 });
                             }
-
+                            if ($('#shift_modal').val().length > 0) {
+                                filteredData = filteredData.filter(item => {
+                                    return $('#shift_modal').val().includes(item
+                                        .shift1
+                                    );
+                                });
+                            }
                             loadDataTable(filteredData); // Tampilkan data di DataTable
 
                             // Tutup modal jika ada

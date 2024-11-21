@@ -95,7 +95,7 @@ class rekapController extends Controller
             $division = $department ? $department->division : null;
 
             // Ambil shift
-            $latestShift = Shift::where('npk', $checkin->npk)
+            $latestShift = shift::where('npk', $checkin->npk)
                 ->where('date', $checkin->tanggal)
                 ->latest()
                 ->first();
@@ -197,7 +197,7 @@ class rekapController extends Controller
             }
         }
 
-        $noCheckData = Shift::with(['user.section.department.division', 'user.role'])
+        $noCheckData = shift::with(['user.section.department.division', 'user.role'])
             ->leftJoin('absensici', function ($join) {
                 $join->on('absensici.npk', '=', 'kategorishift.npk')
                     ->on('absensici.tanggal', '=', 'kategorishift.date');
@@ -234,7 +234,7 @@ class rekapController extends Controller
             ->get();
 
 
-        $noCheckData = Shift::with(['user.section.department.division', 'user.role'])
+        $noCheckData = shift::with(['user.section.department.division', 'user.role'])
             ->leftJoin('absensici', function ($join) {
                 $join->on('absensici.npk', '=', 'kategorishift.npk')
                     ->on('absensici.tanggal', '=', 'kategorishift.date');
@@ -275,7 +275,7 @@ class rekapController extends Controller
             $role = $noCheck->user ? $noCheck->user->role : null;
 
             // Ambil shift terakhir berdasarkan date atau kolom lain yang relevan
-            $latestShift = Shift::where('npk', $noCheck->npk)
+            $latestShift = shift::where('npk', $noCheck->npk)
                 ->where('date', $noCheck->tanggal)
                 ->orderBy('date', 'desc')
                 ->latest('created_at') // Jika ada kolom updated_at, tambahkan latest berdasarkan kolom ini

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-use App\Models\Shift;
+use App\Models\shift;
 use Illuminate\Http\Request;
 use App\Imports\ShiftsImport;
 use Illuminate\Support\Facades\DB;
@@ -126,7 +126,7 @@ class shiftController extends Controller
 
         // Mengambil shift terbaru berdasarkan npk dan tanggal
         foreach ($data->get() as $checkin) {
-            $latestShift = Shift::where('npk', $checkin->npk)
+            $latestShift = shift::where('npk', $checkin->npk)
                 ->where('date', $checkin->date) // Menggunakan date dari $checkin
                 ->latest()
                 ->first();
@@ -150,7 +150,7 @@ class shiftController extends Controller
         $selectedNPKs = $request->input('selected_npk') ? explode(',', $request->input('selected_npk')) : [];
 
 
-        $dataQuery = Shift::with(['user.section', 'user.department', 'user.division'])
+        $dataQuery = shift::with(['user.section', 'user.department', 'user.division'])
             ->select(['kategorishift.id', 'kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             ->orderBy('kategorishift.date', 'ASC');
@@ -256,7 +256,7 @@ class shiftController extends Controller
                     }
                 }
 
-                Shift::create($data);
+                shift::create($data);
             }
             $startDate->addDay();
         }
@@ -298,7 +298,7 @@ class shiftController extends Controller
         ]);
 
         // Buat data shift baru
-        Shift::create([
+        shift::create([
             'npk' => $request->input('npk'),
             'shift1' => $request->input('shift1'),
             'date' => $request->input('date'),
