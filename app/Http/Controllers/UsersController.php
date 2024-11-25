@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\absensici;
 use App\Models\User;
 use App\Models\RoleModel;
 use App\Models\SectionModel;
@@ -13,8 +14,13 @@ use Illuminate\Support\Facades\Auth;
 use App\Exports\UsersExport;
 use Maatwebsite\Excel\Facades\Excel;
 
+use App\Models\absensico;
+use App\Models\RecapAbsensi;
+use App\Models\Shift;
+
 class UsersController extends Controller
 {
+
     public function index()
     {
         $user = Auth::user();
@@ -44,6 +50,8 @@ class UsersController extends Controller
         $department = DepartmentModel::all();
         $division = DivisionModel::all();
 
+
+        $this->storeRekabAbsensi();
         // Use the retrieved userData for DataTables response
         return view('user.index', compact('userData', 'role', 'section', 'department', 'division'));
     }

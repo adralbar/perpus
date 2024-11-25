@@ -13,7 +13,7 @@ class absensici extends Model
 
     public function shift()
     {
-        return $this->hasOne(shift::class, 'date', 'tanggal');
+        return $this->hasOne(Shift::class, 'date', 'tanggal');
     }
     public function user()
     {
