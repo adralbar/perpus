@@ -14,7 +14,7 @@ use App\Http\Controllers\absensiController;
 use App\Http\Controllers\performaController;
 use App\Http\Controllers\absensiCoController;
 use App\Http\Controllers\dashboardController;
-use App\Http\Controllers\MasterShiftController;
+// use App\Http\Controllers\MasterShiftController;
 use App\Http\Controllers\PenyimpanganController;
 
 
@@ -65,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
         //trash
         Route::resource('absensiControllerAjax', absensiController::class);
         Route::resource('absensiCoControllerAjax', absensiCoController::class);
-        Route::resource('master-shift', MasterShiftController::class);
+        // Route::resource('master-shift', MasterShiftController::class);
 
 
         Route::get('/users/export',  [UsersController::class, 'export'])->name('exportUsers');
@@ -128,3 +128,10 @@ Route::post('/registerperformaapi123', [registController::class, 'register'])->n
 //     return response()->json(['csrfToken' => csrf_token()]);
 // });
 Route::post('/logout', [loginController::class, 'logout'])->name('logout');
+
+
+// wa gateway formulir
+
+Route::get('/send-message-form', function () {
+    return view('examples.wagateway');
+})->name('send.message.form');

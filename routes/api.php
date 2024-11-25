@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\api\apiBroadcastController;
+use App\Http\Controllers\api\apiGatewayController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\loginController;
@@ -42,4 +44,9 @@ Route::get('/karyawandataapi', [UsersController::class, 'karyawandata'])->name('
 Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
 
 Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
-Route::get('/master-shifts', [MasterShiftApiController::class, 'getMasterShift']);
+// Route::get('/master-shifts', [MasterShiftApiController::class, 'getMasterShift']);
+
+Route::get('/check-late-and-absen', [apiBroadcastController::class, 'checkLateAndAbsent']);
+Route::post('/wagateway', [apiGatewayController::class, 'sendMessage']);
+
+Route::post('/send-message', [apiGatewayController::class, 'sendMessageFromRequest'])->name('api.sendMessage');

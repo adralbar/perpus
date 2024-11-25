@@ -9,11 +9,12 @@ class Kernel extends ConsoleKernel
 {
     protected $commands = [
         Commands\QueueWorkerCommand::class,
+        Commands\CallApiCommand::class,
     ];
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('inspire')->hourly();
+        $schedule->command('api:check-late-absen')->dailyAt('09:00'); 
     }
 
     protected function commands()
@@ -22,4 +23,7 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+
+
+    
 }
