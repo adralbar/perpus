@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use DateTime;
 use Carbon\Carbon;
 use App\Models\User;
-use App\Models\Shift;
+use App\Models\shift;
 use App\Models\absensici;
 use App\Models\absensico;
 use App\Models\CutiModel;
 use App\Jobs\UploadFileJob;
 use App\Models\MasterShift;
 use App\Events\FileUploaded;
-use App\Models\RecapAbsensi;
 use App\Models\SectionModel;
 use Illuminate\Http\Request;
 use App\Models\DivisionModel;
@@ -34,134 +33,23 @@ class rekapController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
         $user = Auth::user();
         $roleId = $user->role_id;
         $sectionId = $user->section_id;
 
-        // Mengambil status dari request jika ada
-        $status = $request->input('status', 1);
-
-        // Query untuk mengambil data user berdasarkan status
-        $query = User::select('nama', 'npk')->where('status', $status);
+        $query = User::select('nama', 'npk');
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
         }
-
         $masterShift = MasterShift::pluck('waktu');
-        $userData = User::where('status', 1)->get();
-        // Kembalikan view dengan variabel userData
-        return view('rekap.rekapAbsensi', compact('masterShift', 'userData'));
+
+        $userData = $query->get();
+        return view('rekap.rekapAbsensi', compact('userData', 'masterShift'));
     }
 
-<<<<<<< Updated upstream
-    // public function getRecapDataApi(Request $request)
-    // {
-    //     $data = [];
-
-    //     $startDate = $request->query('startDate');
-    //     $endDate = $request->query('endDate');
-    //     $npk = $request->query('npk');
-
-    //     RecapAbsensi::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-    //         $query->whereBetween('tanggal', [$startDate, $endDate]);
-    //     })
-    //         ->when($npk, function ($query) use ($npk) {
-    //             $query->where('npk', $npk);
-    //         })
-    //         ->chunk(100, function ($records) use (&$data) {
-    //             foreach ($records as $record) {
-    //                 $data[] = $record;
-    //             }
-    //         });
-
-    //     return response()->json(['data' => $data]);
-    // }
-
-
-
-    // public function getDataApi()
-    // {
-    //     $checkinQuery = Absensici::select('npk', 'tanggal', DB::raw('MIN(waktuci) as waktuci'))
-    //         ->groupBy('npk', 'tanggal');
-
-    //     $checkoutQuery = Absensico::select('npk', 'tanggal', DB::raw('MAX(waktuco) as waktuco'))
-    //         ->groupBy('npk', 'tanggal');
-
-    //     $checkinResults = $checkinQuery->get()->keyBy(fn($item) => "{$item->npk}-{$item->tanggal}");
-    //     $checkoutResults = $checkoutQuery->get()->keyBy(fn($item) => "{$item->npk}-{$item->tanggal}");
-
-    //     $results = [];
-    //     foreach ($checkinResults as $key => $checkin) {
-    //         $checkout = $checkoutResults->get($key);
-
-    //         $user = User::where('npk', $checkin->npk)->first();
-    //         $section = $user->section ?? null;
-    //         $department = $section ? $section->department : null;
-    //         $division = $department ? $department->division : null;
-    //         $npkSistem = $user->npk_sistem ?? null;
-
-    //         // Ambil shift yang terakhir sesuai tanggal
-    //         $latestShift = Shift::where('npk', $checkin->npk)
-    //             ->where('date', $checkin->tanggal)
-    //             ->latest()
-    //             ->first();
-    //         $shift1 = $latestShift ? $latestShift->shift1 : 'No shift';
-
-    //         // Tentukan status berdasarkan waktu check-in dan shift
-    //         $shiftIn = $shift1 ? explode(' - ', str_replace('.', ':', $shift1))[0] : null;
-    //         $status = $latestShift && $checkin->waktuci > $shiftIn ? 'Terlambat' : 'Tepat Waktu';
-
-    //         // Data untuk rekab absensi
-    //         $rekabData = [
-    //             'nama' => $user->nama ?? '',
-    //             'npk' => $checkin->npk,
-    //             'tanggal' => $checkin->tanggal,
-    //             'waktuci' => $checkin->waktuci ?: 'NO IN',
-    //             'waktuco' => $checkout->waktuco ?? 'NO OUT',
-    //             'shift1' => $shift1,
-    //             'section_nama' => $section->nama ?? '',
-    //             'department_nama' => $department->nama ?? '',
-    //             'division_nama' => $division->nama ?? '',
-    //             'status' => $status,
-    //             'npk_sistem' => $npkSistem,
-    //         ];
-
-    //         // Insert atau update ke dalam tabel rekabAbsensi
-    //         RecapAbsensi::updateOrCreate(
-    //             [
-    //                 'npk' => $checkin->npk,
-    //                 'tanggal' => $checkin->tanggal
-    //             ],
-    //             $rekabData
-    //         );
-
-    //         $results[] = $rekabData;
-    //     }
-
-    //     // Kembalikan hasil akhir sebagai respons JSON
-    //     return response()->json(['data' => $results]);
-    // }
-
-
-=======
-
-    public function getKaryawan(Request $request)
-    {
-        $status = $request->query('status', 1);
-
-        $userData = User::where('status', $status)->get();
-
-        return response()->json([
-            'userData' => $userData
-        ]);
-    }
-
-
-
->>>>>>> Stashed changes
     public function getData(Request $request)
     {
         $today = date('Y-m-d');
@@ -641,17 +529,20 @@ class rekapController extends Controller
 
         return response()->json(['success' => 'Check-in berhasil ditambahkan!']);
     }
+
     public function upload(Request $request)
     {
         set_time_limit(300);
         $request->validate([
-            'file' => 'required|mimes:txt|max:250',
+            'file' => 'required|mimes:txt|max:250', // Max size in kilobytes
         ]);
 
         $file = $request->file('file');
         if (!$file->isValid()) {
             return redirect()->back()->withErrors('File upload gagal. Silakan coba lagi.');
         }
+
+        // Simpan file ke storage
         $filePath = $file->storeAs('uploads', $file->getClientOriginalName());
 
         if (!$filePath) {
@@ -659,14 +550,16 @@ class rekapController extends Controller
         }
 
         $fileContent = file(storage_path('app/' . $filePath));
+
         $batchSize = 100;
         $totalLines = count($fileContent);
 
         for ($offset = 0; $offset < $totalLines; $offset += $batchSize) {
+            // Ambil batch sesuai offset dan batchSize
             $batch = array_slice($fileContent, $offset, $batchSize);
 
             foreach ($batch as $line) {
-                $data = str_getcsv($line, "\t");
+                $data = str_getcsv($line, "\t"); // Parsing baris CSV dengan delimiter tab
 
                 if (count($data) >= 5) {
                     $npk_sistem = $data[1];
@@ -674,6 +567,7 @@ class rekapController extends Controller
                     $status = $data[3];
                     $time = $data[4];
 
+                    // Mengonversi format tanggal
                     $date = DateTime::createFromFormat('d.m.Y', $tanggal);
                     if ($date) {
                         $formattedDate = $date->format('Y-m-d');
@@ -682,51 +576,26 @@ class rekapController extends Controller
                         continue;
                     }
 
+                    // Cari user berdasarkan npk_sistem
                     $user = User::where('npk_sistem', $npk_sistem)->first();
 
                     if ($user) {
-                        $section = $user->section ?? null;
-                        $department = $section ? $section->department : null;
-                        $division = $department ? $department->division : null;
-
-                        $latestShift = Shift::where('npk', $user->npk)
-                            ->where('date', $formattedDate)
-                            ->latest()
-                            ->first();
-                        $shift1 = $latestShift ? $latestShift->shift1 : 'No shift';
-
-                        $shiftIn = $shift1 ? explode(' - ', str_replace('.', ':', $shift1))[0] : null;
-                        $attendanceStatus = $latestShift && $status === 'P10' && $time > $shiftIn ? 'Terlambat' : 'Tepat Waktu';
-
-                        $existingRecap = RecapAbsensi::where('npk_sistem', $npk_sistem)
-                            ->where('tanggal', $formattedDate)
-                            ->first();
-
-                        $waktuci = $status === 'P10'
-                            ? ($existingRecap && $existingRecap->waktuci ? $existingRecap->waktuci : $time)
-                            : $existingRecap->waktuci ?? null;
-
-                        $waktuco = $status === 'P20'
-                            ? ($existingRecap && $existingRecap->waktuco ? max($existingRecap->waktuco, $time) : $time)
-                            : $existingRecap->waktuco ?? null;
-
-                        RecapAbsensi::updateOrCreate(
-                            [
+                        // Simpan atau update ke dalam tabel yang sesuai dengan mengisi npk otomatis
+                        if ($status == 'P10') {
+                            Absensici::create([
                                 'npk_sistem' => $npk_sistem,
-                                'tanggal' => $formattedDate
-                            ],
-                            [
-                                'nama' => $user->nama,
-                                'npk' => $user->npk,
-                                'waktuci' => $waktuci,
-                                'waktuco' => $waktuco,
-                                'shift1' => $shift1,
-                                'section_nama' => $section->name ?? '',
-                                'department_nama' => $department->name ?? '',
-                                'division_nama' => $division->name ?? '',
-                                'status' => $attendanceStatus,
-                            ]
-                        );
+                                'tanggal' => $formattedDate,
+                                'waktuci' => $time,
+                                'npk' => $user->npk, // Isi npk dari relasi User
+                            ]);
+                        } elseif ($status == 'P20') {
+                            Absensico::create([
+                                'npk_sistem' => $npk_sistem,
+                                'tanggal' => $formattedDate,
+                                'waktuco' => $time,
+                                'npk' => $user->npk, // Isi npk dari relasi User
+                            ]);
+                        }
                     } else {
                         Log::error('User dengan npk_sistem tidak ditemukan', ['npk_sistem' => $npk_sistem]);
                     }
@@ -738,9 +607,6 @@ class rekapController extends Controller
 
         return redirect()->back()->with('success', 'File berhasil diunggah dan diproses.');
     }
-
-
-
 
     public function exportAbsensi(Request $request)
     {
