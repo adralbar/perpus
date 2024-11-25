@@ -34,23 +34,29 @@ class rekapController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $roleId = $user->role_id;
         $sectionId = $user->section_id;
 
-        $query = User::select('nama', 'npk');
+        // Mengambil status dari request jika ada
+        $status = $request->input('status', 1);
+
+        // Query untuk mengambil data user berdasarkan status
+        $query = User::select('nama', 'npk')->where('status', $status);
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
         }
-        $masterShift = MasterShift::pluck('waktu');
 
-        $userData = $query->get();
-        return view('rekap.rekapAbsensi', compact('userData', 'masterShift'));
+        $masterShift = MasterShift::pluck('waktu');
+        $userData = User::where('status', 1)->get();
+        // Kembalikan view dengan variabel userData
+        return view('rekap.rekapAbsensi', compact('masterShift', 'userData'));
     }
 
+<<<<<<< Updated upstream
     // public function getRecapDataApi(Request $request)
     // {
     //     $data = [];
@@ -140,6 +146,22 @@ class rekapController extends Controller
     // }
 
 
+=======
+
+    public function getKaryawan(Request $request)
+    {
+        $status = $request->query('status', 1);
+
+        $userData = User::where('status', $status)->get();
+
+        return response()->json([
+            'userData' => $userData
+        ]);
+    }
+
+
+
+>>>>>>> Stashed changes
     public function getData(Request $request)
     {
         $today = date('Y-m-d');

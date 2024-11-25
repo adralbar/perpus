@@ -56,6 +56,13 @@
                         </div>
                     </div>
 
+                    <div class="form-check form-switch ml-3">
+                        <input class="form-check-input" type="checkbox" id="toggleStatus"
+                            data-status="{{ request('status', 1) }}" {{ request('status', 1) == 0 ? 'checked' : '' }}>
+                        <label class="form-check-label" for="toggleStatus" id="statusText">
+                            {{ request('status', 1) == 0 ? 'Nonaktif' : 'Aktif' }}
+                        </label>
+                    </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -380,15 +387,16 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="mb-3">
-                                <select class="dualistbox form-control" id="shift_modal" name="shift[]" multiple
-                                    size="10" required>
-                                    @foreach ($masterShift as $shift)
-                                        <option value="{{ $shift }}">{{ $shift }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
                         </div>
+                        <div class="mb-3">
+                            <select class="dualistbox form-control" id="shift_modal" name="shift[]" multiple
+                                size="10" required>
+                                @foreach ($masterShift as $shift)
+                                    <option value="{{ $shift }}">{{ $shift }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="modalStartDate" class="form-label">Tanggal Mulai</label>
@@ -410,12 +418,13 @@
     </div>
 
     <script src="{{ asset('dist/js/plugins/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
-    {{-- <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script> --}}
-    <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script>
-    <script src="{{ asset('lte/plugins/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js') }}"></script>
+    <script src="{{ asset('lte/plugins/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js') }}"></script> <!-- Dual Listbox -->
+    </script>
+
+    <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script> <!-- XLSX -->
     <script>
         window.onload = function() {
             alert('Silahkan isi Filter tanggal terlebih dahulu!');
@@ -430,14 +439,71 @@
                 e.preventDefault(); // Mencegah form dari pengiriman
             }
         };
-        var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+
+        var dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+            selectorMinimalHeight: 200,
             nonSelectedListLabel: 'NPK Tersedia',
             selectedListLabel: 'NPK Terpilih',
             preserveSelectionOnMove: 'moved',
             moveOnSelect: false,
             nonSelectedFilter: '',
-
         });
+
+        $(document).on('click', '#toggleStatus', function() {
+            var status = this.checked ? 0 : 1; // Tentukan status berdasarkan saklar
+            var statusText = status === 0 ? 'Nonaktif' : 'Aktif';
+
+            $('#statusText').text(statusText);
+            var fetchUrl = "{{ route('get.karyawan') }}";
+
+            // Menggunakan AJAX untuk mengambil data berdasarkan status
+            $.ajax({
+                url: fetchUrl,
+                method: 'GET',
+                data: {
+                    status: status
+                },
+                success: function(data) {
+                    var selectedValues = $('select[name="selected_npk[]"]')
+                        .val(); // Mendapatkan nilai yang dipilih sebelumnya
+                    var $dualistbox = $('select[name="selected_npk[]"]');
+
+                    $dualistbox.empty(); // Kosongkan pilihan yang ada
+
+                    // Tambahkan opsi baru berdasarkan data yang diterima
+                    data.userData.forEach(function(user) {
+                        $('<option>', {
+                            value: user.npk,
+                            text: `${user.nama} (${user.npk})`
+                        }).appendTo($dualistbox);
+                    });
+
+                    // Pastikan selectedValues masih valid
+                    selectedValues = selectedValues.filter(function(value) {
+                        return data.userData.some(function(user) {
+                            return user.npk === value;
+                        });
+                    });
+
+                    // Set nilai yang dipilih
+                    $dualistbox.val(selectedValues);
+
+                    // Trigger perubahan dan refresh tampilan dual listbox
+                    $dualistbox.trigger('change');
+
+                    // Delay refresh untuk memastikan perubahan diterapkan
+                    setTimeout(function() {
+                        $dualistbox.bootstrapDualListbox('refresh');
+                    }, 100);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching data:', error);
+                }
+            });
+        });
+
+
+
         $('#statusFilter').bootstrapDualListbox({
             selectorMinimalHeight: 200,
             nonSelectedListLabel: 'Status Tersedia',
@@ -463,7 +529,6 @@
             preserveSelectionOnMove: 'moved',
             // Tambahkan opsi lain sesuai kebutuhan
         });
-
 
         $(document).ready(function() {
             function loadDataTable(filteredData) {
@@ -708,9 +773,6 @@
                     alert("Tidak ada data untuk diekspor.");
                 }
             });
-
-
-
 
             $('#checkinForm').on('submit', function(e) {
                 e.preventDefault();

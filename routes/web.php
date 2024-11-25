@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
         // Route::resource('master-shift', MasterShiftController::class);
 
 
+
         Route::get('/users/export',  [UsersController::class, 'export'])->name('exportUsers');
     });
 
@@ -88,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/shiftapi', [shiftController::class, 'shiftApi'])->name('shiftapi');
         Route::get('/export-data', [shiftController::class, 'exportData'])->name('exportData');
         Route::get('/exporttemplate', [shiftController::class, 'templateExport'])->name('exportTemplate');
+        Route::get('/getKaryawan', [rekapController::class, 'getKaryawan'])->name('get.karyawan');
 
 
         //route data karyawan
