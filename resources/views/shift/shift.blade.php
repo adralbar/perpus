@@ -3,7 +3,9 @@
 
     <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}">
+    {{-- <link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}"> --}}
+    <link rel="stylesheet" href="{{ asset('lte/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css') }}">
+
     <link rel="stylesheet" href="{{ asset('dist/css/daterangepicker.css') }}">
     <link rel="stylesheet" type="text/css">
 
@@ -171,22 +173,9 @@
                             <div class="form-group">
                                 <label for="shift1">Waktu Shift</label>
                                 <select class="form-control" id="shift1" name="shift1" required>
-                                    <option value="06:00 - 15:00">06:00 - 15:00</option>
-                                    <option value="07:00 - 16:00">07:00 - 16:00</option>
-                                    <option value="14:00 - 23:00">14:00 - 23:00</option>
-                                    <option value="13:00 - 22:00">13:00 - 22:00</option>
-                                    <option value="21:00 - 06:00">21:00 - 06:00</option>
-                                    <option value="22:00 - 07:00">22:00 - 07:00</option>
-                                    <option value="23:00 - 08:00">23:00 - 08:00</option>
-                                    <option value="06:00 - 15:20">06:00 - 15:20 (Fri)</option>
-                                    <option value="07:00 - 16:30">07:00 - 16:30 (Fri)</option>
-                                    <option value="15:00 - 00:00">15:00 - 00:00</option>
-                                    <option value="16:00 - 01:00">16:00 - 01:00</option>
-                                    <option value="08:00 - 17:20">08:00 - 17:20 (Fri)</option>
-                                    <option value="09:00 - 18:20">09:00 - 18:20 (Fri)</option>
-                                    <option value="08:00 - 17:00">08:00 - 17:00 (Fri)</option>
-                                    <option value="OFF">OFF</option>
-                                    <option value="Dinas Luar Stand By">Dinas Luar Stand By</option>
+                                    @foreach ($masterShift as $shift)
+                                        <option value="{{ $shift }}">{{ $shift }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="form-group">
@@ -228,52 +217,69 @@
         <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
         <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
-        <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
+        {{-- <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script> --}}
         <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script>
+        <script src="{{ asset('lte/plugins/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js') }}"></script>
 
+
+        @if (Auth::user()->role_id != 1)
+            <script>
+                $(document).ready(function() {
+                    function getToday() {
+                        const today = new Date();
+                        today.setDate(today.getDate() + 1); // Tambahkan 1 hari
+                        return today.toISOString().split('T')[0];
+                    }
+
+                    // Fungsi untuk mendapatkan tanggal maksimal (14 hari ke depan)
+                    function getMaxDate() {
+                        const today = new Date();
+                        const dayOfWeek = today.getDay(); // 0 (Minggu) - 6 (Sabtu)
+                        const daysUntilEndOfWeek = 7 - dayOfWeek; // Hari tersisa hingga akhir minggu ini
+                        today.setDate(today.getDate() + daysUntilEndOfWeek + 14); // Akhir minggu ini + 14 hari
+                        return today.toISOString().split('T')[0];
+                    }
+
+                    // Set atribut min dan max
+                    $('#start_date').attr({
+                        min: getToday(),
+                        max: getMaxDate()
+                    });
+                    $('#end_date').attr({
+                        min: getToday(),
+                        max: getMaxDate()
+                    });
+                });
+            </script>
+        @endif
         <script>
-            window.onload = function() {
-                alert('Silahkan isi Filter terlebih dahulu!');
-            };
-
             let shiftHistoryUrl;
-            var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox();
+            var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+                nonSelectedListLabel: 'NPK Tersedia',
+                selectedListLabel: 'NPK Terpilih',
+                preserveSelectionOnMove: 'moved',
+                moveOnSelect: false,
+                nonSelectedFilter: '',
 
-            var demo1 = $('select[name="npk[]"]').bootstrapDualListbox();
+            });
+
+            var demo1 = $('select[name="npk[]"]').bootstrapDualListbox({
+                nonSelectedListLabel: 'NPK Tersedia',
+                selectedListLabel: 'NPK Terpilih',
+                preserveSelectionOnMove: 'moved',
+                moveOnSelect: false,
+                nonSelectedFilter: '',
+
+            });
             var demo2 = $('.demo2').bootstrapDualListbox({
                 nonSelectedListLabel: 'Non-selected',
                 selectedListLabel: 'Selected',
                 preserveSelectionOnMove: 'moved',
                 moveOnSelect: false,
                 nonSelectedFilter: 'ion ([7-9]|[1][0-2])'
+
             });
             $(document).ready(function() {
-                function getToday() {
-                    const today = new Date();
-                    today.setDate(today.getDate() + 1); // Tambahkan 1 hari
-                    return today.toISOString().split('T')[0];
-
-                }
-                // Fungsi untuk mendapatkan tanggal maksimal (14 hari ke depan)
-                function getMaxDate() {
-                    const today = new Date();
-                    const dayOfWeek = today.getDay(); // 0 (Minggu) - 6 (Sabtu)
-                    const daysUntilEndOfWeek = 7 - dayOfWeek; // Hari tersisa hingga akhir minggu ini
-                    today.setDate(today.getDate() + daysUntilEndOfWeek + 14); // Akhir minggu ini + 14 hari
-                    return today.toISOString().split('T')[0];
-                }
-
-                // Set atribut min dan max
-                $('#start_date').attr({
-                    min: getToday(),
-                    max: getMaxDate()
-                });
-                $('#end_date').attr({
-                    min: getToday(),
-                    max: getMaxDate()
-                });
-
-
                 var table = $('#myTable').DataTable({
                     processing: true,
                     serverSide: true,
