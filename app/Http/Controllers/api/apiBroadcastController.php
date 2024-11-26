@@ -9,20 +9,19 @@ use App\Models\peringatanModel;
 use App\Models\shift;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 class apiBroadcastController extends Controller
 {
     public function checkLateAndAbsent()
     {
         set_time_limit(0);
 
-        // Ambil semua pengguna mulai dari id 42
         $users = User::where('id', '>=', 42)->get();
 
-        // Ambil tanggal hari kemarin
         $yesterday = Carbon::yesterday();
 
         foreach ($users as $user) {
-            // Ambil semua shift untuk pengguna berdasarkan `npk` yang terjadi kemarin
             $shifts = shift::where('npk', $user->npk)
                 ->whereDate('date', $yesterday) // Filter shift yang terjadi kemarin
                 ->get();
@@ -121,12 +120,36 @@ class apiBroadcastController extends Controller
 
     private function sendWarningMessage($user, $kategori)
     {
+        // Log untuk debugging
+        Log::info('sendWarningMessage dipanggil.', [
+            'user_id' => $user->id,
+            'user_no_telp' => $user->no_telp,
+            'kategori' => $kategori,
+        ]);
+    
         $data = [
             'destination' => $user->no_telp,
             'message' => "Anda telah {$kategori} sebanyak 3 kali. Mohon perbaiki absensi Anda.",
         ];
-
+    
+        Log::info('Data pesan yang akan dikirim:', $data);
+    
         $apiGateway = new apiGatewayController();
-        return $apiGateway->sendMessage($data);
+    
+        // Coba tangkap error jika ada masalah saat pengiriman pesan
+        try {
+            $response = $apiGateway->sendMessage($data);
+            Log::info('Pesan berhasil dikirim.', [
+                'response' => $response,
+            ]);
+            return $response;
+        } catch (\Exception $e) {
+            Log::error('Gagal mengirim pesan.', [
+                'error_message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return false;
+        }
     }
+    
 }
