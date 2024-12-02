@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PcdLoginLogs extends Model
 {
     use HasFactory;
-
+ protected $connection = 'mysql2'; 
     protected $table = 'pcd_login_logs'; // Nama tabel di database
 
     // Tentukan atribut yang dapat diisi
