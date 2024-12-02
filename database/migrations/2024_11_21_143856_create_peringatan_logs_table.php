@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('peringatan', function (Blueprint $table) {
+        Schema::create('peringatan_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('kategori'); // "telat" atau "mangkir"
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('peringatan');
+        Schema::dropIfExists('peringatan_logs');
     }
 };
