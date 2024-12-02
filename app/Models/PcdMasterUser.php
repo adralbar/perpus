@@ -9,8 +9,8 @@ class PcdMasterUser extends Model
 {
     use HasFactory;
 
- protected $connection = 'mysql2'; 
- protected $table = 'pcd_master_users';
+    protected $connection = 'mysql2';
+    protected $table = 'pcd_master_users';
 
     // Kolom yang dapat diisi secara massal
     protected $fillable = [
