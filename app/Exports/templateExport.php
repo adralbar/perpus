@@ -103,13 +103,14 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
                     '21:00 - 06:00',
                     '22:00 - 07:00',
                     '23:00 - 08:00',
-                    '06:00 - 15:20 (Fri)',
-                    '07:00 - 16:30 (Fri)',
+                    '06:00 - 15:20',
+                    '07:00 - 16:30',
                     '15:00 - 00:00',
                     '16:00 - 01:00',
                     '08:00 - 17:20',
                     '09:00 - 18:20',
                     '08:00 - 17:00',
+                    'Dinas Luar Stand By'
                 ];
 
                 $rowIndex = 2;
@@ -118,12 +119,13 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
                     $rowIndex++;
                 }
 
-                // Menambahkan catatan format tanggal di bawah jadwal shift terakhir
                 $noteRow = 2; // Baris setelah jadwal shift terakhir
-                $sheet->setCellValue('I' . $noteRow, 'YYYY-MM-DD (contoh: 2024-11-29)');
+                $sheet->setCellValue('I' . $noteRow, 'YYYY-MM-DD contoh: ');
+                $noteRow = 3; // Baris setelah jadwal shift terakhir
+                $sheet->setCellValue('I' . $noteRow, '2024-11-29');
 
 
-                $noteRow += 13;
+                $noteRow += 14;
                 $sheet->setCellValue('H' . $noteRow, 'NB : Pastikan number format text');
 
                 // Mengatur gaya untuk catatan
@@ -148,6 +150,7 @@ class TemplateExport implements FromCollection, WithHeadings, WithStyles, WithEv
             'F' => NumberFormat::FORMAT_TEXT, // Kolom F (default)
             'G' => NumberFormat::FORMAT_TEXT, // Kolom G (default)
             'H' => NumberFormat::FORMAT_TEXT, // Jadwal Shift
+            'I' => NumberFormat::FORMAT_TEXT, // Jadwal Shift
         ];
     }
 }

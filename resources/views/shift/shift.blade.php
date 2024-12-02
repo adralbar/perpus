@@ -118,6 +118,14 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="form-check form-switch ml-4 mt-1">
+                                <input class="form-check-input" type="checkbox" id="toggleStatus"
+                                    data-status="{{ request('status', 1) }}"
+                                    {{ request('status', 1) == 0 ? 'checked' : '' }}>
+                                <label class="form-check-label" for="toggleStatus" id="statusText">
+                                    {{ request('status', 1) == 0 ? 'Nonaktif' : 'Aktif' }}
+                                </label>
+                            </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3 mt-3">
                                     <label for="startDate" class="form-label">Tanggal Mulai</label>
@@ -254,7 +262,8 @@
         @endif
         <script>
             let shiftHistoryUrl;
-            var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+            var $dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
                 nonSelectedListLabel: 'NPK Tersedia',
                 selectedListLabel: 'NPK Terpilih',
                 preserveSelectionOnMove: 'moved',
@@ -263,7 +272,42 @@
 
             });
 
+            $(document).on('click', '#toggleStatus', function() {
+                var status = this.checked ? 0 : 1; // Status 0 atau 1
+                var fetchUrl = "{{ route('get.karyawan') }}";
+
+                // AJAX untuk mendapatkan data
+                $.ajax({
+                    url: fetchUrl,
+                    method: 'GET',
+                    data: {
+                        status: status,
+                    },
+                    success: function(data) {
+                        // Kosongkan opsi yang ada
+                        $dualistbox.empty();
+
+                        // Tambahkan opsi baru dari data
+                        data.userData.forEach(function(user) {
+                            $('<option>', {
+                                value: user.npk,
+                                text: `${user.nama} (${user.npk})`,
+                            }).appendTo($dualistbox);
+                        });
+
+                        // Refresh tampilan dual listbox
+                        $dualistbox.bootstrapDualListbox('refresh');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            });
+
+
+
             var demo1 = $('select[name="npk[]"]').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
                 nonSelectedListLabel: 'NPK Tersedia',
                 selectedListLabel: 'NPK Terpilih',
                 preserveSelectionOnMove: 'moved',
@@ -272,6 +316,7 @@
 
             });
             var demo2 = $('.demo2').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
                 nonSelectedListLabel: 'Non-selected',
                 selectedListLabel: 'Selected',
                 preserveSelectionOnMove: 'moved',

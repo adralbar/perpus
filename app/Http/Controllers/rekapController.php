@@ -400,6 +400,28 @@ class rekapController extends Controller
             "data" => $data,
         ]);
     }
+ public function getKaryawan(Request $request)
+    {
+        $user = Auth::user();
+        $status = $request->query('status', 1);
+        $roleId = $user->role_id;
+        $sectionId = $user->section_id;
+        $departmentId = $user->department_id;
+
+        $query = User::select('nama', 'npk')->where('status', $status);
+
+        if ($roleId == 2) {
+            $query->where('section_id', $sectionId);
+        } else if ($roleId == 9) {
+            $query->where('department_id', $departmentId);
+        }
+
+        $userData = $query->get();
+
+        return response()->json([
+            'userData' => $userData
+        ]);
+    }
 
     public function getPenyimpangan(Request $request)
     {
@@ -530,7 +552,7 @@ class rekapController extends Controller
         return response()->json(['success' => 'Check-in berhasil ditambahkan!']);
     }
 
-    public function upload(Request $request)
+ public function upload(Request $request)
     {
         set_time_limit(300);
         $request->validate([
@@ -607,7 +629,7 @@ class rekapController extends Controller
 
         return redirect()->back()->with('success', 'File berhasil diunggah dan diproses.');
     }
-
+    
     public function exportAbsensi(Request $request)
     {
         $startDate = $request->input('startDate');

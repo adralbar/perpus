@@ -397,6 +397,7 @@
                             </select>
                         </div>
 
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="modalStartDate" class="form-label">Tanggal Mulai</label>
@@ -440,65 +441,47 @@
             }
         };
 
-        var dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+        // Inisialisasi Dual Listbox di luar fungsi AJAX
+        var $dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
             selectorMinimalHeight: 200,
-            nonSelectedListLabel: 'NPK Tersedia',
-            selectedListLabel: 'NPK Terpilih',
-            preserveSelectionOnMove: 'moved',
+            nonSelectedListLabel: 'Status Tersedia',
+            selectedListLabel: 'Status Dipilih',
             moveOnSelect: false,
-            nonSelectedFilter: '',
+            preserveSelectionOnMove: 'moved',
         });
 
-        $(document).on('click', '#toggleStatus', function() {
-            var status = this.checked ? 0 : 1; // Tentukan status berdasarkan saklar
-            var statusText = status === 0 ? 'Nonaktif' : 'Aktif';
 
-            $('#statusText').text(statusText);
+        $(document).on('click', '#toggleStatus', function() {
+            var status = this.checked ? 0 : 1; // Status 0 atau 1
             var fetchUrl = "{{ route('get.karyawan') }}";
 
-            // Menggunakan AJAX untuk mengambil data berdasarkan status
+            // AJAX untuk mendapatkan data
+
             $.ajax({
                 url: fetchUrl,
                 method: 'GET',
                 data: {
-                    status: status
-                },
-                success: function(data) {
-                    var selectedValues = $('select[name="selected_npk[]"]')
-                        .val(); // Mendapatkan nilai yang dipilih sebelumnya
-                    var $dualistbox = $('select[name="selected_npk[]"]');
-
-                    $dualistbox.empty(); // Kosongkan pilihan yang ada
-
-                    // Tambahkan opsi baru berdasarkan data yang diterima
-                    data.userData.forEach(function(user) {
-                        $('<option>', {
-                            value: user.npk,
-                            text: `${user.nama} (${user.npk})`
-                        }).appendTo($dualistbox);
-                    });
-
-                    // Pastikan selectedValues masih valid
-                    selectedValues = selectedValues.filter(function(value) {
-                        return data.userData.some(function(user) {
-                            return user.npk === value;
+                        status: status,
+                    },
+                    success: function(data) {
+                        // Kosongkan opsi yang ada
+                        $dualistbox.empty();
+    
+                        // Tambahkan opsi baru dari data
+                        data.userData.forEach(function(user) {
+                            $('<option>', {
+                                value: user.npk,
+                                text: `${user.nama} (${user.npk})`,
+                            }).appendTo($dualistbox);
                         });
-                    });
-
-                    // Set nilai yang dipilih
-                    $dualistbox.val(selectedValues);
-
-                    // Trigger perubahan dan refresh tampilan dual listbox
-                    $dualistbox.trigger('change');
-
-                    // Delay refresh untuk memastikan perubahan diterapkan
-                    setTimeout(function() {
+    
+                        // Refresh tampilan dual listbox
                         $dualistbox.bootstrapDualListbox('refresh');
-                    }, 100);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching data:', error);
-                }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    },
+  
             });
         });
 
@@ -506,6 +489,15 @@
 
         $('#statusFilter').bootstrapDualListbox({
             selectorMinimalHeight: 200,
+            nonSelectedListLabel: 'Status Tersedia',
+            selectedListLabel: 'Status Dipilih',
+            moveOnSelect: false,
+            preserveSelectionOnMove: 'moved',
+            // Tambahkan opsi lain sesuai kebutuhan
+        });
+
+        $('#kehadiran').bootstrapDualListbox({
+            selectorMinimalHeight: 50,
             nonSelectedListLabel: 'Status Tersedia',
             selectedListLabel: 'Status Dipilih',
             moveOnSelect: false,
@@ -700,6 +692,7 @@
                                 ...($('#shift_modal').val() || [])
                             ],
                             status: $('#statusFilter').val() || [],
+                            kehadiran: $('#kehadiran').val() || [],
 
                         },
                         success: function(response) {
@@ -721,6 +714,19 @@
                                     );
                                 });
                             }
+                            if ($('#kehadiran').val().length > 0) {
+                                filteredData = filteredData.filter(item => {
+                                    // Memeriksa apakah status kehadiran di data JSON cocok dengan pilihan filter
+                                    return $('#kehadiran').val().some(filterValue => {
+                                        return (filterValue === "NO IN" && item
+                                                .waktuci === "NO IN") ||
+                                            (filterValue === "NO OUT" && item
+                                                .waktuco === "NO OUT");
+                                    });
+                                });
+                            }
+
+
                             loadDataTable(filteredData); // Tampilkan data di DataTable
 
                             // Tutup modal jika ada
