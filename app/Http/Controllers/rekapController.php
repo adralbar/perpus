@@ -139,6 +139,11 @@ class rekapController extends Controller
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             }
+            $latestShift = shift::where('npk', $checkout->npk)
+                ->where('date', $checkout->tanggal)
+                ->latest()
+                ->first();
+            $shift1 = $latestShift ? $latestShift->shift1 : null;
 
             // Cek apakah ada check-in untuk tanggal ini
             if (isset($results[$key])) {
