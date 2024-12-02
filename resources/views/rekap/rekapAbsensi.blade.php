@@ -396,12 +396,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <select id="kehadiran" multiple class="form-control">
-                                <option value="NO IN">NO IN</option>
-                                <option value="NO OUT">NO OUT</option>
-                            </select>
-                        </div>
+
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -461,30 +456,32 @@
             var fetchUrl = "{{ route('get.karyawan') }}";
 
             // AJAX untuk mendapatkan data
+
             $.ajax({
                 url: fetchUrl,
                 method: 'GET',
                 data: {
-                    status: status,
-                },
-                success: function(data) {
-                    // Kosongkan opsi yang ada
-                    $dualistbox.empty();
-
-                    // Tambahkan opsi baru dari data
-                    data.userData.forEach(function(user) {
-                        $('<option>', {
-                            value: user.npk,
-                            text: `${user.nama} (${user.npk})`,
-                        }).appendTo($dualistbox);
-                    });
-
-                    // Refresh tampilan dual listbox
-                    $dualistbox.bootstrapDualListbox('refresh');
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching data:', error);
-                },
+                        status: status,
+                    },
+                    success: function(data) {
+                        // Kosongkan opsi yang ada
+                        $dualistbox.empty();
+    
+                        // Tambahkan opsi baru dari data
+                        data.userData.forEach(function(user) {
+                            $('<option>', {
+                                value: user.npk,
+                                text: `${user.nama} (${user.npk})`,
+                            }).appendTo($dualistbox);
+                        });
+    
+                        // Refresh tampilan dual listbox
+                        $dualistbox.bootstrapDualListbox('refresh');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    },
+  
             });
         });
 

@@ -40,6 +40,15 @@ class loginController extends Controller
                 return redirect()->intended('/rekap');
             }
 
+            if (!$user) {
+                // If NPK is not found, return back with an error
+                return redirect()->back()->withErrors('NPK tidak terdaftar')->withInput();
+            }
+
+            // Check if the user's status is active
+            if ($user->status == 0) {
+                return redirect()->back()->withErrors('NPK tidak aktif')->withInput();
+            }
 
             return redirect()->route('login')->withErrors([
                 'login' => 'Anda tidak diizinkan untuk mengakses halaman ini.',

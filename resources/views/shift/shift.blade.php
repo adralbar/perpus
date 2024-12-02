@@ -262,7 +262,6 @@
         @endif
         <script>
             let shiftHistoryUrl;
-
             var $dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
                 selectorMinimalHeight: 200,
                 nonSelectedListLabel: 'NPK Tersedia',
