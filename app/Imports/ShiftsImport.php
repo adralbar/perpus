@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use Illuminate\Support\Collection;
-use App\Models\Shift;
+use App\Models\shift;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Carbon\Carbon;
 use App\Models\User;
@@ -96,7 +96,7 @@ class ShiftsImport implements ToCollection
                             $data['date'] = $startDate->toDateString();
 
                             // Simpan data ke database
-                            Shift::create($data);
+                            shift::create($data);
 
                             $startDate->addDay();
                         }

@@ -27,8 +27,9 @@ class shiftController extends Controller
         $roleId = $user->role_id;
         $sectionId = $user->section_id;
         $departmentId = $user->department_id;
+        
+        $query = User::select('nama', 'npk')->where('status', 1);
 
-        $query = User::select('nama', 'npk');
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
@@ -91,56 +92,67 @@ class shiftController extends Controller
     //         })
     //         ->make(true);
     // }
-    public function getData(Request $request)
-    {
-        $startDate = $request->input('startDate');
-        $endDate = $request->input('endDate');
+public function getData(Request $request)
+{
+    $startDate = $request->input('startDate');
+    $endDate = $request->input('endDate');
 
-        $data = shift::select([
-            'kategorishift.id',
-            'kategorishift.npk',
-            'kategorishift.shift1',
-            'kategorishift.date',
-            'users.nama'
-        ])
-            ->join('users', 'kategorishift.npk', '=', 'users.npk')
-            ->orderBy('kategorishift.date', 'DESC');
+    // Mengambil data shift dan menggabungkan informasi pengguna
+    $data = shift::select([
+        'kategorishift.id',
+        'kategorishift.npk',
+        'kategorishift.shift1',
+        'kategorishift.date',
+        'users.nama',
+        'latest_shift.latest_created_at'
+    ])
+    ->join('users', 'kategorishift.npk', '=', 'users.npk')
+    // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
+    ->join(DB::raw('(
+        SELECT npk, date, MAX(created_at) as latest_created_at
+        FROM kategorishift
+        GROUP BY npk, date
+    ) AS latest_shift'), function($join) {
+        $join->on('kategorishift.npk', '=', 'latest_shift.npk')
+             ->on('kategorishift.date', '=', 'latest_shift.date')
+             ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at'); // Menambahkan kondisi ini
+    })
+    ->orderBy('kategorishift.date', 'DESC'); // Mengurutkan berdasarkan tanggal shift
 
-        $user = Auth::user();
-        $roleId = $user->role_id;
+    // Mendapatkan role_id pengguna saat ini
+    $user = Auth::user();
+    $roleId = $user->role_id;
 
-        if ($request->has('selected_npk') && !empty($request->selected_npk)) {
-            $selectedNPKs = explode(',', $request->selected_npk);
-            $data->whereIn('users.npk', $selectedNPKs);
-        }
-
-        if (!empty($startDate) && !empty($endDate)) {
-            $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
-        }
-
-        // Pengecekan role_id
-        if ($roleId == 2) {
-            $sectionId = $user->section_id;
-            $data->where('users.section_id', $sectionId);
-        }
-
-        // Mengambil shift terbaru berdasarkan npk dan tanggal
-        foreach ($data->get() as $checkin) {
-            $latestShift = shift::where('npk', $checkin->npk)
-                ->where('date', $checkin->date) // Menggunakan date dari $checkin
-                ->latest()
-                ->first();
-
-            $checkin->latest_shift = $latestShift ? $latestShift->shift1 : null; // Menambahkan shift terbaru ke objek checkin
-        }
-
-        return DataTables::of($data)
-            ->addIndexColumn()
-            ->setRowId(function ($data) {
-                return $data->id;
-            })
-            ->make(true);
+    // Jika ada npk yang dipilih, filter berdasarkan npk tersebut
+    if ($request->has('selected_npk') && !empty($request->selected_npk)) {
+        $selectedNPKs = explode(',', $request->selected_npk);
+        $data->whereIn('users.npk', $selectedNPKs);
     }
+
+    // Jika ada rentang tanggal, filter data berdasarkan tanggal
+    if (!empty($startDate) && !empty($endDate)) {
+        $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
+    }
+
+    // Pengecekan role_id, jika role adalah 2 (misalnya admin), filter berdasarkan section
+    if ($roleId == 2) {
+        $sectionId = $user->section_id;
+        $data->where('users.section_id', $sectionId);
+    }
+
+    // Mengambil data dari query
+    $data = $data->get();
+
+    // Menggunakan DataTables untuk menampilkan data dalam format yang sesuai
+    return DataTables::of($data)
+        ->addIndexColumn()
+        ->setRowId(function ($data) {
+            return $data->id;
+        })
+        ->make(true);
+}
+
+
 
 
     public function exportData(Request $request)

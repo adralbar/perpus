@@ -3,7 +3,9 @@
 
     <link rel="stylesheet" href="{{ asset('dist/css/plugins/jquery.dataTables.min.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/plugins/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}">
+    {{-- <link rel="stylesheet" href="{{ asset('dist/css/bootstrap-duallistbox.css') }}"> --}}
+    <link rel="stylesheet" href="{{ asset('lte/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css') }}">
+
     <link rel="stylesheet" href="{{ asset('dist/css/daterangepicker.css') }}">
     <link rel="stylesheet" type="text/css">
 
@@ -116,6 +118,14 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="form-check form-switch ml-4 mt-1">
+                                <input class="form-check-input" type="checkbox" id="toggleStatus"
+                                    data-status="{{ request('status', 1) }}"
+                                    {{ request('status', 1) == 0 ? 'checked' : '' }}>
+                                <label class="form-check-label" for="toggleStatus" id="statusText">
+                                    {{ request('status', 1) == 0 ? 'Nonaktif' : 'Aktif' }}
+                                </label>
+                            </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3 mt-3">
                                     <label for="startDate" class="form-label">Tanggal Mulai</label>
@@ -215,58 +225,107 @@
         <script src="{{ asset('dist/js/plugins/jquery.dataTables.min.js') }}"></script>
         <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
-        <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script>
+        {{-- <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script> --}}
         <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script>
+        <script src="{{ asset('lte/plugins/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js') }}"></script>
 
-        <script>
-            window.onload = function() {
-                Swal.fire({
-                    title: 'Peringatan!',
-                    text: 'Silahkan isi Filter terlebih dahulu untuk menampilkan data!',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
+
+        @if (Auth::user()->role_id != 1)
+            <script>
+                $(document).ready(function() {
+                    function getToday() {
+                        const today = new Date();
+                        today.setDate(today.getDate() + 1); // Tambahkan 1 hari
+                        return today.toISOString().split('T')[0];
+                    }
+
+                    // Fungsi untuk mendapatkan tanggal maksimal (14 hari ke depan)
+                    function getMaxDate() {
+                        const today = new Date();
+                        const dayOfWeek = today.getDay(); // 0 (Minggu) - 6 (Sabtu)
+                        const daysUntilEndOfWeek = 7 - dayOfWeek; // Hari tersisa hingga akhir minggu ini
+                        today.setDate(today.getDate() + daysUntilEndOfWeek + 14); // Akhir minggu ini + 14 hari
+                        return today.toISOString().split('T')[0];
+                    }
+
+                    // Set atribut min dan max
+                    $('#start_date').attr({
+                        min: getToday(),
+                        max: getMaxDate()
+                    });
+                    $('#end_date').attr({
+                        min: getToday(),
+                        max: getMaxDate()
+                    });
                 });
-            };
-
-
+            </script>
+        @endif
+        <script>
             let shiftHistoryUrl;
-            var selectedNPK = $('select[name="selected_npk[]"]').bootstrapDualListbox();
 
-            var demo1 = $('select[name="npk[]"]').bootstrapDualListbox();
+            var $dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
+                nonSelectedListLabel: 'NPK Tersedia',
+                selectedListLabel: 'NPK Terpilih',
+                preserveSelectionOnMove: 'moved',
+                moveOnSelect: false,
+                nonSelectedFilter: '',
+
+            });
+
+            $(document).on('click', '#toggleStatus', function() {
+                var status = this.checked ? 0 : 1; // Status 0 atau 1
+                var fetchUrl = "{{ route('get.karyawan') }}";
+
+                // AJAX untuk mendapatkan data
+                $.ajax({
+                    url: fetchUrl,
+                    method: 'GET',
+                    data: {
+                        status: status,
+                    },
+                    success: function(data) {
+                        // Kosongkan opsi yang ada
+                        $dualistbox.empty();
+
+                        // Tambahkan opsi baru dari data
+                        data.userData.forEach(function(user) {
+                            $('<option>', {
+                                value: user.npk,
+                                text: `${user.nama} (${user.npk})`,
+                            }).appendTo($dualistbox);
+                        });
+
+                        // Refresh tampilan dual listbox
+                        $dualistbox.bootstrapDualListbox('refresh');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    },
+                });
+            });
+
+
+
+            var demo1 = $('select[name="npk[]"]').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
+                nonSelectedListLabel: 'NPK Tersedia',
+                selectedListLabel: 'NPK Terpilih',
+                preserveSelectionOnMove: 'moved',
+                moveOnSelect: false,
+                nonSelectedFilter: '',
+
+            });
             var demo2 = $('.demo2').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
                 nonSelectedListLabel: 'Non-selected',
                 selectedListLabel: 'Selected',
                 preserveSelectionOnMove: 'moved',
                 moveOnSelect: false,
                 nonSelectedFilter: 'ion ([7-9]|[1][0-2])'
+
             });
             $(document).ready(function() {
-                function getToday() {
-                    const today = new Date();
-                    today.setDate(today.getDate() + 1); // Tambahkan 1 hari
-                    return today.toISOString().split('T')[0];
-
-                }
-                // Fungsi untuk mendapatkan tanggal maksimal (14 hari ke depan)
-                function getMaxDate() {
-                    const today = new Date();
-                    const dayOfWeek = today.getDay(); // 0 (Minggu) - 6 (Sabtu)
-                    const daysUntilEndOfWeek = 7 - dayOfWeek; // Hari tersisa hingga akhir minggu ini
-                    today.setDate(today.getDate() + daysUntilEndOfWeek + 14); // Akhir minggu ini + 14 hari
-                    return today.toISOString().split('T')[0];
-                }
-
-                // Set atribut min dan max
-                $('#start_date').attr({
-                    min: getToday(),
-                    max: getMaxDate()
-                });
-                $('#end_date').attr({
-                    min: getToday(),
-                    max: getMaxDate()
-                });
-
-
                 var table = $('#myTable').DataTable({
                     processing: true,
                     serverSide: true,
