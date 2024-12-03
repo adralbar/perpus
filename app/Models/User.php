@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password',
     ];
     protected $fillable = [
+        'npk_sistem',
         'npk',
         'nama',
         'password',
@@ -24,7 +25,9 @@ class User extends Authenticatable
         'section_id',
         'department_id',
         'division_id',
-        'role_id'
+        'role_id',
+        'status'
+
     ];
 
     public function section()

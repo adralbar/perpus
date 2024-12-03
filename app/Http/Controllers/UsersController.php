@@ -23,45 +23,41 @@ class UsersController extends Controller
 
     public function index()
     {
-        $user = Auth::user();
-        $roleId = $user->role_id;
-        $sectionId = $user->section_id;
-
-        // Initialize userData as an empty collection
-        $userData = collect();
-
-        // Check role ID and fetch data accordingly
-        if ($roleId == 2) {
-            // Fetch users based on section id if the role is 2
-            $userData = User::with('division', 'department', 'section', 'role')
-                ->where('section_id', $sectionId)
-                ->orderBy('created_at', 'DESC')
-                ->get();
-        } elseif ($roleId == 1 || $roleId == 6) {
-            // Fetch all users if the role is 1 or 6
-            $userData = User::with('division', 'department', 'section', 'role')
-                ->orderBy('created_at', 'DESC')
-                ->get();
-        }
-
-        // Fetch other models if needed (optional)
+        $userData = User::with('division', 'department', 'section', 'role')->orderBy('created_at', 'DESC')->get();
         $role = RoleModel::all();
-        $section = SectionModel::all();
-        $department = DepartmentModel::all();
-        $division = DivisionModel::all();
-
-
-        $this->storeRekabAbsensi();
-        // Use the retrieved userData for DataTables response
+        $section = SectionModel::all(); // Ambil semua section
+        $department = DepartmentModel::all(); // Ambil semua departemen
+        $division = DivisionModel::all(); // Ambil semua division
         return view('user.index', compact('userData', 'role', 'section', 'department', 'division'));
     }
+    public function getDepartmentAndDivision(Request $request)
+    {
+        $section_id = $request->section_id;
 
+        // Ambil data section beserta relasi department dan division
+        $section = SectionModel::with('department.division')->find($section_id);
 
+        if ($section && $section->department && $section->department->division) {
+            return response()->json([
+                'department' => [
+                    'id' => $section->department->id,
+                    'nama' => $section->department->nama,
+                ],
+                'division' => [
+                    'id' => $section->department->division->id,
+                    'nama' => $section->department->division->nama,
+                ]
+            ]);
+        }
+
+        return response()->json(['error' => 'Data tidak ditemukan'], 404);
+    }
 
     public function store(Request $request)
     {
         $request->validate(
             [
+                'npk_sistem' => 'required|unique:users,npk_sistem',
                 'npk' => 'required|unique:users,npk',
                 'nama' => 'required',
                 'password' => 'required',
@@ -70,8 +66,11 @@ class UsersController extends Controller
                 'department_id' => 'required',
                 'division_id' => 'required',
                 'role_id' => 'required',
+                'status',
+
             ],
             [
+                'npk_sistem' => 'NPK wajib diisi.',
                 'npk.required' => 'NPK wajib diisi.',
                 'npk.unique' => 'NPK sudah terdaftar.',
                 'nama.required' => 'Nama wajib diisi.',
@@ -81,9 +80,11 @@ class UsersController extends Controller
                 'department_id.required' => 'Departemen wajib dipilih.',
                 'division_id.required' => 'Division wajib dipilih.',
                 'role_id.required' => 'Role wajib dipilih.',
+
             ]
         );
         $data = [
+            'npk_sistem' => $request->npk_sistem,
             'npk' => $request->npk,
             'nama' => $request->nama,
             'password' => bcrypt($request->password),
@@ -92,7 +93,10 @@ class UsersController extends Controller
             'department_id' => $request->department_id,
             'division_id' => $request->division_id,
             'role_id' => $request->role_id,
+            'status' => $request->status,
         ];
+
+
         User::create($data);
         return redirect('user')->with('success', 'User berhasil ditambahkan.');
     }
@@ -117,10 +121,12 @@ class UsersController extends Controller
     public function edit($npk)
     {
         $user = User::where('npk', $npk)->firstOrFail();
-        $division = DivisionModel::find($user->division_id); // Ambil semua division
-        $department = DepartmentModel::find($user->department_id);
-        $section = SectionModel::find($user->section_id); // Ambil semua section
-        $role = RoleModel::find($user->role_id);
+
+        // Ambil semua division, department, section, dan role
+        $division = DivisionModel::all(); // Ambil semua division
+        $department = DepartmentModel::all(); // Ambil semua department
+        $section = SectionModel::all(); // Ambil semua section
+        $role = RoleModel::all(); // Ambil semua role
 
         return view('user.update', [
             'user' => $user,
@@ -141,6 +147,7 @@ class UsersController extends Controller
             'department_id' => 'required',
             'section_id' => 'required',
             'role_id' => 'required',
+            'status' => 'nullable',
         ], [
             'nama.required' => 'Nama wajib diisi.',
             'no_telp.required' => 'no_telp wajib diisi.',
@@ -157,12 +164,12 @@ class UsersController extends Controller
         $user->department_id = $request->department_id;
         $user->section_id = $request->section_id;
         $user->role_id = $request->role_id;
+        $user->status = $request->status;
 
         if ($request->filled('password')) {
             $user->password = bcrypt($request->password);
         }
 
-        dd($user->all());
         $user->save();
 
         return redirect('/user')->with('success', 'Data User berhasil diperbarui.');
@@ -175,6 +182,8 @@ class UsersController extends Controller
 
         return redirect('/user')->with('success', 'Data User berhasil dihapus.');
     }
+
+
     public function karyawandata()
     {
         $userData = User::with('division', 'department', 'section', 'role')->orderBy('created_at', 'DESC')->get();
@@ -190,17 +199,6 @@ class UsersController extends Controller
             'departments' => $department,
             'divisions' => $division
         ]);
-    }
-    public function getDepartments($divisionId)
-    {
-        $departments = DepartmentModel::where('division_id', $divisionId)->get();
-        return response()->json($departments);
-    }
-
-    public function getSections($departmentId)
-    {
-        $sections = SectionModel::where('department_id', $departmentId)->get();
-        return response()->json($sections);
     }
 
     public function export()

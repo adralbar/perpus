@@ -43,9 +43,10 @@ class shiftController extends Controller
         $masterShiftQuery = MasterShift::query();
 
 
-        if ($departmentId != 16) {
+        if ($departmentId != 16 && $roleId != 1) {
             $masterShiftQuery->whereNotBetween('id', [17, 29]);
         }
+
 
         $masterShift = $masterShiftQuery->pluck('waktu');
 

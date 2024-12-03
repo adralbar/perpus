@@ -53,15 +53,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/get-penyimpangan', [rekapController::class, 'getPenyimpangan'])->name('getPenyimpangan');
         Route::get('/get-cuti', [rekapController::class, 'getCuti'])->name('getCuti');
 
+
         Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
         Route::post('/user', [UsersController::class, 'store']);
         Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
         Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
         Route::put('/user/update/{npk}', [UsersController::class, 'update']);
         Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
+        Route::get('section-data', [UsersController::class, 'getDepartmentAndDivision'])->name('section.data');
         Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
-        Route::get('/departments/{divisionId}', [UsersController::class, 'getDepartments']);
-        Route::get('/sections/{departmentId}', [UsersController::class, 'getSections']);
 
         //trash
         Route::resource('absensiControllerAjax', absensiController::class);
