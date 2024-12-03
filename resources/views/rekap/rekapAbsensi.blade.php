@@ -20,6 +20,10 @@
                                 data-bs-target="#checkoutModal">
                                 Tambah Check-out
                             </button>
+                            <button type="button" class="btn btn-danger btn-sm mr-2" data-bs-toggle="modal"
+                                data-bs-target="#hapusModal">
+                                Hapus Absen
+                            </button>
                             <button type="button" class="btn btn-secondary btn-sm mr-2" data-bs-toggle="modal"
                                 data-bs-target="#uploadModal">
                                 Upload File
@@ -120,11 +124,7 @@
                             @csrf
                             <div class="form-group">
                                 <label for="npk">NPK Api</label>
-                                <input type="text" class="form-control" id="npk" name="npk" list="npkList"
-                                    required>
-                                <datalist id="npkList">
-
-                                </datalist>
+                                <input type="text" class="form-control" id="npk" name="npk" required>
                             </div>
                             <div class="form-group">
                                 <label for="tanggal">Tanggal</label>
@@ -155,11 +155,8 @@
                             @csrf
                             <div class="form-group">
                                 <label for="npk">NPK Api</label>
-                                <input type="text" class="form-control" id="npk" name="npk" list="npkList"
-                                    required>
-                                <datalist id="npkList">
+                                <input type="text" class="form-control" id="npk" name="npk" required>
 
-                                </datalist>
                             </div>
                             <div class="form-group">
                                 <label for="tanggal">Tanggal</label>
@@ -171,6 +168,43 @@
                             </div>
                             <button type="submit" class="btn btn-primary">Simpan</button>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="hapusModal" tabindex="-1" aria-labelledby="hapusModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="hapusModalLabel">Hapus Absen</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="delete-absen-form">
+                            @csrf
+                            <div id="message"></div>
+
+                            <div class="form-group">
+                                <label for="npk">NPK Api</label>
+                                <input type="text" class="form-control" id="npk" name="npk" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tanggal">Tanggal</label>
+                                <input type="date" class="form-control" id="tanggal" name="tanggal" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="hapusabsen">Hapus Absen</label>
+                                <select name="hapusabsen" id="hapusabsen" class="form-control">
+                                    <option value="in">In</option>
+                                    <option value="out">Out</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-danger">Hapus Absen</button>
+                        </form>
+
+                        <!-- Error and success message container -->
+
                     </div>
                 </div>
             </div>
@@ -914,28 +948,28 @@
             });
         })
 
-        $(document).ready(function() {
-            $.ajax({
-                url: '{{ route('shift.data') }}',
-                type: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    console.log("Respons server:", response);
+        // $(document).ready(function() {
+        //     $.ajax({
+        //         url: '{{ route('shift.data') }}',
+        //         type: 'GET',
+        //         dataType: 'json',
+        //         success: function(response) {
+        //             console.log("Respons server:", response);
 
-                    if (response.data && Array.isArray(response.data)) {
-                        $.each(response.data, function(index, item) {
-                            $('#npkList').append('<option value="' + item.npk + '">' + item
-                                .nama + ' (' + item.npk + ')</option>');
-                        });
-                    } else {
-                        console.error("Data tidak dalam format array atau tidak ditemukan.");
-                    }
-                },
-                error: function() {
-                    alert('Gagal mengambil data NPK');
-                }
-            });
-        });
+        //             if (response.data && Array.isArray(response.data)) {
+        //                 $.each(response.data, function(index, item) {
+        //                     $('#npkList').append('<option value="' + item.npk + '">' + item
+        //                         .nama + ' (' + item.npk + ')</option>');
+        //                 });
+        //             } else {
+        //                 console.error("Data tidak dalam format array atau tidak ditemukan.");
+        //             }
+        //         },
+        //         error: function() {
+        //             alert('Gagal mengambil data NPK');
+        //         }
+        //     });
+        // });
 
         //edit data
         $(document).on('click', '.btn-edit', function() {
@@ -988,6 +1022,22 @@
                         alert("Gagal memperbarui data.");
                     }
                 });
+            });
+        });
+
+        $('#delete-absen-form').submit(function(e) {
+            e.preventDefault(); // Mencegah form melakukan submit tradisional
+            $.ajax({
+                url: '{{ route('hapus.absen') }}',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    $('#message').html(
+                        '<div class="alert alert-success">Absen berhasil dihapus!</div>');
+                },
+                error: function(xhr, status, error) {
+                    $('#message').html('<div class="alert alert-danger">Gagal menghapus absen.</div>');
+                }
             });
         });
     </script>

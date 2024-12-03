@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
         Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
         Route::post('/update-data/{npk}/{tanggal}', [rekapController::class, 'updateData'])->name('edit.data');
+        Route::post('/delete-absen', [rekapController::class, 'delete'])->name('hapus.absen');
 
         //route performa
         Route::get('/performa', [performaController::class, 'index'])->name('performa.index');

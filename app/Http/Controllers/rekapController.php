@@ -189,7 +189,7 @@ class rekapController extends Controller
                         'nama' => $checkout->user ? $checkout->user->nama : '',
                         'npk' => $checkout->npk,
                         'tanggal' => $checkout->tanggal,
-                        'waktuci' => null, // Tidak ada check-in
+                        'waktuci' => null, // Tidak ada check-inF
                         'waktuco' => $checkout->waktuco,
                         'shift1' => $shift1,
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
@@ -745,5 +745,37 @@ class rekapController extends Controller
         }
 
         return response()->json(['message' => 'Data berhasil diperbarui']);
+    }
+
+
+    public function delete(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'npk' => 'required|string',
+            'tanggal' => 'required|date',
+            'hapusabsen' => 'required|in:in,out'
+        ]);
+
+        // Tentukan model dan kolom yang akan dihapus berdasarkan 'hapusabsen'
+        if ($request->hapusabsen == 'in') {
+            $model = Absensici::class;
+            $columnToDelete = 'waktuci';
+        } else {
+            $model = Absensico::class;
+            $columnToDelete = 'waktuco';
+        }
+
+        // Hapus data di model yang sesuai berdasarkan tanggal dan kolom yang dipilih
+        $deleted = $model::where('tanggal', $request->tanggal)
+            ->whereNotNull($columnToDelete) // Pastikan kolom waktu absen tidak null
+            ->delete(); // Hapus data
+
+        // Mengembalikan respons JSON
+        if ($deleted) {
+            return response()->json(['success' => true, 'message' => 'Absen berhasil dihapus']);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus absen']);
+        }
     }
 }
