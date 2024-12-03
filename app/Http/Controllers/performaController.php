@@ -93,72 +93,72 @@ class performaController extends Controller
     //         ->make(true);
     // }
 
-public function getData(Request $request)
-{
-    $startDate = $request->input('startDate');
-    $endDate = $request->input('endDate');
+    public function getData(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
 
-    $query = DB::table('absensici')
-        ->leftJoin('users as user1', 'absensici.npk', '=', DB::raw('user1.npk COLLATE utf8mb4_unicode_ci'))
-        ->leftJoin('kategorishift', function ($join) {
-            $join->on('absensici.npk', '=', DB::raw('kategorishift.npk COLLATE utf8mb4_unicode_ci'))
-                ->on('absensici.tanggal', '=', 'kategorishift.date');
-        })
-        ->join(DB::raw('pcd_master_users as pcd_users'), function ($join) {
-            $join->on(DB::raw('pcd_users.npk COLLATE utf8mb4_unicode_ci'), '=', DB::raw('user1.npk COLLATE utf8mb4_unicode_ci'));
-        })
-        ->join(DB::raw('(SELECT user_id, DATE(created_at) as tanggal, MIN(created_at) AS first_login_time, MAX(station_id) AS station_id 
+        $query = DB::table('absensici')
+            ->leftJoin('users as user1', 'absensici.npk', '=', DB::raw('user1.npk COLLATE utf8mb4_unicode_ci'))
+            ->leftJoin('kategorishift', function ($join) {
+                $join->on('absensici.npk', '=', DB::raw('kategorishift.npk COLLATE utf8mb4_unicode_ci'))
+                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            })
+            ->join(DB::raw('pcd_master_users as pcd_users'), function ($join) {
+                $join->on(DB::raw('pcd_users.npk COLLATE utf8mb4_unicode_ci'), '=', DB::raw('user1.npk COLLATE utf8mb4_unicode_ci'));
+            })
+            ->join(DB::raw('(SELECT user_id, DATE(created_at) as tanggal, MIN(created_at) AS first_login_time, MAX(station_id) AS station_id 
                          FROM pcd_login_logs 
                          GROUP BY user_id, DATE(created_at)) as first_login'), function ($join) {
-            $join->on(DB::raw('pcd_users.id COLLATE utf8mb4_unicode_ci'), '=', DB::raw('first_login.user_id COLLATE utf8mb4_unicode_ci'))
-                ->on('absensici.tanggal', '=', 'first_login.tanggal');
-        })
-        ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci 
+                $join->on(DB::raw('pcd_users.id COLLATE utf8mb4_unicode_ci'), '=', DB::raw('first_login.user_id COLLATE utf8mb4_unicode_ci'))
+                    ->on('absensici.tanggal', '=', 'first_login.tanggal');
+            })
+            ->join(DB::raw('(SELECT npk, tanggal, MIN(waktuci) AS waktuci 
                          FROM absensici 
                          GROUP BY npk, tanggal) as first_checkin'), function ($join) {
-            $join->on(DB::raw('first_checkin.npk COLLATE utf8mb4_unicode_ci'), '=', DB::raw('absensici.npk COLLATE utf8mb4_unicode_ci'))
-                ->on('first_checkin.tanggal', '=', 'absensici.tanggal');
-        })
-        ->join('users as user2', 'absensici.npk', '=', 'user2.npk')
-        ->select(
-            'user2.nama',
-            'absensici.npk',
-            'absensici.tanggal',
-            'first_checkin.waktuci AS waktuci_checkin',
-            'kategorishift.shift1',
-            DB::raw('TIME(first_login.first_login_time) AS waktu_login_dashboard'),
-            'first_login.station_id',
-            DB::raw("TIMEDIFF(
+                $join->on(DB::raw('first_checkin.npk COLLATE utf8mb4_unicode_ci'), '=', DB::raw('absensici.npk COLLATE utf8mb4_unicode_ci'))
+                    ->on('first_checkin.tanggal', '=', 'absensici.tanggal');
+            })
+            ->join('users as user2', 'absensici.npk', '=', 'user2.npk')
+            ->select(
+                'user2.nama',
+                'absensici.npk',
+                'absensici.tanggal',
+                'first_checkin.waktuci AS waktuci_checkin',
+                'kategorishift.shift1',
+                DB::raw('TIME(first_login.first_login_time) AS waktu_login_dashboard'),
+                'first_login.station_id',
+                DB::raw("TIMEDIFF(
                 TIME(first_login.first_login_time), 
                 STR_TO_DATE(SUBSTRING_INDEX(kategorishift.shift1, ' - ', 1), '%H:%i')
             ) AS selisih_waktu"),
-            'user2.division_id',
-            'user2.department_id',
-            'user2.section_id'
-        )
-        ->whereIn('user2.section_id', [31, 25])
-        ->distinct()
-        ->orderBy('absensici.tanggal', 'desc');
+                'user2.division_id',
+                'user2.department_id',
+                'user2.section_id'
+            )
+            ->whereIn('user2.section_id', [31, 25])
+            ->distinct()
+            ->orderBy('absensici.tanggal', 'desc');
 
-    if (!empty($startDate) && !empty($endDate)) {
-        $query->whereBetween('absensici.tanggal', [$startDate, $endDate]);
-    }
+        if (!empty($startDate) && !empty($endDate)) {
+            $query->whereBetween('absensici.tanggal', [$startDate, $endDate]);
+        }
 
-    $data = $query->get();
-    foreach ($data as $item) {
-        $section = SectionModel::find($item->section_id);
-        $department = $section ? DepartmentModel::find($section->department_id) : null;
-        $division = $department ? DivisionModel::find($department->division_id) : null;
+        $data = $query->get();
+        foreach ($data as $item) {
+            $section = SectionModel::find($item->section_id);
+            $department = $section ? DepartmentModel::find($section->department_id) : null;
+            $division = $department ? DivisionModel::find($department->division_id) : null;
 
-        $item->section_nama = $section ? $section->nama : 'Unknown';
-        $item->department_nama = $department ? $department->nama : 'Unknown';
-        $item->division_nama = $division ? $division->nama : 'Unknown';
-    }
+            $item->section_nama = $section ? $section->nama : 'Unknown';
+            $item->department_nama = $department ? $department->nama : 'Unknown';
+            $item->division_nama = $division ? $division->nama : 'Unknown';
+        }
 
-    return DataTables::of($data)
-        ->addIndexColumn()
-        ->addColumn('aksi', function ($row) {
-            $btn = '<button class="btn btn-primary btn-sm btnDetail"
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('aksi', function ($row) {
+                $btn = '<button class="btn btn-primary btn-sm btnDetail"
                 data-nama="' . e($row->nama) . '"
                 data-npk="' . e($row->npk) . '"
                 data-tanggal="' . e($row->tanggal) . '"  
@@ -167,23 +167,11 @@ public function getData(Request $request)
                 data-division="' . e($row->division_nama) . '"> 
                 Detail
             </button>';
-            return $btn;
-        })
-        ->rawColumns(['aksi'])
-        ->make(true);
-}
-
-
-
-
-
-
-
-
-
-
-
-
+                return $btn;
+            })
+            ->rawColumns(['aksi'])
+            ->make(true);
+    }
 
     public function storeLogs(Request $request)
     {
