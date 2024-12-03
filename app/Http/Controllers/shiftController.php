@@ -28,8 +28,8 @@ class shiftController extends Controller
         $sectionId = $user->section_id;
         $departmentId = $user->department_id;
 
+        // Query untuk data pengguna
         $query = User::select('nama', 'npk')->where('status', 1);
-
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
@@ -38,10 +38,20 @@ class shiftController extends Controller
         }
 
         $userData = $query->get();
-        $masterShift = MasterShift::pluck('waktu');
+
+        // Query untuk data MasterShift
+        $masterShiftQuery = MasterShift::query();
+
+
+        if ($departmentId != 16) {
+            $masterShiftQuery->whereNotBetween('id', [17, 29]);
+        }
+
+        $masterShift = $masterShiftQuery->pluck('waktu');
 
         return view('shift.shift', compact('userData', 'masterShift'));
     }
+
 
 
     public function getData(Request $request)
@@ -293,7 +303,7 @@ class shiftController extends Controller
         $dayOfWeek = $date->dayOfWeek;
 
         // Cek jika role_id bukan 1 atau 6, dan hari adalah Sabtu (6) atau Minggu (0)
-        if (Auth::user()->role_id != 1 && Auth::user()->role_id != 6 && ($dayOfWeek == 6 || $dayOfWeek == 0)) {
+        if (Auth::user()->role_id != 1 && Auth::user()->role_id != 6 && Auth::user()->department_id != 16 && ($dayOfWeek == 6 || $dayOfWeek == 0)) {
             return response()->json(['error' => 'Anda tidak diizinkan untuk mengedit data di hari Sabtu dan Minggu'], 403);
         }
 
