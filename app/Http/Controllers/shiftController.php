@@ -160,12 +160,23 @@ class shiftController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
         $selectedNPKs = $request->input('selected_npk') ? explode(',', $request->input('selected_npk')) : [];
-
+        $user = Auth::user();
+        $roleId = $user->role_id;
 
         $dataQuery = shift::with(['user.section', 'user.department', 'user.division'])
             ->select(['kategorishift.id', 'kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             ->orderBy('kategorishift.date', 'ASC');
+
+        if ($roleId == 2) {
+            $sectionId = $user->section_id;
+            $dataQuery->where('users.section_id', $sectionId);
+        }
+
+        if ($roleId == 9) {
+            $departmentId = $user->department_id;
+            $dataQuery->where('users.department_id', $departmentId);
+        }
 
         if (!empty($selectedNPKs)) {
             $dataQuery->whereIn('users.npk', $selectedNPKs);
