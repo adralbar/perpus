@@ -1,4 +1,4 @@
-@extends('layout.main')
+@extends('layout.main   ')
 
 @section('breadcrumbs')
     Dashboard {{ Auth::user()->role->nama }}
@@ -8,11 +8,11 @@
     <div class="container-fluid">
         <div class="content-wrapper">
             <div class="card-header">
-                <h3 class="card-title">Detail Karyawan</h3>
+                <p class="pl-3 pb-3 font-weight-bold h3">Detail Data Karyawan</p>
             </div>
 
-            <div class="card-body">
-                <table id="example1" class="table table-bordered table-striped">
+            <div class="card-body bg-white">
+                <table id="example1" class="table table-bordered table-striped ">
                     <thead>
                         <tr>
                             <th>NPK</th>
@@ -36,9 +36,11 @@
                 </table>
             </div>
 
+
             <div class="card-footer">
-                <a href="/user" class="btn btn-info float-right">Kembali</a>
+                <a href="{{ route('karyawan.index') }}" class="btn btn-info float-right">Kembali</a>
             </div>
         </div>
+    </div>
     </div>
 @endsection
