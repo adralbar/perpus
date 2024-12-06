@@ -680,8 +680,6 @@
                 }
             });
 
-
-
             $('#exportShift').on('click', function() {
                 console.log('saya diklik');
 

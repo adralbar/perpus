@@ -39,8 +39,7 @@ class rekapController extends Controller
         $roleId = $user->role_id;
         $sectionId = $user->section_id;
 
-        $query = User::select('nama', 'npk');
-
+        $query = User::select('nama', 'npk')->where('status', 1);
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
         }
@@ -140,6 +139,11 @@ class rekapController extends Controller
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             }
+            $latestShift = shift::where('npk', $checkout->npk)
+                ->where('date', $checkout->tanggal)
+                ->latest()
+                ->first();
+            $shift1 = $latestShift ? $latestShift->shift1 : null;
 
             // Cek apakah ada check-in untuk tanggal ini
             if (isset($results[$key])) {
@@ -185,7 +189,7 @@ class rekapController extends Controller
                         'nama' => $checkout->user ? $checkout->user->nama : '',
                         'npk' => $checkout->npk,
                         'tanggal' => $checkout->tanggal,
-                        'waktuci' => null, // Tidak ada check-in
+                        'waktuci' => null, // Tidak ada check-inF
                         'waktuco' => $checkout->waktuco,
                         'shift1' => $shift1,
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
@@ -400,7 +404,7 @@ class rekapController extends Controller
             "data" => $data,
         ]);
     }
- public function getKaryawan(Request $request)
+    public function getKaryawan(Request $request)
     {
         $user = Auth::user();
         $status = $request->query('status', 1);
@@ -422,6 +426,8 @@ class rekapController extends Controller
             'userData' => $userData
         ]);
     }
+
+
 
     public function getPenyimpangan(Request $request)
     {
@@ -552,7 +558,7 @@ class rekapController extends Controller
         return response()->json(['success' => 'Check-in berhasil ditambahkan!']);
     }
 
- public function upload(Request $request)
+    public function upload(Request $request)
     {
         set_time_limit(300);
         $request->validate([
@@ -629,7 +635,7 @@ class rekapController extends Controller
 
         return redirect()->back()->with('success', 'File berhasil diunggah dan diproses.');
     }
-    
+
     public function exportAbsensi(Request $request)
     {
         $startDate = $request->input('startDate');
@@ -739,5 +745,37 @@ class rekapController extends Controller
         }
 
         return response()->json(['message' => 'Data berhasil diperbarui']);
+    }
+
+
+    public function delete(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'npk' => 'required|string',
+            'tanggal' => 'required|date',
+            'hapusabsen' => 'required|in:in,out'
+        ]);
+
+        // Tentukan model dan kolom yang akan dihapus berdasarkan 'hapusabsen'
+        if ($request->hapusabsen == 'in') {
+            $model = Absensici::class;
+            $columnToDelete = 'waktuci';
+        } else {
+            $model = Absensico::class;
+            $columnToDelete = 'waktuco';
+        }
+
+        // Hapus data di model yang sesuai berdasarkan tanggal dan kolom yang dipilih
+        $deleted = $model::where('tanggal', $request->tanggal)
+            ->whereNotNull($columnToDelete) // Pastikan kolom waktu absen tidak null
+            ->delete(); // Hapus data
+
+        // Mengembalikan respons JSON
+        if ($deleted) {
+            return response()->json(['success' => true, 'message' => 'Absen berhasil dihapus']);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus absen']);
+        }
     }
 }

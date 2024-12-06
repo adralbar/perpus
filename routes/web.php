@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
         Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
         Route::post('/update-data/{npk}/{tanggal}', [rekapController::class, 'updateData'])->name('edit.data');
+        Route::post('/delete-absen', [rekapController::class, 'delete'])->name('hapus.absen');
 
         //route performa
         Route::get('/performa', [performaController::class, 'index'])->name('performa.index');
@@ -52,15 +53,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/get-penyimpangan', [rekapController::class, 'getPenyimpangan'])->name('getPenyimpangan');
         Route::get('/get-cuti', [rekapController::class, 'getCuti'])->name('getCuti');
 
+
         Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
         Route::post('/user', [UsersController::class, 'store']);
         Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
         Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
         Route::put('/user/update/{npk}', [UsersController::class, 'update']);
         Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
+        Route::get('section-data', [UsersController::class, 'getDepartmentAndDivision'])->name('section.data');
         Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
-        Route::get('/departments/{divisionId}', [UsersController::class, 'getDepartments']);
-        Route::get('/sections/{departmentId}', [UsersController::class, 'getSections']);
 
         //trash
         Route::resource('absensiControllerAjax', absensiController::class);
@@ -130,10 +131,3 @@ Route::post('/registerperformaapi123', [registController::class, 'register'])->n
 //     return response()->json(['csrfToken' => csrf_token()]);
 // });
 Route::post('/logout', [loginController::class, 'logout'])->name('logout');
-
-
-// wa gateway formulir
-
-Route::get('/send-message-form', function () {
-    return view('examples.wagateway');
-})->name('send.message.form');

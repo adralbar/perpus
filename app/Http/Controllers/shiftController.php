@@ -27,9 +27,9 @@ class shiftController extends Controller
         $roleId = $user->role_id;
         $sectionId = $user->section_id;
         $departmentId = $user->department_id;
-        
-        $query = User::select('nama', 'npk')->where('status', 1);
 
+        // Query untuk data pengguna
+        $query = User::select('nama', 'npk')->where('status', 1);
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
@@ -38,119 +38,98 @@ class shiftController extends Controller
         }
 
         $userData = $query->get();
-        $masterShift = MasterShift::pluck('waktu');
+
+        // Query untuk data MasterShift
+        $masterShiftQuery = MasterShift::query();
+
+
+        if ($departmentId != 16 && $roleId != 1) {
+            $masterShiftQuery->whereNotBetween('id', [17, 29]);
+        }
+
+
+        $masterShift = $masterShiftQuery->pluck('waktu');
 
         return view('shift.shift', compact('userData', 'masterShift'));
     }
 
-    // public function getData(Request $request)
-    // {
-    //     $startDate = $request->input('startDate');
-    //     $endDate = $request->input('endDate');
 
-    //     // Mengambil data `shift1` dengan `created_at` terbaru untuk setiap `npk` dan `tanggal`
-    //     $data = Shift::select([
-    //         'kategorishift.id',
-    //         'kategorishift.npk',
-    //         'kategorishift.shift1',
-    //         'kategorishift.date',
-    //         'users.nama'
-    //     ])
-    //         ->join('users', 'kategorishift.npk', '=', 'users.npk')
-    //         ->where(function ($query) use ($startDate, $endDate) {
-    //             if (!empty($startDate) && !empty($endDate)) {
-    //                 $query->whereBetween('kategorishift.date', [$startDate, $endDate]);
-    //             }
-    //         })
-    //         ->whereIn('kategorishift.created_at', function ($query) {
-    //             $query->selectRaw('MAX(created_at)')
-    //                 ->from('kategorishift as ks')
-    //                 ->whereColumn('ks.npk', 'kategorishift.npk')
-    //                 ->whereColumn('ks.date', 'kategorishift.date')
-    //                 ->groupBy('ks.npk', 'ks.date');
-    //         })
-    //         ->orderBy('kategorishift.date', 'ASC');
 
-    //     $user = Auth::user();
-    //     $roleId = $user->role_id;
+    public function getData(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $selectedNPKs = $request->has('selected_npk') ? explode(',', $request->selected_npk) : [];
 
-    //     if ($request->has('selected_npk') && !empty($request->selected_npk)) {
-    //         $selectedNPKs = explode(',', $request->selected_npk);
-    //         $data->whereIn('users.npk', $selectedNPKs);
-    //     }
+        // Generate a list of dates between startDate and endDate
+        $dates = collect();
+        $date = \Carbon\Carbon::parse($startDate);
+        $endDate = \Carbon\Carbon::parse($endDate);
 
-    //     // Pengecekan role_id
-    //     if ($roleId == 2) {
-    //         $sectionId = $user->section_id;
-    //         $data->where('users.section_id', $sectionId);
-    //     }
+        while ($date <= $endDate) {
+            $dates->push($date->format('Y-m-d'));
+            $date->addDay();
+        }
 
-    //     return DataTables::of($data)
-    //         ->addIndexColumn()
-    //         ->setRowId(function ($data) {
-    //             return $data->id;
-    //         })
-    //         ->make(true);
-    // }
-public function getData(Request $request)
-{
-    $startDate = $request->input('startDate');
-    $endDate = $request->input('endDate');
+        // Mengambil data shift dan menggabungkan informasi pengguna
+        $data = shift::select([
+            'kategorishift.id',
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama',
+            'latest_shift.latest_created_at'
+        ])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
+            ->join(DB::raw('(
+                SELECT npk, date, MAX(created_at) as latest_created_at
+                FROM kategorishift
+                GROUP BY npk, date
+            ) AS latest_shift'), function ($join) {
+                $join->on('kategorishift.npk', '=', 'latest_shift.npk')
+                    ->on('kategorishift.date', '=', 'latest_shift.date')
+                    ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
+            })
+            ->whereIn('users.npk', $selectedNPKs)
+            ->whereBetween('kategorishift.date', [$startDate, $endDate])
+            ->orderBy('kategorishift.date', 'DESC');
 
-    // Mengambil data shift dan menggabungkan informasi pengguna
-    $data = shift::select([
-        'kategorishift.id',
-        'kategorishift.npk',
-        'kategorishift.shift1',
-        'kategorishift.date',
-        'users.nama',
-        'latest_shift.latest_created_at'
-    ])
-    ->join('users', 'kategorishift.npk', '=', 'users.npk')
-    // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
-    ->join(DB::raw('(
-        SELECT npk, date, MAX(created_at) as latest_created_at
-        FROM kategorishift
-        GROUP BY npk, date
-    ) AS latest_shift'), function($join) {
-        $join->on('kategorishift.npk', '=', 'latest_shift.npk')
-             ->on('kategorishift.date', '=', 'latest_shift.date')
-             ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at'); // Menambahkan kondisi ini
-    })
-    ->orderBy('kategorishift.date', 'DESC'); // Mengurutkan berdasarkan tanggal shift
+        // Mengambil data shift yang ditemukan
+        $shiftData = $data->get();
 
-    // Mendapatkan role_id pengguna saat ini
-    $user = Auth::user();
-    $roleId = $user->role_id;
+        // Menyiapkan array untuk menyimpan hasil akhir
+        $resultData = [];
 
-    // Jika ada npk yang dipilih, filter berdasarkan npk tersebut
-    if ($request->has('selected_npk') && !empty($request->selected_npk)) {
-        $selectedNPKs = explode(',', $request->selected_npk);
-        $data->whereIn('users.npk', $selectedNPKs);
+        foreach ($selectedNPKs as $npk) {
+            foreach ($dates as $date) {
+                $shift = $shiftData->firstWhere(function ($shift) use ($npk, $date) {
+                    return $shift->npk === $npk && $shift->date === $date;
+                });
+
+                $shift1 = $shift ? $shift->shift1 : '-';
+
+                $user = User::where('npk', $npk)->first();
+                $nama = $user ? $user->nama : 'Nama Tidak Ditemukan';
+
+                // Menambahkan data untuk tanggal dan npk
+                $resultData[] = [
+                    'npk' => $npk,
+                    'shift1' => $shift1,
+                    'date' => $date,
+                    'nama' => $nama,
+                ];
+            }
+        }
+
+        // Menggunakan DataTables untuk menampilkan data dalam format yang sesuai
+        return DataTables::of($resultData)
+            ->addIndexColumn()
+            ->setRowId(function ($data) {
+                return $data['npk'] . '_' . $data['date']; // Menetapkan ID baris berdasarkan npk dan date
+            })
+            ->make(true);
     }
-
-    // Jika ada rentang tanggal, filter data berdasarkan tanggal
-    if (!empty($startDate) && !empty($endDate)) {
-        $data->whereBetween('kategorishift.date', [$startDate, $endDate]);
-    }
-
-    // Pengecekan role_id, jika role adalah 2 (misalnya admin), filter berdasarkan section
-    if ($roleId == 2) {
-        $sectionId = $user->section_id;
-        $data->where('users.section_id', $sectionId);
-    }
-
-    // Mengambil data dari query
-    $data = $data->get();
-
-    // Menggunakan DataTables untuk menampilkan data dalam format yang sesuai
-    return DataTables::of($data)
-        ->addIndexColumn()
-        ->setRowId(function ($data) {
-            return $data->id;
-        })
-        ->make(true);
-}
 
 
 
@@ -160,44 +139,74 @@ public function getData(Request $request)
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
         $selectedNPKs = $request->input('selected_npk') ? explode(',', $request->input('selected_npk')) : [];
+        $user = Auth::user();
+        $roleId = $user->role_id;
 
+        // Generate list of dates between startDate and endDate
+        $dates = collect();
+        $date = \Carbon\Carbon::parse($startDate);
+        $endDate = \Carbon\Carbon::parse($endDate);
 
-        $dataQuery = shift::with(['user.section', 'user.department', 'user.division'])
-            ->select(['kategorishift.id', 'kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
+        while ($date <= $endDate) {
+            $dates->push($date->format('Y-m-d'));
+            $date->addDay();
+        }
+
+        // Mengambil data shift dan menggabungkan informasi pengguna
+        $data = shift::select([
+            'kategorishift.id',
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama',
+            'latest_shift.latest_created_at'
+        ])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
+            ->join(DB::raw('(
+            SELECT npk, date, MAX(created_at) as latest_created_at
+            FROM kategorishift
+            GROUP BY npk, date
+        ) AS latest_shift'), function ($join) {
+                $join->on('kategorishift.npk', '=', 'latest_shift.npk')
+                    ->on('kategorishift.date', '=', 'latest_shift.date')
+                    ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
+            })
+            ->whereIn('users.npk', $selectedNPKs)
+            ->whereBetween('kategorishift.date', [$startDate, $endDate])
             ->orderBy('kategorishift.date', 'ASC');
 
-        if (!empty($selectedNPKs)) {
-            $dataQuery->whereIn('users.npk', $selectedNPKs);
-        }
-
-        // Tambahkan filter untuk rentang tanggal
-        if (!empty($startDate) && !empty($endDate)) {
-            $dataQuery->whereBetween('kategorishift.date', [$startDate, $endDate]);
-        }
-
-
-        $data = $dataQuery->get();
-
-        if ($data->isEmpty()) {
-            return response()->json(['message' => 'Data tidak ditemukan'], 404);
-        }
+        // Mengambil data shift yang ditemukan
+        $shiftData = $data->get();
 
         // Siapkan data untuk ekspor
         $exportData = [];
-        foreach ($data as $shift) {
-            $user = $shift->user;
-            $exportData[] = [
-                'NPK' => $shift->npk,
-                'Nama' => $user->nama,
-                'Tanggal' => $shift->date,
-                'Shift' => $shift->shift1,
-                'Section' => $user->section ? $user->section->nama : 'Tidak Ada',
-                'Department' => $user->department ? $user->department->nama : 'Tidak Ada',
-                'Division' => $user->division ? $user->division->nama : 'Tidak Ada',
-            ];
+        foreach ($selectedNPKs as $npk) {
+            foreach ($dates as $date) {
+                $shift = $shiftData->firstWhere(function ($shift) use ($npk, $date) {
+                    return $shift->npk === $npk && $shift->date === $date;
+                });
+
+                $shift1 = $shift ? $shift->shift1 : '-';
+
+                // Get user info
+                $user = User::where('npk', $npk)->first();
+                $nama = $user ? $user->nama : 'Nama Tidak Ditemukan';
+
+                // Add to export data array
+                $exportData[] = [
+                    'NPK' => $npk,
+                    'Nama' => $nama,
+                    'Tanggal' => $date,
+                    'Shift' => $shift1,
+                ];
+            }
         }
 
+        if (empty($exportData)) {
+            $errorMessage = 'Isi filter sebelum export.';
+            return redirect()->back()->with('error', $errorMessage); // Kembalikan dengan pesan sukses
+        }
         return Excel::download(new ShiftExport($exportData), 'shift_data.xlsx');
     }
 
@@ -295,7 +304,7 @@ public function getData(Request $request)
         $dayOfWeek = $date->dayOfWeek;
 
         // Cek jika role_id bukan 1 atau 6, dan hari adalah Sabtu (6) atau Minggu (0)
-        if (Auth::user()->role_id != 1 && Auth::user()->role_id != 6 && ($dayOfWeek == 6 || $dayOfWeek == 0)) {
+        if (Auth::user()->role_id != 1 && Auth::user()->role_id != 6 && Auth::user()->department_id != 16 && ($dayOfWeek == 6 || $dayOfWeek == 0)) {
             return response()->json(['error' => 'Anda tidak diizinkan untuk mengedit data di hari Sabtu dan Minggu'], 403);
         }
 

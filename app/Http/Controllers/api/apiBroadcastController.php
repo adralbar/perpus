@@ -2,154 +2,221 @@
 
 namespace App\Http\Controllers\api;
 
+use Carbon\Carbon;
+
+use App\Models\User;
+use App\Models\shift;
+use App\Models\absensici;
+use App\Models\absensico;
+use App\Models\CutiModel;
+use App\Models\PenyimpanganModel;
+use Illuminate\Http\Request;
+use App\Models\peringatanModel;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
-use App\Models\absensici;
-use App\Models\peringatanModel;
-use App\Models\shift;
-use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class apiBroadcastController extends Controller
 {
     public function checkLateAndAbsent()
     {
-        set_time_limit(0);
+        try {
+            $yesterday = Carbon::yesterday()->toDateString();
 
-        $users = User::where('id', '>=', 42)->get();
+            $checkinResults = $this->getCheckinData($yesterday) ?? collect([]);
+            $checkoutResults = $this->getCheckoutData($yesterday) ?? collect([]);
+            $noCheckResults = $this->getNoCheckData($yesterday) ?? collect([]);
 
-        $yesterday = Carbon::yesterday();
+            $mergedResults = $checkinResults->merge($checkoutResults)->merge($noCheckResults);
+            $results = $this->processAdditionalData($mergedResults);
+            $sortedResults = $results->sortBy('tanggal')->values();
 
-        foreach ($users as $user) {
-            $shifts = shift::where('npk', $user->npk)
-                ->whereDate('date', $yesterday) // Filter shift yang terjadi kemarin
+            $user = User::all();
+            $this->sendWarningMessage($user, $sortedResults);
+            return response()->json([
+                'success' => true,
+                'message' => 'Late and absent data retrieved successfully',
+                'data' => $sortedResults
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    private function getCheckinData($yesterday)
+    {
+        return AbsensiCi::with(['user', 'shift'])
+            ->select('npk', 'tanggal', DB::raw('MIN(waktuci) as waktuci'))
+            ->whereDate('tanggal', '=', $yesterday)
+            ->groupBy('npk', 'tanggal')
+            ->get()
+            ->mapWithKeys(function ($checkin) {
+                $key = "{$checkin->npk}-{$checkin->tanggal}";
+                return [
+                    $key => [
+                        'nama' => $checkin->user->nama ?? 'Tidak Diketahui',
+                        'npk' => $checkin->npk,
+                        'tanggal' => $checkin->tanggal,
+                        'waktuci' => $checkin->waktuci,
+                        'waktuco' => null,
+                        'status' => $this->determineStatus($checkin),
+                    ]
+                ];
+            });
+    }
+
+    private function getCheckoutData($yesterday)
+    {
+        return AbsensiCo::with(['user', 'shift'])
+            ->select('npk', 'tanggal', DB::raw('MAX(waktuco) as waktuco'))
+            ->whereDate('tanggal', '=', $yesterday)
+            ->groupBy('npk', 'tanggal')
+            ->get()
+            ->mapWithKeys(function ($checkout) {
+                $key = "{$checkout->npk}-{$checkout->tanggal}";
+                return [
+                    $key => [
+                        'nama' => $checkout->user->nama ?? 'Tidak Diketahui',
+                        'npk' => $checkout->npk,
+                        'tanggal' => $checkout->tanggal,
+                        'waktuci' => null,
+                        'waktuco' => $checkout->waktuco,
+                        'status' => 'NO IN',
+                    ]
+                ];
+            });
+    }
+
+    private function getNoCheckData($yesterday)
+    {
+        return shift::with(['user.section.department.division', 'user.role'])
+            ->leftJoin('absensici', function ($join) {
+                $join->on('absensici.npk', '=', 'kategorishift.npk')
+                    ->on('absensici.tanggal', '=', 'kategorishift.date');
+            })
+            ->leftJoin('absensico', function ($join) {
+                $join->on('absensico.npk', '=', 'kategorishift.npk')
+                    ->on('absensico.tanggal', '=', 'kategorishift.date');
+            })
+            ->select(
+                'kategorishift.npk',
+                'kategorishift.date as tanggal',
+                'kategorishift.shift1',
+                DB::raw('IFNULL(DATE_FORMAT(MIN(absensici.waktuci), "%H:%i"), "NO IN") as waktuci'),
+                DB::raw('IFNULL(DATE_FORMAT(MAX(absensico.waktuco), "%H:%i"), "NO OUT") as waktuco')
+            )
+            ->whereNull('absensici.waktuci')
+            ->whereNull('absensico.waktuco')
+            ->where('kategorishift.date', '=', $yesterday)
+            ->where('kategorishift.shift1', '!=', 'OFF')
+            ->groupBy('kategorishift.npk', 'kategorishift.date', 'kategorishift.shift1') // Add GROUP BY
+            ->get()
+            ->mapWithKeys(function ($noCheck) {
+                $key = "{$noCheck->npk}-{$noCheck->tanggal}";
+                return [
+                    $key => [
+                        'nama' => $noCheck->user->nama ?? 'Tidak Diketahui',
+                        'npk' => $noCheck->npk,
+                        'tanggal' => $noCheck->tanggal,
+                        'waktuci' => $noCheck->waktuci,
+                        'waktuco' => $noCheck->waktuco,
+                        'status' => 'Mangkir',
+                    ]
+                ];
+            });
+    }
+
+
+    private function processAdditionalData($mergedResults)
+    {
+        return $mergedResults->map(function ($row) {
+            $npk = $row['npk'];
+            $tanggal = $row['tanggal'] ?? null;
+
+            // Cek data cuti
+            $cutiModels = CutiModel::where('npk', $npk)
+                ->where(function ($query) use ($tanggal) {
+                    $query->where('tanggal_mulai', '<=', $tanggal)
+                        ->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggal]);
+                })
+                ->whereIn('approved_by', [2, 3, 4, 5])
                 ->get();
 
-            foreach ($shifts as $shift) {
-                // Pisahkan waktu awal shift dari `shift1` (format "07:00 - 16:00")
-                $shiftStart = explode(' - ', $shift->shift1)[0];
+            $kategoriCuti = $cutiModels->pluck('kategori')->first();
 
-                // Periksa absensi pada tanggal shift
-                $absensi = absensici::where('npk', $user->npk)
-                    ->whereDate('tanggal', $yesterday) // Pastikan absensi juga terjadi kemarin
-                    ->first();
+            // Cek data penyimpangan
+            $penyimpangan = PenyimpanganModel::where('npk', $npk)
+                ->where(function ($query) use ($tanggal) {
+                    $query->where('tanggal_mulai', '<=', $tanggal)
+                        ->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggal]);
+                })
+                ->whereIn('approved_by', [2, 3, 4, 5])
+                ->first();
 
-                // Cek keterlambatan atau absensi
-                if ($absensi) {
-                    // Jika ada absensi, cek keterlambatan
-                    if ($absensi->waktuci > $shiftStart) {
-                        $kategori = 'telat';
+            $kategoriPenyimpangan = $penyimpangan->kategori ?? null;
 
-                        // Cek apakah ada duplikasi peringatan untuk pengguna ini
-                        $existingWarning = peringatanModel::where('user_id', $user->id)
-                            ->where('kategori', $kategori)
-                            ->orderBy('created_at', 'desc')
-                            ->first();
+            // Update data dengan status
+            $row['status'] = $kategoriCuti ?: ($kategoriPenyimpangan ?: $row['status']);
+            return $row;
+        });
+    }
 
-                        if ($existingWarning) {
-                            if ($existingWarning->jumlah < 3) {
-                                // Perbarui jumlah peringatan
-                                $existingWarning->jumlah++;
-                                $existingWarning->save();
+    private function determineStatus($checkin)
+    {
+        // Ambil shift
+        $latestShift = shift::where('npk', $checkin->npk)
+            ->where('date', $checkin->tanggal)
+            ->latest()
+            ->first();
+        $shift1 = $latestShift ? $latestShift->shift1 : null;
 
-                                // Kirim peringatan jika jumlah mencapai 3
-                                if ($existingWarning->jumlah == 3) {
-                                    $this->sendWarningMessage($user, $kategori);
-                                }
-                            } else {
-                                // Jika sudah lebih dari 3, buat peringatan baru
-                                peringatanModel::create([
-                                    'user_id' => $user->id,
-                                    'kategori' => $kategori,
-                                    'jumlah' => 1,
-                                ]);
-                            }
-                        } else {
-                            // Jika belum ada peringatan, buat baru
-                            peringatanModel::create([
-                                'user_id' => $user->id,
-                                'kategori' => $kategori,
-                                'jumlah' => 1,
-                            ]);
-                        }
-                    }
-                } else {
-                    // Jika tidak ada absensi, hitung sebagai mangkir
-                    $kategori = 'mangkir';
+        // Default status
+        $status = 'No Shift';
 
-                    // Cek apakah ada duplikasi peringatan untuk pengguna ini
-                    $existingWarning = peringatanModel::where('user_id', $user->id)
-                        ->where('kategori', $kategori)
-                        ->orderBy('created_at', 'desc')
-                        ->first();
+        // Ambil role pengguna
+        $role = $checkin->user ? $checkin->user->role : null;
 
-                    if ($existingWarning) {
-                        if ($existingWarning->jumlah < 3) {
-                            // Perbarui jumlah peringatan
-                            $existingWarning->jumlah++;
-                            $existingWarning->save();
+        // Cek jika role adalah 5 atau 8, maka status langsung 'Tepat Waktu'
+        if ($role && in_array($role->id, [5, 8])) {
+            $status = 'Tepat Waktu';
+        } elseif ($latestShift) {
+            // Jika tidak, cek apakah terlambat atau tepat waktu berdasarkan shift
+            $shiftIn = explode(' - ', str_replace('.', ':', $shift1))[0];
+            $shiftInFormatted = date('H:i:s', strtotime($shiftIn));
 
-                            // Kirim peringatan jika jumlah mencapai 3
-                            if ($existingWarning->jumlah == 3) {
-                                $this->sendWarningMessage($user, $kategori);
-                            }
-                        } else {
-                            // Jika sudah lebih dari 3, buat peringatan baru
-                            peringatanModel::create([
-                                'user_id' => $user->id,
-                                'kategori' => $kategori,
-                                'jumlah' => 1,
-                            ]);
-                        }
-                    } else {
-                        // Jika belum ada peringatan, buat baru
-                        peringatanModel::create([
-                            'user_id' => $user->id,
-                            'kategori' => $kategori,
-                            'jumlah' => 1,
-                        ]);
-                    }
+            $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
+        }
+        // dd($role);
+        return $status;
+    }
+
+    private function sendWarningMessage($users, $sortedResults)
+    {
+        foreach ($users as $user) {
+            $userResults = $sortedResults->where('npk', $user->npk);
+            foreach ($userResults as $result) {
+                $message = "";
+                $tanggal = $result['tanggal'] ?? 'Tidak diketahui';
+                if ($result['status'] === 'Terlambat') {
+                    $waktuTerlambat = $result['waktuci'] ?? 'Tidak diketahui';
+                    $message = "Anda terlambat pada tanggal {$tanggal} pukul {$waktuTerlambat}. Mohon perbaiki absensi Anda.";
+                } elseif ($result['status'] === 'Mangkir') {
+                    $message = "Anda tidak hadir pada tanggal {$tanggal}. Mohon perbaiki absensi Anda.";
+                }
+                if ($message) {
+                    $data = [
+                        'destination' => $user->no_telp,
+                        'message' => $message,
+                    ];
+                    $apiGateway = new apiGatewayController();
+                    $apiGateway->sendMessage($data);
                 }
             }
         }
-
-        return response()->json(['message' => 'Peringatan untuk hari kemarin telah diproses.']);
     }
 
-
-    private function sendWarningMessage($user, $kategori)
-    {
-        // Log untuk debugging
-        Log::info('sendWarningMessage dipanggil.', [
-            'user_id' => $user->id,
-            'user_no_telp' => $user->no_telp,
-            'kategori' => $kategori,
-        ]);
-    
-        $data = [
-            'destination' => $user->no_telp,
-            'message' => "Anda telah {$kategori} sebanyak 3 kali. Mohon perbaiki absensi Anda.",
-        ];
-    
-        Log::info('Data pesan yang akan dikirim:', $data);
-    
-        $apiGateway = new apiGatewayController();
-    
-        // Coba tangkap error jika ada masalah saat pengiriman pesan
-        try {
-            $response = $apiGateway->sendMessage($data);
-            Log::info('Pesan berhasil dikirim.', [
-                'response' => $response,
-            ]);
-            return $response;
-        } catch (\Exception $e) {
-            Log::error('Gagal mengirim pesan.', [
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return false;
-        }
-    }
-    
 }
