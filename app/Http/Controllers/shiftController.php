@@ -47,9 +47,21 @@ class shiftController extends Controller
             $masterShiftQuery->whereNotBetween('id', [17, 29]);
         }
 
-
         $masterShift = $masterShiftQuery->pluck('waktu');
+        $user = Auth::user();
+        $roleId = $user->role_id;
+        $sectionId = $user->section_id;
+        $departmentId = $user->department_id; // Ambil department_id pengguna
 
+        $query = User::select('npk', 'nama');
+
+        if ($roleId == 2) {
+            $query->where('section_id', $sectionId);
+        } elseif ($roleId == 9) {
+            $query->where('department_id', $departmentId);
+        }
+
+        $userData = $query->get();
         return view('shift.shift', compact('userData', 'masterShift'));
     }
 
@@ -57,14 +69,16 @@ class shiftController extends Controller
 
     public function getData(Request $request)
     {
+        set_time_limit(0);
+
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
         $selectedNPKs = $request->has('selected_npk') ? explode(',', $request->selected_npk) : [];
 
         // Generate a list of dates between startDate and endDate
         $dates = collect();
-        $date = \Carbon\Carbon::parse($startDate);
-        $endDate = \Carbon\Carbon::parse($endDate);
+        $date = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
 
         while ($date <= $endDate) {
             $dates->push($date->format('Y-m-d'));
