@@ -18,4 +18,6 @@ class PcdMasterUser extends Model
         // 'name',
         'npk'
     ];
+    
+  
 }

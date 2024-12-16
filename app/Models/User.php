@@ -12,6 +12,7 @@ class User extends Authenticatable
     use HasFactory, HasApiTokens, Notifiable;
 
     protected $table = 'users';
+  protected $connection = 'mysql';
 
     protected $hidden = [
         'password',

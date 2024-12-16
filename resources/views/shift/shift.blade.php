@@ -226,7 +226,7 @@
         <script src="{{ asset('dist/js/plugins/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
         {{-- <script src="{{ asset('dist/js/jquery.bootstrap-duallistbox.js') }}"></script> --}}
-        <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script>
+        <script src="{{ asset('dist/js/exceljs.min.js') }}"></script>
         <script src="{{ asset('lte/plugins/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js') }}"></script>
 
 
@@ -261,6 +261,145 @@
             </script>
         @endif
         <script>
+            document.getElementById('exportButton').addEventListener('click', function() {
+                // Ambil data pengguna yang diteruskan dari Laravel
+                var userData = @json($userData);
+
+                // Persiapkan data untuk file Excel
+                var workbook = new ExcelJS.Workbook();
+                var worksheet = workbook.addWorksheet('Template');
+
+                // Definisikan heading untuk kolom
+                var headings = ['NPK', 'Nama', 'Jadwal Shift', 'Start Date', 'End Date', '', '',
+                    'Contoh Shift yang terdaftar', 'Format Tanggal (startdate & enddate)'
+                ];
+
+                // Tambahkan header ke worksheet
+                var headerRow = worksheet.addRow(headings);
+
+                headerRow.eachCell(function(cell, colNumber) {
+                    cell.style.numFmt = '@'; // Pastikan format teks untuk semua kolom
+
+                    if (colNumber !== 6 && colNumber !== 7) { // Kolom F dan G tidak distyling
+                        cell.style.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: {
+                                argb: 'FFFF00'
+                            } // Warna kuning
+                        };
+                        cell.style.font = {
+                            bold: true // Teks menjadi bold
+                        };
+                    }
+                });
+
+                // Menambahkan data pengguna
+                userData.forEach(function(user) {
+                    worksheet.addRow([
+                        user.npk.toString(), // Pastikan NPK dianggap sebagai teks
+                        user.nama.toString(), // Pastikan Nama dianggap sebagai teks
+                        '', '', '', '', '', '', ''
+                    ]);
+                });
+
+                // Atur lebar kolom
+                worksheet.columns = [{
+                        width: 15
+                    }, // NPK
+                    {
+                        width: 25
+                    }, // Nama
+                    {
+                        width: 20
+                    }, // Jadwal Shift
+                    {
+                        width: 15
+                    }, // Start Date
+                    {
+                        width: 15
+                    }, // End Date
+                    {
+                        width: 10
+                    }, // Kolom kosong F
+                    {
+                        width: 10
+                    }, // Kolom kosong G
+                    {
+                        width: 30
+                    }, // Contoh Shift
+                    {
+                        width: 20
+                    } // Format Tanggal
+                ];
+
+                worksheet.eachRow({
+                    includeEmpty: true
+                }, function(row, rowNumber) {
+                    row.eachCell({
+                        includeEmpty: true
+                    }, function(cell, colNumber) {
+                        {
+                            cell.style.numFmt = '@';
+                        }
+                    });
+                });
+
+                // Menambahkan contoh jadwal shift (langsung setelah header)
+                const shiftSchedules = [
+                    '06:00 - 15:00', '07:00 - 16:00', '14:00 - 23:00', '13:00 - 22:00',
+                    '21:00 - 06:00', '22:00 - 07:00', '23:00 - 08:00', '06:00 - 15:20',
+                    '07:00 - 16:30', '15:00 - 00:00', '16:00 - 01:00', '08:00 - 17:20',
+                    '09:00 - 18:20', '08:00 - 17:00', 'Dinas Luar Stand By'
+                ];
+
+                let rowIndex = 2; // Mulai dari baris 2, setelah header
+                shiftSchedules.forEach(function(schedule, index) {
+                    // Menulis data shift schedule ke kolom H
+                    let cell = worksheet.getCell(`H${rowIndex + index}`);
+                    cell.value = schedule;
+                    cell.style.numFmt = '@'; // Pastikan format teks
+                });
+
+                // Menambahkan catatan (Notes)
+                worksheet.getCell(`I2`).value = 'YYYY-MM-DD contoh: ';
+                worksheet.getCell(`I2`).style.numFmt = '@'; // Format teks
+
+                worksheet.getCell(`I3`).value = '2024-11-29';
+                worksheet.getCell(`I3`).style.numFmt = '@'; // Format teks
+                const noteRowIndex = rowIndex + shiftSchedules.length + 1;
+
+                worksheet.getCell(`H${noteRowIndex - 1}`).value = 'NB : Pastikan number format text';
+                worksheet.getCell(`H${noteRowIndex - 1}`).style.numFmt = '@'; // Format teks
+                worksheet.getCell(`H${noteRowIndex - 1}`).style.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: {
+                        argb: 'FF0000'
+                    } // Background merah
+                };
+                worksheet.getCell(`H${noteRowIndex - 1}`).style.font = {
+                    bold: true // Teks menjadi bold
+                };
+
+                // Ekspor workbook sebagai file Excel
+                workbook.xlsx.writeBuffer().then(function(buffer) {
+                    var blob = new Blob([buffer], {
+                        type: 'application/octet-stream'
+                    });
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'TEMPLATE SHIFT.xlsx';
+                    link.click();
+                });
+            });
+
+
+
+
+
+
+
             let shiftHistoryUrl;
             var $dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
                 selectorMinimalHeight: 200,
@@ -284,10 +423,8 @@
                         status: status,
                     },
                     success: function(data) {
-                        // Kosongkan opsi yang ada
                         $dualistbox.empty();
 
-                        // Tambahkan opsi baru dari data
                         data.userData.forEach(function(user) {
                             $('<option>', {
                                 value: user.npk,
@@ -328,6 +465,7 @@
                 var table = $('#myTable').DataTable({
                     processing: true,
                     serverSide: true,
+                    deferRender: true, 
                     ajax: {
                         url: '{{ route('shift.data') }}',
                         data: function(d) {
@@ -385,16 +523,16 @@
                     });
                 });
 
-                $('#exportButton').on('click', function() {
-                    var startDate = $('#startDate').val();
-                    var endDate = $('#endDate').val();
-                    var search = $('#dt-search-0').val();
-                    window.location.href = "{{ route('exportTemplate') }}?startDate=" + encodeURIComponent(
-                            startDate) +
-                        "&endDate=" + encodeURIComponent(endDate) +
-                        "&search=" + encodeURIComponent(search);
+                // $('#exportButton').on('click', function() {
+                //     var startDate = $('#startDate').val();
+                //     var endDate = $('#endDate').val();
+                //     var search = $('#dt-search-0').val();
+                //     window.location.href = "{{ route('exportTemplate') }}?startDate=" + encodeURIComponent(
+                //             startDate) +
+                //         "&endDate=" + encodeURIComponent(endDate) +
+                //         "&search=" + encodeURIComponent(search);
 
-                });
+                // });
 
                 $('#filterButton').click(function(e) {
                     e.preventDefault();
@@ -680,17 +818,110 @@
                 }
             });
 
-            $('#exportShift').on('click', function() {
-                console.log('saya diklik');
+          
+            $('#exportShift').on('click', async function() {
+                console.log('Button clicked');
 
-                var startDate = $('#startDate').val();
-                var endDate = $('#endDate').val();
-                var selectedNPK = $('#selectedNPK').val();
+                let startDate = $('#startDate').val();
+                let endDate = $('#endDate').val();
+                let selectedNPK = $('#selectedNPK').val();
 
-                window.location.href = "{{ route('exportData') }}?startDate=" + encodeURIComponent(
-                        startDate) +
-                    "&endDate=" + encodeURIComponent(endDate) +
-                    "&selected_npk=" + encodeURIComponent(selectedNPK);
+                if (!startDate || !endDate || !selectedNPK) {
+                    alert('Harap isi semua filter sebelum ekspor!');
+                    return;
+                }
+
+                try {
+                    console.log('Fetching data...');
+                    const response = await fetch(
+                        `{{ route('exportData') }}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&selected_npk=${encodeURIComponent(selectedNPK)}`
+                    );
+                    const data = await response.json();
+
+                    console.log('Response received:', data);
+
+                    if (response.ok && data.length > 0) {
+                        console.log('Creating Excel file...');
+                        const workbook = new ExcelJS.Workbook();
+                        const worksheet = workbook.addWorksheet('Shift Data');
+
+                        // Set header with styling
+                        worksheet.columns = [{
+                                header: 'NPK',
+                                key: 'npk',
+                                width: 15
+                            },
+                            {
+                                header: 'Nama',
+                                key: 'nama',
+                                width: 25
+                            },
+                            {
+                                header: 'Tanggal',
+                                key: 'tanggal',
+                                width: 15
+                            },
+                            {
+                                header: 'Shift',
+                                key: 'shift',
+                                width: 10
+                            },
+                            {
+                                header: 'Section',
+                                key: 'section_nama',
+                                width: 10
+                            },
+                            {
+                                header: 'Department',
+                                key: 'department_nama',
+                                width: 10
+                            },
+                            {
+                                header: 'Division',
+                                key: 'division_nama',
+                                width: 10
+                            },
+                        ];
+
+                        worksheet.getRow(1).eachCell((cell) => {
+                            cell.font = {
+                                bold: true
+                            };
+                            cell.fill = {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: {
+                                    argb: 'FFFF00'
+                                }, // Kuning
+                            };
+                            cell.alignment = {
+                                horizontal: 'left',
+                                vertical: 'middle'
+                            };
+                        });
+
+                        // Add data rows
+                        worksheet.addRows(data);
+
+                        console.log('Excel file created. Downloading...');
+                        const buffer = await workbook.xlsx.writeBuffer();
+
+                        const blob = new Blob([buffer], {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = 'DATASHIFT.xlsx';
+                        link.click();
+                        console.log('Download completed.');
+                    } else {
+                        console.warn('No data found:', data.message);
+                        alert(data.message || 'Data tidak ditemukan!');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat ekspor data!');
+                }
             });
         </script>
         @if (session('success'))
