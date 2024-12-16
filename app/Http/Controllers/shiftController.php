@@ -47,11 +47,24 @@ class shiftController extends Controller
             $masterShiftQuery->whereNotBetween('id', [17, 29]);
         }
 
-
         $masterShift = $masterShiftQuery->pluck('waktu');
+        $user = Auth::user();
+        $roleId = $user->role_id;
+        $sectionId = $user->section_id;
+        $departmentId = $user->department_id; // Ambil department_id pengguna
 
+        $query = User::select('npk', 'nama');
+
+        if ($roleId == 2) {
+            $query->where('section_id', $sectionId);
+        } elseif ($roleId == 9) {
+            $query->where('department_id', $departmentId);
+        }
+
+        $userData = $query->get();
         return view('shift.shift', compact('userData', 'masterShift'));
     }
+
 
 
 
@@ -70,7 +83,6 @@ class shiftController extends Controller
         $dates->push($date->format('Y-m-d'));
         $date->addDay();
     }
-
     // Mengambil data shift dan menggabungkan informasi pengguna
     $data = shift::select([
         'kategorishift.id',
