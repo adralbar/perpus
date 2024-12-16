@@ -465,6 +465,7 @@
                 var table = $('#myTable').DataTable({
                     processing: true,
                     serverSide: true,
+                    deferRender: true, 
                     ajax: {
                         url: '{{ route('shift.data') }}',
                         data: function(d) {
@@ -817,17 +818,110 @@
                 }
             });
 
-            $('#exportShift').on('click', function() {
-                console.log('saya diklik');
+          
+            $('#exportShift').on('click', async function() {
+                console.log('Button clicked');
 
-                var startDate = $('#startDate').val();
-                var endDate = $('#endDate').val();
-                var selectedNPK = $('#selectedNPK').val();
+                let startDate = $('#startDate').val();
+                let endDate = $('#endDate').val();
+                let selectedNPK = $('#selectedNPK').val();
 
-                window.location.href = "{{ route('exportData') }}?startDate=" + encodeURIComponent(
-                        startDate) +
-                    "&endDate=" + encodeURIComponent(endDate) +
-                    "&selected_npk=" + encodeURIComponent(selectedNPK);
+                if (!startDate || !endDate || !selectedNPK) {
+                    alert('Harap isi semua filter sebelum ekspor!');
+                    return;
+                }
+
+                try {
+                    console.log('Fetching data...');
+                    const response = await fetch(
+                        `{{ route('exportData') }}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&selected_npk=${encodeURIComponent(selectedNPK)}`
+                    );
+                    const data = await response.json();
+
+                    console.log('Response received:', data);
+
+                    if (response.ok && data.length > 0) {
+                        console.log('Creating Excel file...');
+                        const workbook = new ExcelJS.Workbook();
+                        const worksheet = workbook.addWorksheet('Shift Data');
+
+                        // Set header with styling
+                        worksheet.columns = [{
+                                header: 'NPK',
+                                key: 'npk',
+                                width: 15
+                            },
+                            {
+                                header: 'Nama',
+                                key: 'nama',
+                                width: 25
+                            },
+                            {
+                                header: 'Tanggal',
+                                key: 'tanggal',
+                                width: 15
+                            },
+                            {
+                                header: 'Shift',
+                                key: 'shift',
+                                width: 10
+                            },
+                            {
+                                header: 'Section',
+                                key: 'section_nama',
+                                width: 10
+                            },
+                            {
+                                header: 'Department',
+                                key: 'department_nama',
+                                width: 10
+                            },
+                            {
+                                header: 'Division',
+                                key: 'division_nama',
+                                width: 10
+                            },
+                        ];
+
+                        worksheet.getRow(1).eachCell((cell) => {
+                            cell.font = {
+                                bold: true
+                            };
+                            cell.fill = {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: {
+                                    argb: 'FFFF00'
+                                }, // Kuning
+                            };
+                            cell.alignment = {
+                                horizontal: 'left',
+                                vertical: 'middle'
+                            };
+                        });
+
+                        // Add data rows
+                        worksheet.addRows(data);
+
+                        console.log('Excel file created. Downloading...');
+                        const buffer = await workbook.xlsx.writeBuffer();
+
+                        const blob = new Blob([buffer], {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = 'DATASHIFT.xlsx';
+                        link.click();
+                        console.log('Download completed.');
+                    } else {
+                        console.warn('No data found:', data.message);
+                        alert(data.message || 'Data tidak ditemukan!');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat ekspor data!');
+                }
             });
         </script>
         @if (session('success'))

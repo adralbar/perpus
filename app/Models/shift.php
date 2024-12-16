@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class shift extends Model
 {
     use HasFactory;
+  protected $connection = 'mysql';
     protected $table = 'kategorishift';
     protected $fillable = ['npk', 'shift1', 'date', 'start_date', 'end_date', 'status'];
 

@@ -13,6 +13,7 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\UsersExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\PcdMasterUser;
 
 use App\Models\absensico;
 use App\Models\RecapAbsensi;
@@ -23,6 +24,7 @@ class UsersController extends Controller
 
     public function index()
     {
+       
         $userData = User::with('division', 'department', 'section', 'role')->orderBy('created_at', 'DESC')->get();
         $role = RoleModel::all();
         $section = SectionModel::all(); // Ambil semua section

@@ -131,3 +131,4 @@ Route::post('/registerperformaapi123', [registController::class, 'register'])->n
 //     return response()->json(['csrfToken' => csrf_token()]);
 // });
 Route::post('/logout', [loginController::class, 'logout'])->name('logout');
+
