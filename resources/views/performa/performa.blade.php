@@ -7,15 +7,16 @@
             <p class="pl-3 pb-3 font-weight-bold h3">Performa Karyawan</p>
             <div class="p-3 ml-3 text-black card">
                 <div class="mb-3">
-                    <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
+                    {{-- <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
                         data-bs-target="#logModal">
                         Tambah Log
                     </button>
                     <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
                         data-bs-target="#userIdModal">
                         Tambah User Id
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm" id="exportButton">Export to Excel</button>
+                    </button> --}}
+                    <button type="button" class="btn btn-success btn-sm float-end" id="exportExcel">Export to
+                        Excel</button>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
