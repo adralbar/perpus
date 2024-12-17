@@ -84,8 +84,13 @@ class ShiftsImport implements ToCollection
                     if ($startDate && $endDate && $sectionId !== null) {
                         while ($startDate->lte($endDate)) {
                             if ($startDate->isWeekend()) {
-                                if ($startDate->isSaturday() && in_array($sectionId, [22, 40])) {
+                                if ($data['shift1'] == 'Dinas Luar Stand By') {
+                                    $data['shift1'] = 'Dinas Luar Stand By Off';
+                                } elseif ($startDate->isSaturday() && in_array($sectionId, [22, 40])) {
                                     $data['shift1'] = !empty($row[2]) ? $row[2] : '';
+                                } elseif ($startDate->isSunday()) {
+                                    // Menambahkan kondisi untuk hari Minggu
+                                    $data['shift1'] = 'Dinas Luar Stand By Off';
                                 } else {
                                     $data['shift1'] = 'OFF';
                                 }

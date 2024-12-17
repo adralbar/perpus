@@ -68,148 +68,148 @@ class shiftController extends Controller
 
 
 
-  public function getData(Request $request)
-{
-    $startDate = $request->input('startDate');
-    $endDate = $request->input('endDate');
-    $selectedNPKs = $request->has('selected_npk') ? explode(',', $request->selected_npk) : [];
+    public function getData(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $selectedNPKs = $request->has('selected_npk') ? explode(',', $request->selected_npk) : [];
 
-    set_time_limit(300);        
-    $dates = collect();
-    $date = \Carbon\Carbon::parse($startDate);
-    $endDate = \Carbon\Carbon::parse($endDate);
+        set_time_limit(300);
+        $dates = collect();
+        $date = \Carbon\Carbon::parse($startDate);
+        $endDate = \Carbon\Carbon::parse($endDate);
 
-    while ($date <= $endDate) {
-        $dates->push($date->format('Y-m-d'));
-        $date->addDay();
-    }
-    // Mengambil data shift dan menggabungkan informasi pengguna
-    $data = shift::select([
-        'kategorishift.id',
-        'kategorishift.npk',
-        'kategorishift.shift1',
-        'kategorishift.date',
-        'users.nama',
-        'latest_shift.latest_created_at'
-    ])
-    ->join('users', 'kategorishift.npk', '=', 'users.npk')
-    // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
-    ->join(DB::raw('(
+        while ($date <= $endDate) {
+            $dates->push($date->format('Y-m-d'));
+            $date->addDay();
+        }
+        // Mengambil data shift dan menggabungkan informasi pengguna
+        $data = shift::select([
+            'kategorishift.id',
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama',
+            'latest_shift.latest_created_at'
+        ])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
+            ->join(DB::raw('(
         SELECT npk, date, MAX(created_at) as latest_created_at
         FROM kategorishift
         GROUP BY npk, date
     ) AS latest_shift'), function ($join) {
-        $join->on('kategorishift.npk', '=', 'latest_shift.npk')
-             ->on('kategorishift.date', '=', 'latest_shift.date')
-             ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
-    })
-    ->whereIn('users.npk', $selectedNPKs)
-    ->whereBetween('kategorishift.date', [$startDate, $endDate])
-    ->orderBy('kategorishift.date', 'DESC');
+                $join->on('kategorishift.npk', '=', 'latest_shift.npk')
+                    ->on('kategorishift.date', '=', 'latest_shift.date')
+                    ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
+            })
+            ->whereIn('users.npk', $selectedNPKs)
+            ->whereBetween('kategorishift.date', [$startDate, $endDate])
+            ->orderBy('kategorishift.date', 'DESC');
 
-    // Mengambil data shift yang ditemukan
-    $shiftData = $data->get();
+        // Mengambil data shift yang ditemukan
+        $shiftData = $data->get();
 
-    // Kelompokkan data shift berdasarkan npk dan date
-    $shiftGrouped = $shiftData->groupBy(function($shift) {
-        return $shift->npk . '_' . $shift->date;
-    });
-
-    $resultData = [];
-
-    foreach ($selectedNPKs as $npk) {
-        foreach ($dates as $date) {
-            $key = $npk . '_' . $date;
-            $shift = $shiftGrouped->get($key);
-
-            $shift1 = $shift ? $shift->first()->shift1 : '-';
-
-            $user = User::where('npk', $npk)->first();
-            $nama = $user ? $user->nama : 'Nama Tidak Ditemukan';
-
-            // Menambahkan data untuk tanggal dan npk
-            $resultData[] = [
-                'npk' => $npk,
-                'shift1' => $shift1,
-                'date' => $date,
-                'nama' => $nama,
-            ];
-        }
-    }
-
-    // Menggunakan DataTables untuk menampilkan data dalam format yang sesuai
-    return DataTables::of($resultData)
-        ->addIndexColumn()
-        ->setRowId(function ($data) {
-            return $data['npk'] . '_' . $data['date']; // Menetapkan ID baris berdasarkan npk dan date
-        })
-        ->make(true);
-}
-
-
-
-
-  public function exportData(Request $request)
-{
-    $startDate = $request->input('startDate');
-    $endDate = $request->input('endDate');
-    $selectedNPKs = $request->input('selected_npk') ? explode(',', $request->input('selected_npk')) : [];
-
-    // Generate date range
-    $dates = collect();
-    $date = Carbon::parse($startDate);
-    $endDate = Carbon::parse($endDate);
-
-    while ($date <= $endDate) {
-        $dates->push($date->format('Y-m-d'));
-        $date->addDay();
-    }
-
-    // Fetch shift data and group by npk and date
-    $shiftData = shift::select(['kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
-        ->join('users', 'kategorishift.npk', '=', 'users.npk')
-        ->whereIn('users.npk', $selectedNPKs)
-        ->whereBetween('kategorishift.date', [$startDate, $endDate])
-        ->get()
-        ->groupBy(function ($shift) {
-            return $shift->npk . '_' . $shift->date; // Group by npk and date
+        // Kelompokkan data shift berdasarkan npk dan date
+        $shiftGrouped = $shiftData->groupBy(function ($shift) {
+            return $shift->npk . '_' . $shift->date;
         });
 
-    // Fetch users and their related data
-    $users = User::with(['section', 'department', 'division'])->whereIn('npk', $selectedNPKs)->get()->keyBy('npk');
+        $resultData = [];
 
-    // Prepare export data
-    $exportData = [];
-    foreach ($selectedNPKs as $npk) {
-        $user = $users->get($npk);
-        $nama = $user ? $user->nama : 'Nama Tidak Ditemukan';
-        $sectionNama = $user && $user->section ? $user->section->nama : 'Section Tidak Ditemukan';
-        $departmentNama = $user && $user->department ? $user->department->nama : 'Department Tidak Ditemukan';
-        $divisionNama = $user && $user->division ? $user->division->nama : 'Division Tidak Ditemukan';
+        foreach ($selectedNPKs as $npk) {
+            foreach ($dates as $date) {
+                $key = $npk . '_' . $date;
+                $shift = $shiftGrouped->get($key);
 
-        foreach ($dates as $date) {
-            $key = $npk . '_' . $date;
-            $shift = $shiftData->get($key);
-            $shift1 = $shift ? $shift->first()->shift1 : '-'; // Get shift1 for the first entry in group
+                $shift1 = $shift ? $shift->first()->shift1 : '-';
 
-            $exportData[] = [
-                'npk' => $npk,
-                'nama' => $nama,
-                'tanggal' => $date,
-                'shift' => $shift1,
-                'section_nama' => $sectionNama,
-                'department_nama' => $departmentNama,
-                'division_nama' => $divisionNama,
-            ];
+                $user = User::where('npk', $npk)->first();
+                $nama = $user ? $user->nama : 'Nama Tidak Ditemukan';
+
+                // Menambahkan data untuk tanggal dan npk
+                $resultData[] = [
+                    'npk' => $npk,
+                    'shift1' => $shift1,
+                    'date' => $date,
+                    'nama' => $nama,
+                ];
+            }
         }
+
+        // Menggunakan DataTables untuk menampilkan data dalam format yang sesuai
+        return DataTables::of($resultData)
+            ->addIndexColumn()
+            ->setRowId(function ($data) {
+                return $data['npk'] . '_' . $data['date']; // Menetapkan ID baris berdasarkan npk dan date
+            })
+            ->make(true);
     }
 
-    if (empty($exportData)) {
-        return response()->json(['message' => 'Tidak ada data yang ditemukan.'], 404);
-    }
 
-    return response()->json($exportData, 200);
-}
+
+
+    public function exportData(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $selectedNPKs = $request->input('selected_npk') ? explode(',', $request->input('selected_npk')) : [];
+
+        // Generate date range
+        $dates = collect();
+        $date = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
+
+        while ($date <= $endDate) {
+            $dates->push($date->format('Y-m-d'));
+            $date->addDay();
+        }
+
+        // Fetch shift data and group by npk and date
+        $shiftData = shift::select(['kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            ->whereIn('users.npk', $selectedNPKs)
+            ->whereBetween('kategorishift.date', [$startDate, $endDate])
+            ->get()
+            ->groupBy(function ($shift) {
+                return $shift->npk . '_' . $shift->date; // Group by npk and date
+            });
+
+        // Fetch users and their related data
+        $users = User::with(['section', 'department', 'division'])->whereIn('npk', $selectedNPKs)->get()->keyBy('npk');
+
+        // Prepare export data
+        $exportData = [];
+        foreach ($selectedNPKs as $npk) {
+            $user = $users->get($npk);
+            $nama = $user ? $user->nama : 'Nama Tidak Ditemukan';
+            $sectionNama = $user && $user->section ? $user->section->nama : 'Section Tidak Ditemukan';
+            $departmentNama = $user && $user->department ? $user->department->nama : 'Department Tidak Ditemukan';
+            $divisionNama = $user && $user->division ? $user->division->nama : 'Division Tidak Ditemukan';
+
+            foreach ($dates as $date) {
+                $key = $npk . '_' . $date;
+                $shift = $shiftData->get($key);
+                $shift1 = $shift ? $shift->first()->shift1 : '-'; // Get shift1 for the first entry in group
+
+                $exportData[] = [
+                    'npk' => $npk,
+                    'nama' => $nama,
+                    'tanggal' => $date,
+                    'shift' => $shift1,
+                    'section_nama' => $sectionNama,
+                    'department_nama' => $departmentNama,
+                    'division_nama' => $divisionNama,
+                ];
+            }
+        }
+
+        if (empty($exportData)) {
+            return response()->json(['message' => 'Tidak ada data yang ditemukan.'], 404);
+        }
+
+        return response()->json($exportData, 200);
+    }
 
     public function templateExport()
     {
@@ -269,7 +269,10 @@ class shiftController extends Controller
 
                 // Set shift1 sebagai 'OFF' di akhir pekan, kecuali hari Sabtu untuk section_id 22 dan 40
                 if ($startDate->isWeekend()) {
-                    if ($startDate->isSaturday() && in_array($sectionId, [22, 40])) {
+                    // Cek jika shift1 adalah 'Dinas Luar Stand By'
+                    if ($data['shift1'] == 'Dinas Luar Stand By') {
+                        $data['shift1'] = 'Dinas Luar Stand By Off';
+                    } elseif ($startDate->isSaturday() && in_array($sectionId, [22, 40])) {
                         // Biarkan shift tetap terisi untuk section_id 22 dan 40 pada hari Sabtu
                         $data['shift1'] = $request->input('shift1');
                     } else {
@@ -282,6 +285,7 @@ class shiftController extends Controller
             }
             $startDate->addDay();
         }
+
 
         return response()->json(['success' => 'Data berhasil disimpan']);
     }

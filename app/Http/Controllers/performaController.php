@@ -97,7 +97,7 @@ class performaController extends Controller
                 $shiftStartTime = $categorishift ? \Carbon\Carbon::createFromFormat('H:i', explode(' - ', $categorishift->shift1)[0]) : null;
                 $firstLoginTime = $firstLogin ? \Carbon\Carbon::parse($firstLogin->first_login_time) : null;
                 $item->selisih_waktu = $shiftStartTime && $firstLoginTime
-                    ? $shiftStartTime->diffInMinutes($firstLoginTime) * ($shiftStartTime < $firstLoginTime ? 1 : -1)
+                    ? $shiftStartTime->diffInMinutes($firstLoginTime) * ($shiftStartTime < $firstLoginTime ? -1 : 1)
                     : null;
 
                 // Fetch section, department, and division names
