@@ -14,7 +14,8 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('api:check-late-absen')->dailyAt('09:00'); 
+        // $schedule->command('api:check-late-absen')->dailyAt('09:00'); 
+        $schedule->command('api:check-late-absen')->everyMinute(); 
     }
 
     protected function commands()
