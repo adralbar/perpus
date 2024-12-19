@@ -165,20 +165,42 @@ class shiftController extends Controller
             $date->addDay();
         }
 
-        // Fetch shift data and group by npk and date
-        $shiftData = shift::select(['kategorishift.npk', 'kategorishift.shift1', 'kategorishift.date'])
+        // Ambil data shift dan gabungkan dengan data user
+        $data = shift::select([
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'users.nama',
+            'latest_shift.latest_created_at'
+        ])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
+            ->join(DB::raw('(
+                SELECT npk, date, MAX(created_at) as latest_created_at
+                FROM kategorishift
+                GROUP BY npk, date
+            ) AS latest_shift'), function ($join) {
+                $join->on('kategorishift.npk', '=', 'latest_shift.npk')
+                    ->on('kategorishift.date', '=', 'latest_shift.date')
+                    ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
+            })
             ->whereIn('users.npk', $selectedNPKs)
             ->whereBetween('kategorishift.date', [$startDate, $endDate])
-            ->get()
-            ->groupBy(function ($shift) {
-                return $shift->npk . '_' . $shift->date; // Group by npk and date
-            });
+            ->orderBy('kategorishift.date', 'DESC');
 
-        // Fetch users and their related data
+        // Ambil data shift yang ditemukan
+        $shiftData = $data->get();
+
+        // Kelompokkan data shift berdasarkan npk dan date
+        $shiftGrouped = $shiftData->groupBy(function ($shift) {
+            return $shift->npk . '_' . $shift->date;
+        });
+
+        // Ambil data user
+        $users = User::whereIn('npk', $selectedNPKs)->get()->keyBy('npk');
         $users = User::with(['section', 'department', 'division'])->whereIn('npk', $selectedNPKs)->get()->keyBy('npk');
 
-        // Prepare export data
+        // Persiapkan data untuk export
         $exportData = [];
         foreach ($selectedNPKs as $npk) {
             $user = $users->get($npk);
@@ -189,8 +211,8 @@ class shiftController extends Controller
 
             foreach ($dates as $date) {
                 $key = $npk . '_' . $date;
-                $shift = $shiftData->get($key);
-                $shift1 = $shift ? $shift->first()->shift1 : '-'; // Get shift1 for the first entry in group
+                $shift = $shiftGrouped->get($key);
+                $shift1 = $shift ? $shift->first()->shift1 : '-'; // Ambil shift1 dari data pertama dalam grup
 
                 $exportData[] = [
                     'npk' => $npk,
