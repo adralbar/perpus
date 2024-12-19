@@ -24,8 +24,9 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="npk_sistem">NPK Sistem</label>
-                                                <input type="npk_sistem" class="form-control" name="npk_sistem"
-                                                    id="npk_sistem" placeholder="npk_sistem">
+                                                <input type="text" class="form-control" name="npk_sistem" id="npk_sistem"
+                                                    value="{{ old('npk_sistem', $user->npk_sistem) }}"
+                                                    placeholder="npk_sistem">
                                             </div>
                                         </div>
                                         <div class="col-md-6">

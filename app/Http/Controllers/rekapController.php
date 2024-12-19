@@ -100,7 +100,6 @@ class rekapController extends Controller
                 ->first();
             $shift1 = $latestShift ? $latestShift->shift1 : null;
 
-            $status = 'No Shift';
             $role = $checkin->user ? $checkin->user->role : null;
 
             // Cek jika role adalah 5 atau 8, maka status langsung 'Tepat Waktu'
@@ -124,7 +123,7 @@ class rekapController extends Controller
                 'section_nama' => $section ? $section->nama : '',
                 'department_nama' => $department ? $department->nama : '',
                 'division_nama' => $division ? $division->nama : '',
-                'status' => $status
+                'status' => ($role && in_array($role->id, [4, 5, 8, 9])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
             ];
         }
 
@@ -168,7 +167,7 @@ class rekapController extends Controller
                             'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                             'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                             'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                            'status' => $status // Status untuk entri tanpa check-in
+                            'status' => ($role && in_array($role->id, [4, 5, 8, 9])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
                         ];
                     }
                 } else {
@@ -195,7 +194,7 @@ class rekapController extends Controller
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                         'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                         'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                        'status' => $status
+                        'status' => ($role && in_array($role->id, [4, 5, 8, 9])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
                     ];
                 }
             }
@@ -323,7 +322,7 @@ class rekapController extends Controller
                     'section_nama' => $noCheck->user && $noCheck->user->section ? $noCheck->user->section->nama : '',
                     'department_nama' => $noCheck->user && $noCheck->user->section && $noCheck->user->section->department ? $noCheck->user->section->department->nama : '',
                     'division_nama' => $noCheck->user && $noCheck->user->section && $noCheck->user->section->department && $noCheck->user->section->department->division ? $noCheck->user->section->department->division->nama : '',
-                    'status' => $status
+                    'status' =>  $status,
                 ];
             }
         }
@@ -605,7 +604,9 @@ class rekapController extends Controller
                     }
 
                     // Cari user berdasarkan npk_sistem
-                    $user = User::where('npk_sistem', $npk_sistem)->first();
+                    $user = User::where('npk_sistem', $npk_sistem)
+                        ->where('status', 1) // Pastikan hanya mengambil yang statusnya aktif
+                        ->first();
 
                     if ($user) {
                         // Simpan atau update ke dalam tabel yang sesuai dengan mengisi npk otomatis

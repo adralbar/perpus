@@ -143,7 +143,7 @@ class apiBroadcastController extends Controller
                     $query->where('tanggal_mulai', '<=', $tanggal)
                         ->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggal]);
                 })
-                ->whereIn('approved_by', [2, 3, 4, 5])
+                ->whereIn('approved_by', [3, 4, 5])
                 ->get();
 
             $kategoriCuti = $cutiModels->pluck('kategori')->first();
@@ -209,7 +209,7 @@ class apiBroadcastController extends Controller
                 }
                 if ($message) {
                     $data = [
-                        'destination' => $user->no_telp,
+                        'destination' => '6287737786374',
                         'message' => $message,
                     ];
                     $apiGateway = new apiGatewayController();
@@ -218,5 +218,4 @@ class apiBroadcastController extends Controller
             }
         }
     }
-
 }
