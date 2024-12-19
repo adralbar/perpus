@@ -347,7 +347,7 @@ class rekapController extends Controller
                             $query->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggalMulai]); // Gunakan COALESCE
                         });
                 })
-                ->whereIn('approved_by', [2, 3, 4, 5])
+                ->whereIn('approved_by', [2, 3, 4, 5, 8, 10])
                 ->get();
 
             $cutiCount = $cutiModels->count();
@@ -361,7 +361,7 @@ class rekapController extends Controller
                             $query->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggalMulai]); // Gunakan COALESCE
                         });
                 })
-                ->whereIn('approved_by', [2, 3, 4, 5])
+                ->whereIn('approved_by', [2, 3, 4, 5, 8, 10])
                 ->first();
 
             $penyimpanganCount = $penyimpangan ? 1 : 0;
