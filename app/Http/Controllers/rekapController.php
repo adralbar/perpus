@@ -123,7 +123,7 @@ class rekapController extends Controller
                 'section_nama' => $section ? $section->nama : '',
                 'department_nama' => $department ? $department->nama : '',
                 'division_nama' => $division ? $division->nama : '',
-                'status' => ($role && in_array($role->id, [4, 5, 8, 9])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+                'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
             ];
         }
 
@@ -167,7 +167,7 @@ class rekapController extends Controller
                             'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                             'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                             'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                            'status' => ($role && in_array($role->id, [4, 5, 8, 9])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+                            'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
                         ];
                     }
                 } else {
@@ -194,7 +194,7 @@ class rekapController extends Controller
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                         'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                         'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                        'status' => ($role && in_array($role->id, [4, 5, 8, 9])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+                        'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
                     ];
                 }
             }
