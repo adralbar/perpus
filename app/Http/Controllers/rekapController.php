@@ -113,7 +113,7 @@ class rekapController extends Controller
                 $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
             }
 
-            // Masukkan data check-in
+            //update
             $results[$key] = [
                 'nama' => $checkin->user ? $checkin->user->nama : '',
                 'npk' => $checkin->npk,

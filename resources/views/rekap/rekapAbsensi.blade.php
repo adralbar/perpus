@@ -656,7 +656,7 @@
                 return (isOutsideDateValid || isModalDateValid) &&
                     ($('#selected_npk').val().length > 0 || $('#selected_npk_modal').val().length > 0);
             }
-
+            //update
             $('#submitFilters').on('click', function() {
                 console.log('Submit Filters clicked'); // Debugging log
                 if (checkFilters()) {
