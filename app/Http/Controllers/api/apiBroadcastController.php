@@ -21,7 +21,7 @@ class apiBroadcastController extends Controller
     public function checkLateAndAbsent()
     {
         try {
-            $yesterday = Carbon::yesterday()->toDateString();
+            $yesterday = '2024-12-12';
 
             $checkinResults = $this->getCheckinData($yesterday) ?? collect([]);
             $checkoutResults = $this->getCheckoutData($yesterday) ?? collect([]);
@@ -209,7 +209,7 @@ class apiBroadcastController extends Controller
                 }
                 if ($message) {
                     $data = [
-                        'destination' => '6287737786374',
+                        'destination' => '000',
                         'message' => $message,
                     ];
                     $apiGateway = new apiGatewayController();

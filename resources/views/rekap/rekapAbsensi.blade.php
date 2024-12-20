@@ -660,6 +660,17 @@
             $('#submitFilters').on('click', function() {
                 console.log('Submit Filters clicked'); // Debugging log
                 if (checkFilters()) {
+                    Swal.fire({
+                        title: 'Loading...',
+                        text: 'Memproses data...',
+                        imageWidth: 100,
+                        imageHeight: 100,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
                     $.ajax({
                         url: "{{ route('rekap.getData') }}",
                         type: 'GET',
@@ -694,7 +705,7 @@
                             }
 
                             loadDataTable(filteredData); // Tampilkan data di DataTable
-
+                            Swal.close();
                             // Tutup modal jika ada
                             if ($('#filterModal').hasClass('show')) {
                                 $('#filterModal').modal('hide');
@@ -703,6 +714,8 @@
                         error: function(xhr, error, code) {
                             console.error("Error occurred while fetching data:", xhr
                                 .responseText);
+                            Swal.close();
+                            alert('Terjadi kesalahan saat mengambil data.');
                         }
                     });
                 } else {
@@ -717,6 +730,17 @@
             $('#submitFiltersModal').on('click', function() {
                 console.log('Submit Filters clicked'); // Debugging log
                 if (checkFilters()) {
+                    Swal.fire({
+                        title: 'Loading...',
+                        text: 'Memproses data...',
+                        imageWidth: 100,
+                        imageHeight: 100,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
                     $.ajax({
                         url: "{{ route('rekap.getData') }}",
                         type: 'GET',
@@ -735,8 +759,7 @@
 
                         },
                         success: function(response) {
-                            console.log("Response received:", response); // Debugging log
-                            // Simpan data yang diterima ke `filteredData` agar dapat diakses di luar fungsi
+                            console.log("Response received:", response);
                             filteredData = response.data;
 
                             // Filter berdasarkan status jika ada
@@ -767,7 +790,7 @@
 
 
                             loadDataTable(filteredData); // Tampilkan data di DataTable
-
+                            Swal.close();
                             // Tutup modal jika ada
                             if ($('#filterModal').hasClass('show')) {
                                 $('#filterModal').modal('hide');

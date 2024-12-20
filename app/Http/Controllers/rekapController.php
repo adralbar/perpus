@@ -51,6 +51,7 @@ class rekapController extends Controller
 
     public function getData(Request $request)
     {
+        set_time_limit(300);
         $today = date('Y-m-d');
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
