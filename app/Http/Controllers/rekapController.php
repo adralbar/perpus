@@ -49,6 +49,8 @@ class rekapController extends Controller
         return view('rekap.rekapAbsensi', compact('userData', 'masterShift'));
     }
 
+
+
     public function getData(Request $request)
     {
         set_time_limit(300);
@@ -86,6 +88,8 @@ class rekapController extends Controller
         $checkoutResults = $checkoutQuery->get();
         $results = [];
 
+
+
         foreach ($checkinResults as $checkin) {
             $key = "{$checkin->npk}-{$checkin->tanggal}";
 
@@ -113,13 +117,24 @@ class rekapController extends Controller
                 $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
             }
 
-            //update
+            // Menggunakan Carbon untuk memastikan tanggal checkout adalah 1 hari setelah tanggal checkin
+            $nextDay = Carbon::parse($checkin->tanggal)->addDay()->format('Y-m-d');
+
+            // Cari waktuco pada tanggal berikutnya (1 hari setelah tanggal checkin) antara pukul 00:00 dan 10:00
+            $nextDayCheckout = Absensico::where('npk', $checkin->npk)
+                ->whereDate('tanggal', $nextDay)  // Memastikan tanggalnya tepat 1 hari setelah tanggal checkin
+                ->whereBetween(DB::raw('HOUR(waktuco)'), [0, 10])
+                ->orderBy('tanggal', 'asc')
+                ->first();
+            $waktuco = $nextDayCheckout ? $nextDayCheckout->waktuco : null;
+
+            // Update hasil
             $results[$key] = [
                 'nama' => $checkin->user ? $checkin->user->nama : '',
                 'npk' => $checkin->npk,
                 'tanggal' => $checkin->tanggal,
                 'waktuci' => $checkin->waktuci,
-                'waktuco' => null, // Waktu checkout belum ada saat ini
+                'waktuco' => $waktuco,  // Update waktu checkout dengan hasil yang ditemukan
                 'shift1' => $shift1,
                 'section_nama' => $section ? $section->nama : '',
                 'department_nama' => $department ? $department->nama : '',
@@ -127,6 +142,7 @@ class rekapController extends Controller
                 'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
             ];
         }
+
 
         foreach ($checkoutResults as $checkout) {
             $key = "{$checkout->npk}-{$checkout->tanggal}";
@@ -139,7 +155,7 @@ class rekapController extends Controller
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             }
-            $latestShift = shift::where('npk', $checkout->npk)
+            $latestShift = Shift::where('npk', $checkout->npk)
                 ->where('date', $checkout->tanggal)
                 ->latest()
                 ->first();
@@ -168,7 +184,7 @@ class rekapController extends Controller
                             'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                             'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                             'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                            'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+                            'status' => $status,
                         ];
                     }
                 } else {
@@ -176,28 +192,19 @@ class rekapController extends Controller
                     $results[$key]['waktuco'] = $checkout->waktuco;
                 }
             } else {
-                // Jika tidak ada check-in, cari entri sebelumnya
-                $previousDay = date('Y-m-d', strtotime("{$checkout->tanggal} -1 day"));
-                $previousKey = "{$checkout->npk}-{$previousDay}";
-
-                if (isset($results[$previousKey]) && !$results[$previousKey]['waktuco']) {
-                    // Gabungkan jika ada check-out untuk hari sebelumnya dan tidak ada waktu check-out
-                    $results[$previousKey]['waktuco'] = $checkout->waktuco;
-                } else {
-                    // Jika tidak ada data sebelumnya, buat data baru
-                    $results[$key] = [
-                        'nama' => $checkout->user ? $checkout->user->nama : '',
-                        'npk' => $checkout->npk,
-                        'tanggal' => $checkout->tanggal,
-                        'waktuci' => null, // Tidak ada check-inF
-                        'waktuco' => $checkout->waktuco,
-                        'shift1' => $shift1,
-                        'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
-                        'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
-                        'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                        'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
-                    ];
-                }
+                // Jika tidak ada data check-in, tetap tambahkan data checkout dengan status "NO IN"
+                $results[$key] = [
+                    'nama' => $checkout->user ? $checkout->user->nama : '',
+                    'npk' => $checkout->npk,
+                    'tanggal' => $checkout->tanggal,
+                    'waktuci' => null, // Tidak ada check-in
+                    'waktuco' => $checkout->waktuco,
+                    'shift1' => $shift1,
+                    'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+                    'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+                    'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+                    'status' => $status,
+                ];
             }
         }
 
@@ -404,6 +411,420 @@ class rekapController extends Controller
             "data" => $data,
         ]);
     }
+    // public function getData(Request $request)
+    // {
+    //     set_time_limit(300);
+    //     $today = date('Y-m-d');
+    //     $startDate = $request->input('startDate');
+    //     $endDate = $request->input('endDate');
+
+
+    //     $checkinQuery = Absensici::with(['user', 'shift'])
+    //         ->select('npk', 'tanggal', DB::raw('MIN(waktuci) as waktuci'))
+    //         ->groupBy('npk', 'tanggal');
+
+    //     if (!empty($startDate) && !empty($endDate)) {
+    //         $checkinQuery->whereBetween('tanggal', [$startDate, $endDate]);
+    //     }
+    //     if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
+    //         $selectedNPK = $request->selectedNpk;
+    //         $checkinQuery->whereIn('npk', $selectedNPK);
+    //     }
+
+    //     $checkinResults = $checkinQuery->get();
+
+    //     $checkoutQuery = Absensico::with(['user', 'shift'])
+    //         ->select('npk', 'tanggal', DB::raw('MAX(waktuco) as waktuco'))
+    //         ->groupBy('npk', 'tanggal');
+
+    //     if (!empty($startDate) && !empty($endDate)) {
+    //         $checkoutQuery->whereBetween('tanggal', [$startDate, $endDate]);
+    //     }
+    //     if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
+    //         $selectedNPK = $request->selectedNpk;
+    //         $checkoutQuery->whereIn('npk', $selectedNPK);
+    //     }
+    //     $checkoutResults = $checkoutQuery->get();
+    //     $results = [];
+
+    //     foreach ($checkinResults as $checkin) {
+    //         $key = "{$checkin->npk}-{$checkin->tanggal}";
+
+    //         // Ambil informasi section, department, dan division
+    //         $section = $checkin->user ? $checkin->user->section : null;
+    //         $department = $section ? $section->department : null;
+    //         $division = $department ? $department->division : null;
+
+    //         // Ambil shift
+    //         $latestShift = shift::where('npk', $checkin->npk)
+    //             ->where('date', $checkin->tanggal)
+    //             ->latest()
+    //             ->first();
+    //         $shift1 = $latestShift ? $latestShift->shift1 : null;
+
+    //         $role = $checkin->user ? $checkin->user->role : null;
+
+    //         // Cek jika role adalah 5 atau 8, maka status langsung 'Tepat Waktu'
+    //         if ($role && in_array($role->id, [5, 8])) {
+    //             $status = 'Tepat Waktu';
+    //         } elseif ($latestShift) {
+    //             // Jika tidak, cek apakah terlambat atau tepat waktu berdasarkan shift
+    //             $shiftIn = explode(' - ', str_replace('.', ':', $shift1))[0];
+    //             $shiftInFormatted = date('H:i:s', strtotime($shiftIn));
+    //             $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
+    //         }
+
+    //         $results[$key] = [
+    //             'nama' => $checkin->user ? $checkin->user->nama : '',
+    //             'npk' => $checkin->npk,
+    //             'tanggal' => $checkin->tanggal,
+    //             'waktuci' => $checkin->waktuci,
+    //             'waktuco' => null, // Waktu checkout belum ada saat ini
+    //             'shift1' => $shift1,
+    //             'section_nama' => $section ? $section->nama : '',
+    //             'department_nama' => $department ? $department->nama : '',
+    //             'division_nama' => $division ? $division->nama : '',
+    //             'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+    //         ];
+    //     }
+    //     foreach ($checkoutResults as $checkout) {
+    //         $key = "{$checkout->npk}-{$checkout->tanggal}";
+    //         $role = $checkout->user ? $checkout->user->role : null;
+
+    //         // Tentukan status default
+    //         $status = 'NO IN';
+
+    //         // Jika user dengan role tertentu (misal 5 atau 8), berikan status "Tepat Waktu" secara default
+    //         if ($role && in_array($role->id, [5, 8])) {
+    //             $status = 'Tepat Waktu';
+    //         }
+
+    //         $latestShift = Shift::where('npk', $checkout->npk)
+    //             ->where('date', $checkout->tanggal)
+    //             ->latest()
+    //             ->first();
+    //         $shift1 = $latestShift ? $latestShift->shift1 : null;
+
+    //         $previousDay = date('Y-m-d', strtotime("{$checkout->tanggal} -1 day"));
+
+    //         $Day = date('Y-m-d', strtotime("{$checkout->tanggal} "));
+    //         $waktuCheckout = Carbon::parse($checkout->waktuci); // Pastikan waktuci adalah waktu yang valid
+
+    //         $previousCheckout = Absensico::where('npk', $checkout->npk)
+    //             ->where('tanggal', $Day)
+    //             ->where('waktuco', '<', $waktuCheckout->toTimeString()) // Menggunakan toTimeString() untuk format waktu
+    //             ->first();
+    //         // Pastikan ada check-in dan check-out pada tanggal yang sama
+    //         if ($checkout->waktuci && $previousCheckout) {
+    //             // Jika ada waktu checkout sebelumnya yang lebih kecil dari waktu check-in
+    //             $previousKey = "{$checkout->npk}-{$previousDay}";
+
+    //             // Gabungkan waktu checkout sebelumnya ke dalam hasil
+    //             if (isset($results[$previousKey])) {
+    //                 $results[$previousKey]['waktuco'] = $previousCheckout->waktuco;
+    //             } else {
+    //                 // Jika tidak ada entri di hari sebelumnya, buat entri baru untuk tanggal sebelumnya
+    //                 $results[$previousKey] = [
+    //                     'nama' => $checkout->user ? $checkout->user->nama : '',
+    //                     'npk' => $checkout->npk,
+    //                     'tanggal' => $previousDay,
+    //                     'waktuci' => null, // Tidak ada check-in
+    //                     'waktuco' => $previousCheckout->waktuco,
+    //                     'shift1' => $shift1,
+    //                     'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+    //                     'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+    //                     'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+    //                     'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+    //                 ];
+    //             }
+    //         }
+    //         // Pastikan ada check-in dan check-out pada tanggal yang sama
+    //         else if ($previousCheckout) {
+    //             // Jika ada waktu checkout sebelumnya yang lebih kecil dari waktu check-in
+    //             $previousKey = "{$checkout->npk}-{$previousDay}";
+
+    //             // Gabungkan waktu checkout sebelumnya ke dalam hasil
+    //             if (isset($results[$previousKey])) {
+    //                 $results[$previousKey]['waktuco'] = $previousCheckout->waktuco;
+    //             } else {
+    //                 // Jika tidak ada entri di hari sebelumnya, buat entri baru untuk tanggal sebelumnya
+    //                 $results[$previousKey] = [
+    //                     'nama' => $checkout->user ? $checkout->user->nama : '',
+    //                     'npk' => $checkout->npk,
+    //                     'tanggal' => $previousDay,
+    //                     'waktuci' => null, // Tidak ada check-in
+    //                     'waktuco' => $previousCheckout->waktuco,
+    //                     'shift1' => $shift1,
+    //                     'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+    //                     'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+    //                     'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+    //                     'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+    //                 ];
+    //             }
+    //         }
+
+
+
+    //         // Melanjutkan untuk mengupdate hasil untuk hari ini jika sudah ada check-in
+    //         if (isset($results[$key])) {
+    //             // Jika waktu check-in lebih besar dari waktu check-out, masukkan waktu checkout ke hari sebelumnya
+    //             if ($results[$key]['waktuci'] > $checkout->waktuco) {
+    //                 // Hari sebelumnya
+    //                 $previousDay = date('Y-m-d', strtotime("{$checkout->tanggal} -1 day"));
+    //                 $previousKey = "{$checkout->npk}-{$previousDay}";
+
+    //                 // Jika ada data untuk hari sebelumnya, masukkan waktu checkout
+    //                 if (isset($results[$previousKey])) {
+    //                     $results[$previousKey]['waktuco'] = $checkout->waktuco;
+    //                 } else {
+    //                     // Jika tidak ada entri di hari sebelumnya, buat entri baru untuk tanggal sebelumnya
+    //                     $results[$previousKey] = [
+    //                         'nama' => $checkout->user ? $checkout->user->nama : '',
+    //                         'npk' => $checkout->npk,
+    //                         'tanggal' => $previousDay,
+    //                         'waktuci' => null, // Tidak ada check-in
+    //                         'waktuco' => $checkout->waktuco,
+    //                         'shift1' => null,
+    //                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+    //                         'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+    //                         'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+    //                         'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+    //                     ];
+    //                 }
+    //             } else {
+    //                 // Update waktu check-out untuk hari ini
+    //                 $results[$key]['waktuco'] = $checkout->waktuco;
+    //             }
+    //         } else {
+    //             // Jika tidak ada check-in, cari entri sebelumnya
+    //             $previousDay = date('Y-m-d', strtotime("{$checkout->tanggal} -1 day"));
+    //             $previousKey = "{$checkout->npk}-{$previousDay}";
+
+    //             if (isset($results[$previousKey]) && !$results[$previousKey]['waktuco']) {
+    //                 // Gabungkan jika ada check-out untuk hari sebelumnya dan tidak ada waktu check-out
+    //                 $results[$previousKey]['waktuco'] = $checkout->waktuco;
+    //             } else {
+    //                 // Jika tidak ada data sebelumnya, buat data baru
+    //                 $results[$key] = [
+    //                     'nama' => $checkout->user ? $checkout->user->nama : '',
+    //                     'npk' => $checkout->npk,
+    //                     'tanggal' => $checkout->tanggal,
+    //                     'waktuci' => null, // Tidak ada check-inF
+    //                     'waktuco' => $checkout->waktuco,
+    //                     'shift1' => $shift1,
+    //                     'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+    //                     'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+    //                     'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+    //                     'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+
+    //     $noCheckData = shift::with(['user.section.department.division', 'user.role'])
+    //         ->leftJoin('absensici', function ($join) {
+    //             $join->on('absensici.npk', '=', 'kategorishift.npk')
+    //                 ->on('absensici.tanggal', '=', 'kategorishift.date');
+    //         })
+    //         ->leftJoin('absensico', function ($join) {
+    //             $join->on('absensico.npk', '=', 'kategorishift.npk')
+    //                 ->on('absensico.tanggal', '=', 'kategorishift.date');
+    //         })
+    //         ->select(
+    //             'kategorishift.npk',
+    //             'kategorishift.date as tanggal',
+    //             'kategorishift.shift1',
+    //             DB::raw('IFNULL(DATE_FORMAT(MIN(absensici.waktuci), "%H:%i"), "NO IN") as waktuci'),
+    //             DB::raw('IFNULL(DATE_FORMAT(MAX(absensico.waktuco), "%H:%i"), "NO OUT") as waktuco')
+    //         )
+    //         ->whereNull('absensici.waktuci')
+    //         ->whereNull('absensico.waktuco')
+    //         ->where('kategorishift.date', '<=', $today)
+    //         ->where('kategorishift.shift1', '!=', 'OFF');
+
+    //     // Tambahkan filter tanggal jika $startDate dan $endDate tidak kosong
+    //     if (!empty($startDate) && !empty($endDate)) {
+    //         $noCheckData->whereBetween('kategorishift.date', [$startDate, $endDate]);
+    //     }
+
+    //     // Tambahkan filter NPK jika terdapat NPK yang dipilih
+    //     if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
+    //         $selectedNPK = $request->selectedNpk;
+    //         $noCheckData->whereIn('kategorishift.npk', $selectedNPK);
+    //     }
+
+    //     $noCheckData = $noCheckData
+    //         ->groupBy('kategorishift.npk', 'kategorishift.date', 'kategorishift.shift1')
+    //         ->get();
+
+
+    //     $noCheckData = shift::with(['user.section.department.division', 'user.role'])
+    //         ->leftJoin('absensici', function ($join) {
+    //             $join->on('absensici.npk', '=', 'kategorishift.npk')
+    //                 ->on('absensici.tanggal', '=', 'kategorishift.date');
+    //         })
+    //         ->leftJoin('absensico', function ($join) {
+    //             $join->on('absensico.npk', '=', 'kategorishift.npk')
+    //                 ->on('absensico.tanggal', '=', 'kategorishift.date');
+    //         })
+    //         ->select(
+    //             'kategorishift.npk',
+    //             'kategorishift.date as tanggal',
+    //             'kategorishift.shift1',
+    //             DB::raw('IFNULL(DATE_FORMAT(MIN(absensici.waktuci), "%H:%i"), "NO IN") as waktuci'),
+    //             DB::raw('IFNULL(DATE_FORMAT(MAX(absensico.waktuco), "%H:%i"), "NO OUT") as waktuco')
+    //         )
+    //         ->whereNull('absensici.waktuci')
+    //         ->whereNull('absensico.waktuco')
+    //         ->where('kategorishift.date', '<=', $today)
+    //         ->where('kategorishift.shift1', '!=', 'OFF');
+
+    //     // Tambahkan filter tanggal jika $startDate dan $endDate tidak kosong
+    //     if (!empty($startDate) && !empty($endDate)) {
+    //         $noCheckData->whereBetween('kategorishift.date', [$startDate, $endDate]);
+    //     }
+
+    //     // Tambahkan filter NPK jika terdapat NPK yang dipilih
+    //     if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
+    //         $selectedNPK = $request->selectedNpk;
+    //         $noCheckData->whereIn('kategorishift.npk', $selectedNPK);
+    //     }
+
+    //     $noCheckData = $noCheckData
+    //         ->groupBy('kategorishift.npk', 'kategorishift.date', 'kategorishift.shift1')
+    //         ->get();
+
+    //     foreach ($noCheckData as $noCheck) {
+    //         $key = "{$noCheck->npk}-{$noCheck->tanggal}";
+    //         $role = $noCheck->user ? $noCheck->user->role : null;
+
+    //         // Ambil shift terakhir berdasarkan date atau kolom lain yang relevan
+    //         $latestShift = shift::where('npk', $noCheck->npk)
+    //             ->where('date', $noCheck->tanggal)
+    //             ->orderBy('date', 'desc')
+    //             ->latest('created_at') // Jika ada kolom updated_at, tambahkan latest berdasarkan kolom ini
+    //             ->first();
+    //         $shift1 = $latestShift ? $latestShift->shift1 : null;
+
+    //         // Dapatkan waktu saat ini
+    //         $currentTime = now();
+    //         $shiftStartTime = null;
+
+    //         // Tentukan waktu mulai shift jika formatnya valid
+    //         if ($shift1 && !in_array($shift1, ['Dinas Luar Stand By', 'OFF']) && strpos($shift1, ' - ') !== false) {
+    //             $shiftTimes = explode(' - ', $shift1);
+    //             if (count($shiftTimes) == 2 && preg_match('/^\d{2}:\d{2}$/', $shiftTimes[0])) {
+    //                 $shiftStartTime = Carbon::createFromFormat('H:i', $shiftTimes[0]);
+    //             } else {
+    //                 $shiftStartTime = null;
+    //                 Log::warning("Format shift tidak valid: " . $shift1);
+    //             }
+    //         }
+
+    //         // Tentukan status berdasarkan kondisi yang relevan
+    //         if ($role && in_array($role->id, [5, 8])) {
+    //             $status = 'Tepat Waktu';
+    //         } elseif (!isset($results[$key])) {
+    //             $status = ($shift1 === "Dinas Luar Stand By") ? "Dinas Luar Stand By" : "Mangkir";
+    //         } elseif ($shiftStartTime && $currentTime->gt($shiftStartTime) && $noCheck->waktuci === 'NO IN' && $noCheck->waktuco === 'NO OUT') {
+    //             $status = "Mangkir";
+    //         }
+
+    //         // Isi array results jika belum ada entri untuk key ini
+    //         if (!isset($results[$key])) {
+    //             $results[$key] = [
+    //                 'nama' => $noCheck->user ? $noCheck->user->nama : '',
+    //                 'npk' => $noCheck->npk,
+    //                 'tanggal' => $noCheck->tanggal,
+    //                 'waktuci' => 'NO IN',
+    //                 'waktuco' => 'NO OUT',
+    //                 'shift1' => $shift1,
+    //                 'role' => $role,
+    //                 'section_nama' => $noCheck->user && $noCheck->user->section ? $noCheck->user->section->nama : '',
+    //                 'department_nama' => $noCheck->user && $noCheck->user->section && $noCheck->user->section->department ? $noCheck->user->section->department->nama : '',
+    //                 'division_nama' => $noCheck->user && $noCheck->user->section && $noCheck->user->section->department && $noCheck->user->section->department->division ? $noCheck->user->section->department->division->nama : '',
+    //                 'status' =>  $status,
+    //             ];
+    //         }
+    //     }
+    //     $finalResults = collect(array_values($results))->sortBy('tanggal');
+    //     foreach ($finalResults as $key => $row) {
+    //         $npk = $row['npk'];
+    //         $tanggalMulai = $row['tanggal'] ?? null;
+
+    //         if (!$tanggalMulai) {
+    //             Log::error("Tanggal tidak ditemukan untuk NPK: $npk");
+    //             continue;
+    //         }
+
+    //         $user = User::where('npk', $npk)->first();
+    //         $npkSistem = $user->npk_sistem ?? 'tidak ditemukan';
+
+    //         // Cuti Model
+    //         $cutiModels = CutiModel::where('npk', $npk)
+    //             ->where(function ($query) use ($tanggalMulai) {
+    //                 $query->where('tanggal_mulai', '<=', $tanggalMulai)
+    //                     ->where(function ($query) use ($tanggalMulai) {
+    //                         $query->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggalMulai]); // Gunakan COALESCE
+    //                     });
+    //             })
+    //             ->whereIn('approved_by', [2, 3, 4, 5, 8, 10])
+    //             ->get();
+
+    //         $cutiCount = $cutiModels->count();
+    //         $kategoriCuti = $cutiModels->pluck('kategori')->first();
+
+    //         // Penyimpangan Model
+    //         $penyimpangan = Penyimpanganmodel::where('npk', $npk)
+    //             ->where(function ($query) use ($tanggalMulai) {
+    //                 $query->where('tanggal_mulai', '<=', $tanggalMulai)
+    //                     ->where(function ($query) use ($tanggalMulai) {
+    //                         $query->whereRaw('COALESCE(tanggal_selesai, tanggal_mulai) >= ?', [$tanggalMulai]); // Gunakan COALESCE
+    //                     });
+    //             })
+    //             ->whereIn('approved_by', [2, 3, 4, 5, 8, 10])
+    //             ->first();
+
+    //         $penyimpanganCount = $penyimpangan ? 1 : 0;
+    //         $kategoriPenyimpangan = $penyimpangan->kategori ?? null;
+
+    //         // Implementasi logika untuk status dan API Time
+    //         $apiTime = null;
+
+    //         // Menambahkan tombol Cuti untuk setiap tanggal dalam rentang cuti
+    //         if ($cutiCount > 0) {
+    //             foreach ($cutiModels as $cuti) {
+    //                 $apiTime .= ' <button class="btn btn-info view-cuti" data-npk="' . $npk . '" data-tanggal="' . $cuti->tanggal_mulai . '">Lihat Cuti</button>';
+    //             }
+    //         }
+
+    //         // Menambahkan tombol Penyimpangan jika ada
+    //         if ($penyimpanganCount > 0) {
+    //             $apiTime .= '<button class="btn btn-warning view-penyimpangan" data-npk="' . $npk . '" data-tanggal="' . $penyimpangan->tanggal_mulai . '">Lihat Penyimpangan</button>';
+    //         }
+
+    //         // Memperbarui data
+    //         $finalResults->put($key, array_merge($row, [
+    //             'has_penyimpangan' => $penyimpanganCount > 0,
+    //             'has_cuti' => $cutiCount > 0,
+    //             'api_time' => $apiTime,
+    //             'npk_sistem' => $npkSistem,
+    //             'waktuci' => $row['waktuci'] ?? 'NO IN',
+    //             'waktuco' => $row['waktuco'] ?? 'NO OUT',
+    //             'status' => !empty($kategoriCuti) ? $kategoriCuti : (!empty($kategoriPenyimpangan) ? $kategoriPenyimpangan : $row['status']),
+    //         ]));
+    //     }
+
+    //     $data = [];
+    //     foreach ($finalResults as $item) {
+    //         $data[] = $item;
+    //     }
+
+    //     return response()->json([
+    //         "data" => $data,
+    //     ]);
+    // }
     public function getKaryawan(Request $request)
     {
         $user = Auth::user();

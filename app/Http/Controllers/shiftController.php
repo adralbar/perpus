@@ -95,10 +95,10 @@ class shiftController extends Controller
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
             ->join(DB::raw('(
-        SELECT npk, date, MAX(created_at) as latest_created_at
-        FROM kategorishift
-        GROUP BY npk, date
-    ) AS latest_shift'), function ($join) {
+                SELECT npk, date, MAX(created_at) as latest_created_at
+                FROM kategorishift
+                GROUP BY npk, date
+            ) AS latest_shift'), function ($join) {
                 $join->on('kategorishift.npk', '=', 'latest_shift.npk')
                     ->on('kategorishift.date', '=', 'latest_shift.date')
                     ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
@@ -114,14 +114,12 @@ class shiftController extends Controller
         $shiftGrouped = $shiftData->groupBy(function ($shift) {
             return $shift->npk . '_' . $shift->date;
         });
-
         $resultData = [];
 
         foreach ($selectedNPKs as $npk) {
             foreach ($dates as $date) {
                 $key = $npk . '_' . $date;
                 $shift = $shiftGrouped->get($key);
-
                 $shift1 = $shift ? $shift->first()->shift1 : '-';
 
                 $user = User::where('npk', $npk)->first();
@@ -137,12 +135,9 @@ class shiftController extends Controller
             }
         }
 
-        // Menggunakan DataTables untuk menampilkan data dalam format yang sesuai
         return DataTables::of($resultData)
             ->addIndexColumn()
-            ->setRowId(function ($data) {
-                return $data['npk'] . '_' . $data['date']; // Menetapkan ID baris berdasarkan npk dan date
-            })
+
             ->make(true);
     }
 
