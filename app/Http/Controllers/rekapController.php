@@ -340,8 +340,7 @@ class rekapController extends Controller
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             } elseif (!isset($results[$key])) {
-                $status = ($shift1 === "OFF") ? "OFF" : (($shift1 === "Dinas Luar Stand By" || $shift1 === "Dinas Luar Stand By Off") ? "Dinas Luar Stand By" :
-                        "Mangkir");
+                $status = ($shift1 === "Dinas Luar Stand By") ? "Dinas Luar Stand By" : "Mangkir";
             } elseif ($shiftStartTime && $currentTime->gt($shiftStartTime) && $noCheck->waktuci === 'NO IN' && $noCheck->waktuco === 'NO OUT') {
                 $status = "Mangkir";
             }
