@@ -343,13 +343,18 @@ class rekapController extends Controller
             }
 
             // Tentukan status berdasarkan kondisi yang relevan
-            if ($role && in_array($role->id, [5, 8])) {
+            if ($shift1 === "OFF") {
+                $status = "OFF";
+            } else  if ($shift1 === "Dinas Luar Stand By Off") {
+                $status = "Dinas Luar Stand By";
+            } elseif ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             } elseif (!isset($results[$key])) {
                 $status = ($shift1 === "Dinas Luar Stand By") ? "Dinas Luar Stand By" : "Mangkir";
             } elseif ($shiftStartTime && $currentTime->gt($shiftStartTime) && $noCheck->waktuci === 'NO IN' && $noCheck->waktuco === 'NO OUT') {
                 $status = "Mangkir";
             }
+
 
             // Isi array results jika belum ada entri untuk key ini
             if (!isset($results[$key])) {
