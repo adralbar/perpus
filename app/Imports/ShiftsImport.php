@@ -83,12 +83,12 @@ class ShiftsImport implements ToCollection
                 if (empty($errors)) {
                     if ($startDate && $endDate && $sectionId !== null) {
                         while ($startDate->lte($endDate)) {
-                            if ($startDate->isWeekend()) {
+                            if ($startDate->isWeekend() && Auth::user()->role_id !== 1) {
                                 if ($data['shift1'] == 'Dinas Luar Stand By') {
                                     $data['shift1'] = 'Dinas Luar Stand By Off';
                                 } elseif ($startDate->isSaturday() && in_array($sectionId, [22, 40])) {
                                     $data['shift1'] = !empty($row[2]) ? $row[2] : '';
-                                } elseif ($startDate->isSunday()) {
+                                } elseif ($startDate->isSunday() && Auth::user()->role_id !== 1) {
                                     if ($data['shift1'] == 'Dinas Luar Stand By') {
                                         $data['shift1'] = 'Dinas Luar Stand By Off';
                                     }
