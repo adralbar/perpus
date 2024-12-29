@@ -121,11 +121,17 @@ class rekapController extends Controller
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
             } elseif ($latestShift) {
-                // Jika tidak, cek apakah terlambat atau tepat waktu berdasarkan shift
-                $shiftIn = explode(' - ', str_replace('.', ':', $shift1))[0];
-                $shiftInFormatted = date('H:i:s', strtotime($shiftIn));
-                $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
+                // Jika shift1 adalah OFF, maka status juga OFF
+                if (strtoupper($shift1) === 'OFF') {
+                    $status = 'OFF';
+                } else {
+                    // Jika tidak, cek apakah terlambat atau tepat waktu berdasarkan shift
+                    $shiftIn = explode(' - ', str_replace('.', ':', $shift1))[0];
+                    $shiftInFormatted = date('H:i:s', strtotime($shiftIn));
+                    $status = $checkin->waktuci > $shiftInFormatted ? 'Terlambat' : 'Tepat Waktu';
+                }
             }
+
 
             // Menggunakan Carbon untuk memastikan tanggal checkout adalah 1 hari setelah tanggal checkin
 
