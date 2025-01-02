@@ -109,12 +109,33 @@
                     </div>
                     <div class="modal-body">
                         <form id="filterForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3 mt-3">
+                                    <div class="mb-3">
+                                        <label for="departmentFilter"
+                                            class="form-label font-weight-bold">Departemen</label>
+                                        <select class="form-control" id="departmentFilter" name="department_id"
+                                            style="font-weight: 500;">
+                                            <option value="">Pilih Departement</option>
+                                            <!-- Options will be filled via AJAX -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3 mt-3">
+                                    <label for="sectionFilter" class="form-label font-weight-bold">Section</label>
+                                    <select class="form-control" id="sectionFilter" name="section_id"
+                                        style="font-weight: 500;">
+                                        <option value="">Pilih Section</option>
+                                        <!-- Options will be filled via AJAX -->
+                                    </select>
+                                </div>
+                            </div>
+
                             <label for="npk">NPK Api</label>
                             <select class="dualistbox" multiple="multiple" size="10" name="selected_npk[]"
                                 id="selected_npk" class="form-control">
                                 @foreach ($userData as $user)
-                                    <option value="{{ $user->npk }}">
-                                        {{ $user->nama }} ({{ $user->npk }})
+                                    <option value="{{ $user->npk }}">{{ $user->nama }} ({{ $user->npk }})
                                     </option>
                                 @endforeach
                             </select>
@@ -178,6 +199,7 @@
                     <div class="modal-body">
                         <form id="editShiftForm">
                             @csrf
+
                             <div class="form-group">
                                 <label for="shift1">Waktu Shift</label>
                                 <select class="form-control" id="shift1" name="shift1" required>
@@ -395,11 +417,6 @@
             });
 
 
-
-
-
-
-
             let shiftHistoryUrl;
             var $dualistbox = $('select[name="selected_npk[]"]').bootstrapDualListbox({
                 selectorMinimalHeight: 200,
@@ -411,20 +428,25 @@
 
             });
 
-            $(document).on('click', '#toggleStatus', function() {
-                var status = this.checked ? 0 : 1; // Status 0 atau 1
+            function updateDualListbox() {
+                if (!departmentId) return; // Jika departmentId tidak ada
+
                 var fetchUrl = "{{ route('get.karyawan') }}";
 
-                // AJAX untuk mendapatkan data
+                // AJAX untuk mendapatkan data karyawan berdasarkan departemen dan status
                 $.ajax({
                     url: fetchUrl,
                     method: 'GET',
                     data: {
                         status: status,
+                        department_id: departmentId,
+                        section_id: sectionId,
                     },
                     success: function(data) {
+                        // Kosongkan opsi yang ada di dual listbox
                         $dualistbox.empty();
 
+                        // Tambahkan opsi baru dari data
                         data.userData.forEach(function(user) {
                             $('<option>', {
                                 value: user.npk,
@@ -437,11 +459,9 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching data:', error);
-                    },
+                    }
                 });
-            });
-
-
+            }
 
             var demo1 = $('select[name="npk[]"]').bootstrapDualListbox({
                 selectorMinimalHeight: 200,
@@ -461,11 +481,116 @@
                 nonSelectedFilter: 'ion ([7-9]|[1][0-2])'
 
             });
+
+            function updateDualListbox() {
+                // Pastikan departmentId dan sectionId tersedia
+
+                var fetchUrl = "{{ route('get.karyawan') }}";
+
+                // AJAX untuk mendapatkan data karyawan berdasarkan departemen, seksi, dan status
+                $.ajax({
+                    url: fetchUrl,
+                    method: 'GET',
+                    data: {
+                        status: status,
+                        department_id: departmentId,
+                        section_id: sectionId,
+                    },
+                    success: function(data) {
+                        // Kosongkan opsi yang ada di dual listbox
+                        $dualistbox.empty();
+
+                        // Tambahkan opsi baru dari data
+                        data.userData.forEach(function(user) {
+                            $('<option>', {
+                                value: user.npk,
+                                text: `${user.nama} (${user.npk})`,
+                            }).appendTo($dualistbox);
+                        });
+
+                        // Refresh tampilan dual listbox
+                        $dualistbox.bootstrapDualListbox('refresh');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    }
+                });
+            }
+
+            $(document).on('click', '#toggleStatus', function() {
+                status = this.checked ? 0 : 1; // Update status saat toggle berubah
+                updateDualListbox(); // Memperbarui dual listbox
+            });
+
+            // Event untuk perubahan pada departmentFilter
+            $(document).on('change', '#departmentFilter', function() {
+                departmentId = $(this).val(); // Update departmentId saat departemen berubah
+                updateDualListbox(); // Memperbarui dual listbox
+            });
+
+            // Event untuk perubahan pada sectionFilter
+            $(document).on('change', '#sectionFilter', function() {
+                sectionId = $(this).val(); // Update sectionId saat seksi berubah
+                updateDualListbox(); // Memperbarui dual listbox
+            });
+
+
             $(document).ready(function() {
+                $(document).ready(function() {
+                    function loadDepartments() {
+                        $.ajax({
+                            url: '{{ route('get.department') }}', // Tetap menggunakan route yang sudah ada
+                            method: 'GET',
+                            success: function(response) {
+                                const departmentSelect = $('#departmentFilter');
+                                departmentSelect.empty(); // Kosongkan dropdown
+                                departmentSelect.append(
+                                    '<option value="">Pilih Departemen</option>'); // Opsi default
+
+                                // Isi dropdown dengan departemen yang diterima dari API
+                                response.departments.forEach(function(department) {
+                                    departmentSelect.append(`
+                        <option value="${department.id}">${department.nama}</option>
+                    `);
+                                });
+                            },
+                            error: function() {
+                                alert('Gagal memuat data departemen');
+                            }
+                        });
+                    }
+
+                    function loadSections() {
+                        $.ajax({
+                            url: '{{ route('get.department') }}', // Tetap menggunakan route yang sudah ada
+                            method: 'GET',
+                            success: function(response) {
+                                const sectionSelect = $('#sectionFilter');
+                                sectionSelect.empty(); // Kosongkan dropdown
+                                sectionSelect.append(
+                                    '<option value="">Pilih Section</option>'); // Opsi default
+
+                                // Isi dropdown dengan seksi yang diterima dari API
+                                response.sections.forEach(function(section) {
+                                    sectionSelect.append(`
+                        <option value="${section.id}">${section.nama}</option>
+                    `);
+                                });
+                            },
+                            error: function() {
+                                alert('Gagal memuat data seksi');
+                            }
+                        });
+                    }
+
+                    // Panggil fungsi untuk memuat data awal
+                    loadDepartments();
+                    loadSections();
+                });
                 var table = $('#myTable').DataTable({
                     processing: true,
                     serverSide: true,
-                    deferRender: true, 
+                    deferRender: true,
                     ajax: {
                         url: '{{ route('shift.data') }}',
                         data: function(d) {
@@ -635,7 +760,8 @@
                             // Click event for shift cell
                             shiftCell.addEventListener('click', function() {
                                 console.log("Clicked Shift Cell!");
-                                console.log("Shift:", shift, "Date:", date, "NPK:", details.npk);
+                                console.log("Shift:", shift, "Date:", date, "NPK:", details
+                                    .npk);
                                 $('#editShiftModal').modal('show');
                                 $('#editShiftModal #shift1').val(shift);
                                 $('#editShiftModal #date').val(date);
@@ -659,8 +785,10 @@
                                     success: function(response) {
                                         $('#historyBody').empty();
                                         if (response.data.length > 0) {
-                                            response.data.forEach(function(shift) {
-                                                $('#historyBody').append(`
+                                            response.data.forEach(function(
+                                                shift) {
+                                                $('#historyBody')
+                                                    .append(`
                                         <tr>
                                             <td>${shift.npk}</td>
                                             <td>${shift.shift1}</td>
@@ -675,7 +803,9 @@
                                         }
                                     },
                                     error: function() {
-                                        alert('Gagal mengambil data riwayat shift.');
+                                        alert(
+                                            'Gagal mengambil data riwayat shift.'
+                                        );
                                     }
                                 });
                             });
@@ -721,7 +851,8 @@
                                 });
                             } else {
                                 $('#historyBody').append(
-                                    '<tr><td colspan="3">Tidak ada data shift</td></tr>');
+                                    '<tr><td colspan="3">Tidak ada data shift</td></tr>'
+                                );
                             }
                         },
                         error: function() {
@@ -753,7 +884,8 @@
                                 alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
                             } else {
                                 console.error('Error:', xhr.responseText);
-                                alert('Terjadi kesalahan: ' + xhr.responseJSON.message ||
+                                alert('Terjadi kesalahan: ' + xhr.responseJSON
+                                    .message ||
                                     'Silakan coba lagi.');
                             }
                         }
@@ -787,7 +919,8 @@
                                 alert('Terjadi kesalahan: ' + xhr.responseJSON.error);
                             } else {
                                 console.error('Error:', xhr.responseText);
-                                alert('Terjadi kesalahan: ' + xhr.responseJSON.message ||
+                                alert('Terjadi kesalahan: ' + xhr.responseJSON
+                                    .message ||
                                     'Silakan coba lagi.');
                             }
                         }
@@ -818,7 +951,7 @@
                 }
             });
 
-          
+
             $('#exportShift').on('click', async function() {
                 console.log('Button clicked');
 

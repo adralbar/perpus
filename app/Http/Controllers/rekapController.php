@@ -362,8 +362,8 @@ class rekapController extends Controller
                     'nama' => $noCheck->user ? $noCheck->user->nama : '',
                     'npk' => $noCheck->npk,
                     'tanggal' => $noCheck->tanggal,
-                    'waktuci' => 'NO IN',
-                    'waktuco' => 'NO OUT',
+                    'waktuci' => ($shift1 === "OFF" || $shift1 === "Dinas Luar Stand By Off") ? '----' : 'NO IN',
+                    'waktuco' => ($shift1 === "OFF" || $shift1 === "Dinas Luar Stand By Off") ? '----' : 'NO OUT',
                     'shift1' => $shift1,
                     'role' => $role,
                     'section_nama' => $noCheck->user && $noCheck->user->section ? $noCheck->user->section->nama : '',
@@ -1891,12 +1891,22 @@ class rekapController extends Controller
         $sectionId = $user->section_id;
         $departmentId = $user->department_id;
 
+        $departmentFilter = $request->query('department_id');
+        $sectionFilter = $request->query('section_id');
+
         $query = User::select('nama', 'npk')->where('status', $status);
 
         if ($roleId == 2) {
             $query->where('section_id', $sectionId);
         } else if ($roleId == 9) {
             $query->where('department_id', $departmentId);
+        }
+
+        if ($departmentFilter) {
+            $query->where('department_id', $departmentFilter);
+        }
+        if ($sectionFilter) {
+            $query->where('section_id', $sectionFilter);
         }
 
         $userData = $query->get();
@@ -1906,7 +1916,17 @@ class rekapController extends Controller
         ]);
     }
 
+    public function getDepartments()
+    {
+        // Mengambil semua departemen dan memformat data menjadi ID dan nama
+        $departments = DepartmentModel::all(['id', 'nama']); // Ambil hanya id dan nama
+        $sections = SectionModel::all(['id', 'nama']); // Ambil hanya id dan nama
 
+        return response()->json([
+            'departments' => $departments,
+            'sections' => $sections
+        ]);
+    }
 
     public function getPenyimpangan(Request $request)
     {

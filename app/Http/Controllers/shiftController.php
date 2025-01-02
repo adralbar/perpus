@@ -61,7 +61,7 @@ class shiftController extends Controller
             $query->where('department_id', $departmentId);
         }
 
-        $userData = $query->get();
+
         return view('shift.shift', compact('userData', 'masterShift'));
     }
 

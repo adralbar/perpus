@@ -91,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/export-data', [shiftController::class, 'exportData'])->name('exportData');
         Route::get('/exporttemplate', [shiftController::class, 'templateExport'])->name('exportTemplate');
         Route::get('/getKaryawan', [rekapController::class, 'getKaryawan'])->name('get.karyawan');
+        Route::get('/getDepartments', [rekapController::class, 'getDepartments'])->name('get.department');
 
 
         //route data karyawan
@@ -131,4 +132,3 @@ Route::post('/registerperformaapi123', [registController::class, 'register'])->n
 //     return response()->json(['csrfToken' => csrf_token()]);
 // });
 Route::post('/logout', [loginController::class, 'logout'])->name('logout');
-
