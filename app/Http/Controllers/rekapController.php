@@ -150,6 +150,95 @@ class rekapController extends Controller
             ];
         }
 
+
+        // foreach ($checkoutResults as $checkout) {
+        //     $key = "{$checkout->npk}-{$checkout->tanggal}";
+        //     $role = $checkout->user ? $checkout->user->role : null;
+        //     // Tentukan status default
+        //     $status = 'NO IN';
+
+        //     // Jika user dengan role tertentu (misal 5 atau 8), berikan status "Tepat Waktu" secara default
+        //     if ($role && in_array($role->id, [5, 8])) {
+        //         $status = 'Tepat Waktu';
+        //     }
+
+        //     $latestShift = Shift::where('npk', $checkout->npk)
+        //         ->where('date', $checkout->tanggal)
+        //         ->latest()
+        //         ->first();
+        //     $shift1 = $latestShift ? $latestShift->shift1 : null;
+
+        //     // Cek apakah waktu checkout berada di antara 00:00:00 - 10:00:00
+
+        //     // Periksa jika ada tanggal minus satu hari untuk waktu checkout
+        //     foreach ($checkoutQueryrange as $checkoutRange) {
+        //         $tanggalMinusOneDay = date('Y-m-d', strtotime($checkoutRange->tanggal . ' -1 day'));
+        //         if (isset($results["{$checkoutRange->npk}-{$tanggalMinusOneDay}"])) {
+        //             if ($checkoutRange->npk == $checkout->npk) {
+        //                 $results["{$checkoutRange->npk}-{$tanggalMinusOneDay}"]['waktuco'] = $checkoutRange->waktuco;
+        //             }
+        //         }
+        //     }
+
+        //     if (isset($results[$key])) {
+        //         // Pastikan waktuco tidak null dan menggantikan yang lama
+        //         if ($checkout->waktuco && $results[$key]['waktuco'] != $checkout->waktuco) {
+        //             $results[$key]['waktuco'] = $checkout->waktuco;
+        //         }
+        //     } else {
+        //         if ($checkout->waktuco >= '00:00:00' && $checkout->waktuco <= '10:00:00') {
+        //             // dd($checkin);
+        //             $tanggalMinusOneDay = date('Y-m-d', strtotime($checkout->tanggal . ' -1 day'));
+        //             $waktuci = null;
+        //             if (isset($checkin->tanggal) && $checkin->tanggal != $tanggalMinusOneDay) {
+        //                 $waktuci = null;
+        //             } else {
+        //                 $waktuci = isset($checkin->tanggal) ? $checkin->waktuci : null;
+        //             }
+        //             $results["{$checkout->npk}-{$tanggalMinusOneDay}"] = [
+        //                 'nama' => $checkout->user ? $checkout->user->nama : '',
+        //                 'npk' => $checkout->npk,
+        //                 'tanggal' => $tanggalMinusOneDay,
+        //                 'waktuci' => $waktuci, // Tidak ada check-in
+        //                 'waktuco' => $checkout->waktuco,
+        //                 'shift1' => $shift1,
+        //                 'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+        //                 'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+        //                 'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+        //                 'status' => $status,
+        //             ];
+        //             if (!isset($results[$key])) {
+        //                 $results["{$checkout->npk}-{$checkout->tanggal}"] = [
+        //                     'nama' => $checkout->user ? $checkout->user->nama : '',
+        //                     'npk' => $checkout->npk,
+        //                     'tanggal' => $checkout->tanggal,
+        //                     'waktuci' => null, // Tidak ada check-in
+        //                     'waktuco' => null,
+        //                     'shift1' => $shift1,
+        //                     'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+        //                     'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+        //                     'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+        //                     'status' => $status,
+        //                 ];
+        //             }
+
+        //             // $results["{$checkout->npk}-{$tanggalMinusOneDay}"]['waktuco'] = $checkout->waktuco;
+        //         } else { // Jika tidak ada data check-in, tetap tambahkan data checkout dengan status "NO IN"
+        //             $results[$key] = [
+        //                 'nama' => $checkout->user ? $checkout->user->nama : '',
+        //                 'npk' => $checkout->npk,
+        //                 'tanggal' => $checkout->tanggal,
+        //                 'waktuci' => null, // Tidak ada check-in
+        //                 'waktuco' => $checkout->waktuco,
+        //                 'shift1' => $shift1,
+        //                 'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+        //                 'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+        //                 'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+        //                 'status' => $status,
+        //             ];
+        //         }
+        //     }
+        // }
         foreach ($checkoutResults as $checkout) {
             $key = "{$checkout->npk}-{$checkout->tanggal}";
             $role = $checkout->user ? $checkout->user->role : null;
@@ -167,7 +256,11 @@ class rekapController extends Controller
                 ->first();
             $shift1 = $latestShift ? $latestShift->shift1 : null;
 
-            // Cek apakah waktu checkout berada di antara 00:00:00 - 10:00:00
+            $latestprevShift = Shift::where('npk', $checkout->npk)
+                ->where('date', Carbon::parse($checkout->tanggal)->subDay()->toDateString()) // Mengurangi 1 hari dengan Carbon
+                ->latest()
+                ->first();
+            $shiftprevious = $latestShift ? $latestprevShift->shift1 : null;
 
             // Periksa jika ada tanggal minus satu hari untuk waktu checkout
             foreach ($checkoutQueryrange as $checkoutRange) {
@@ -182,7 +275,7 @@ class rekapController extends Controller
             if (isset($results[$key])) {
                 // Pastikan waktuco tidak null dan menggantikan yang lama
                 if ($checkout->waktuco && $results[$key]['waktuco'] != $checkout->waktuco) {
-                    $results[$key]['waktuco'] = $checkout->waktuco;
+                    $results[$key]['waktuco'] = ($checkout->waktuco >= '00:00:00' && $checkout->waktuco <= '10:00:00') ? null : $checkout->waktuco;
                 }
             } else {
                 if ($checkout->waktuco >= '00:00:00' && $checkout->waktuco <= '10:00:00') {
@@ -192,6 +285,10 @@ class rekapController extends Controller
                     if (isset($checkin->tanggal) && $checkin->tanggal != $tanggalMinusOneDay) {
                         $waktuci = null;
                     } else {
+                        $checkinStatus = isset($checkin)
+                            ? (isset($results["{$checkin->npk}-{$checkin->tanggal}"]) ? $results["{$checkin->npk}-{$checkin->tanggal}"]['status'] : $status)
+                            : $status;
+
                         $waktuci = isset($checkin->tanggal) ? $checkin->waktuci : null;
                     }
                     $results["{$checkout->npk}-{$tanggalMinusOneDay}"] = [
@@ -200,11 +297,12 @@ class rekapController extends Controller
                         'tanggal' => $tanggalMinusOneDay,
                         'waktuci' => $waktuci, // Tidak ada check-in
                         'waktuco' => $checkout->waktuco,
-                        'shift1' => $shift1,
+                        'shift1' => $shiftprevious,
                         'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                         'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                         'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                        'status' => $status,
+                        'status' => $checkinStatus ?? $status,
+
                     ];
                     if (!isset($results[$key])) {
                         $results["{$checkout->npk}-{$checkout->tanggal}"] = [
@@ -217,7 +315,7 @@ class rekapController extends Controller
                             'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
                             'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
                             'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                            'status' => $status,
+                            'status' => 'Mangkir',
                         ];
                     }
 
@@ -238,7 +336,6 @@ class rekapController extends Controller
                 }
             }
         }
-
 
 
         $noCheckData = shift::with(['user.section.department.division', 'user.role'])
@@ -435,8 +532,8 @@ class rekapController extends Controller
                 'has_cuti' => $cutiCount > 0,
                 'api_time' => $apiTime,
                 'npk_sistem' => $npkSistem,
-                'waktuci' => $row['waktuci'] ?? 'NO IN',
-                'waktuco' => $row['waktuco'] ?? 'NO OUT',
+                'waktuci' => ($row['shift1'] === 'OFF') ? ($row['waktuci'] ?? '----') : ($row['waktuci'] ?? 'NO IN'),
+                'waktuco' => ($row['shift1'] === 'OFF') ? ($row['waktuco'] ?? '----') : ($row['waktuco'] ?? 'NO OUT'),
                 'status' => !empty($kategoriCuti) ? $kategoriCuti : (!empty($kategoriPenyimpangan) ? $kategoriPenyimpangan : $row['status']),
             ]));
         }
