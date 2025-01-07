@@ -79,133 +79,133 @@ class dashboardController extends Controller
     }
 
 
-    public function getChartData(Request $request)
-    {
-        set_time_limit(0);
+    // public function getChartData(Request $request)
+    // {
+    //     set_time_limit(0);
 
-        $year = $request->query('year', date('Y'));
+    //     $year = $request->query('year', date('Y'));
 
-        $years = DB::table('absensici')
-            ->select(DB::raw('YEAR(tanggal) as year'))
-            ->distinct()
-            ->pluck('year');
+    //     $years = DB::table('absensici')
+    //         ->select(DB::raw('YEAR(tanggal) as year'))
+    //         ->distinct()
+    //         ->pluck('year');
 
-        $subqueryCheckIn = DB::table('absensici as a')
-            ->select(
-                'a.npk',
-                'a.tanggal',
-                DB::raw('MIN(a.waktuci) as awal_waktuci')
-            )
-            ->groupBy('a.npk', 'a.tanggal');
+    //     $subqueryCheckIn = DB::table('absensici as a')
+    //         ->select(
+    //             'a.npk',
+    //             'a.tanggal',
+    //             DB::raw('MIN(a.waktuci) as awal_waktuci')
+    //         )
+    //         ->groupBy('a.npk', 'a.tanggal');
 
-        $subqueryShift = DB::table('kategorishift as ks')
-            ->select(
-                'ks.npk',
-                'ks.date',
-                'ks.shift1'
-            )
-            ->whereIn('ks.id', function ($query) {
-                $query->select(DB::raw('MAX(id)'))
-                    ->from('kategorishift as inner_ks')
-                    ->whereColumn('inner_ks.npk', 'ks.npk')
-                    ->whereColumn('inner_ks.date', 'ks.date');
-            });
+    //     $subqueryShift = DB::table('kategorishift as ks')
+    //         ->select(
+    //             'ks.npk',
+    //             'ks.date',
+    //             'ks.shift1'
+    //         )
+    //         ->whereIn('ks.id', function ($query) {
+    //             $query->select(DB::raw('MAX(id)'))
+    //                 ->from('kategorishift as inner_ks')
+    //                 ->whereColumn('inner_ks.npk', 'ks.npk')
+    //                 ->whereColumn('inner_ks.date', 'ks.date');
+    //         });
 
-        $data = DB::table('absensici')
-            ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
-                $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
-                    ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
-                    ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
-            })
-            ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
-                $join->on('absensici.npk', '=', 'subqueryShift.npk')
-                    ->on('absensici.tanggal', '=', 'subqueryShift.date');
-            })
-            ->select(
-                DB::raw('DATE_FORMAT(absensici.tanggal, "%b") AS month'),
-                DB::raw('
-                        (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users)) AS total_keterlambatan
-                    ')
-            )
-            ->whereYear('absensici.tanggal', $year)
-            ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
-            ->whereRaw('DAYOFWEEK(absensici.tanggal) NOT IN (1, 7)') // Filter untuk menghindari Sabtu dan Minggu
-            ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
-            ->get();
+    //     $data = DB::table('absensici')
+    //         ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
+    //             $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
+    //                 ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
+    //                 ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
+    //         })
+    //         ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
+    //             $join->on('absensici.npk', '=', 'subqueryShift.npk')
+    //                 ->on('absensici.tanggal', '=', 'subqueryShift.date');
+    //         })
+    //         ->select(
+    //             DB::raw('DATE_FORMAT(absensici.tanggal, "%b") AS month'),
+    //             DB::raw('
+    //                     (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users)) AS total_keterlambatan
+    //                 ')
+    //         )
+    //         ->whereYear('absensici.tanggal', $year)
+    //         ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
+    //         ->whereRaw('DAYOFWEEK(absensici.tanggal) NOT IN (1, 7)') // Filter untuk menghindari Sabtu dan Minggu
+    //         ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%b")'), DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
+    //         ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%m")'))
+    //         ->get();
 
-        $labels = $data->pluck('month');
-        $totals = $data->pluck('total_keterlambatan');
+    //     $labels = $data->pluck('month');
+    //     $totals = $data->pluck('total_keterlambatan');
 
-        return response()->json([
-            'years' => $years,
-            'year' => $year,
-            'labels' => $labels,
-            'totals' => $totals,
-        ]);
-    }
+    //     return response()->json([
+    //         'years' => $years,
+    //         'year' => $year,
+    //         'labels' => $labels,
+    //         'totals' => $totals,
+    //     ]);
+    // }
 
 
-    public function getDataPerTanggal(Request $request)
-    {
-        $month = $request->query('month');
-        $year = $request->query('year', date('Y'));
+    // public function getDataPerTanggal(Request $request)
+    // {
+    //     $month = $request->query('month');
+    //     $year = $request->query('year', date('Y'));
 
-        $subqueryCheckIn = DB::table('absensici as a')
-            ->select(
-                'a.npk',
-                'a.tanggal',
-                DB::raw('MIN(a.waktuci) as awal_waktuci')
-            )
-            ->groupBy('a.npk', 'a.tanggal');
+    //     $subqueryCheckIn = DB::table('absensici as a')
+    //         ->select(
+    //             'a.npk',
+    //             'a.tanggal',
+    //             DB::raw('MIN(a.waktuci) as awal_waktuci')
+    //         )
+    //         ->groupBy('a.npk', 'a.tanggal');
 
-        $subqueryShift = DB::table('kategorishift as ks')
-            ->select(
-                'ks.npk',
-                'ks.date',
-                'ks.shift1'
-            )
-            ->whereIn('ks.id', function ($query) {
-                $query->select(DB::raw('MAX(id)'))
-                    ->from('kategorishift as inner_ks')
-                    ->whereColumn('inner_ks.npk', 'ks.npk')
-                    ->whereColumn('inner_ks.date', 'ks.date');
-            });
+    //     $subqueryShift = DB::table('kategorishift as ks')
+    //         ->select(
+    //             'ks.npk',
+    //             'ks.date',
+    //             'ks.shift1'
+    //         )
+    //         ->whereIn('ks.id', function ($query) {
+    //             $query->select(DB::raw('MAX(id)'))
+    //                 ->from('kategorishift as inner_ks')
+    //                 ->whereColumn('inner_ks.npk', 'ks.npk')
+    //                 ->whereColumn('inner_ks.date', 'ks.date');
+    //         });
 
-        $data = DB::table('absensici')
-            ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
-                $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
-                    ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
-                    ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
-            })
-            ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
-                $join->on('absensici.npk', '=', 'subqueryShift.npk')
-                    ->on('absensici.tanggal', '=', 'subqueryShift.date');
-            })
-            ->select(
-                DB::raw('DATE_FORMAT(absensici.tanggal, "%d") AS day'),
-                DB::raw('
-                    (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users)) AS total_keterlambatan
-                ')
-            )
-            ->whereYear('absensici.tanggal', $year)
-            ->whereMonth('absensici.tanggal', $month)
-            ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
-            ->whereRaw('DAYOFWEEK(absensici.tanggal) NOT IN (1, 7)') // Filter untuk menghindari Sabtu dan Minggu
-            ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%d")'))
-            ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%d")'))
-            ->get();
+    //     $data = DB::table('absensici')
+    //         ->joinSub($subqueryCheckIn, 'subqueryCheckIn', function ($join) {
+    //             $join->on('absensici.npk', '=', 'subqueryCheckIn.npk')
+    //                 ->on('absensici.tanggal', '=', 'subqueryCheckIn.tanggal')
+    //                 ->on('absensici.waktuci', '=', 'subqueryCheckIn.awal_waktuci');
+    //         })
+    //         ->joinSub($subqueryShift, 'subqueryShift', function ($join) {
+    //             $join->on('absensici.npk', '=', 'subqueryShift.npk')
+    //                 ->on('absensici.tanggal', '=', 'subqueryShift.date');
+    //         })
+    //         ->select(
+    //             DB::raw('DATE_FORMAT(absensici.tanggal, "%d") AS day'),
+    //             DB::raw('
+    //                 (COUNT(DISTINCT absensici.npk) * 100 / (SELECT COUNT(*) FROM users)) AS total_keterlambatan
+    //             ')
+    //         )
+    //         ->whereYear('absensici.tanggal', $year)
+    //         ->whereMonth('absensici.tanggal', $month)
+    //         ->whereRaw('TIME(subqueryCheckIn.awal_waktuci) > TIME(REPLACE(SUBSTRING_INDEX(subqueryShift.shift1, " - ", 1), ".", ":"))')
+    //         ->whereRaw('DAYOFWEEK(absensici.tanggal) NOT IN (1, 7)') // Filter untuk menghindari Sabtu dan Minggu
+    //         ->groupBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%d")'))
+    //         ->orderBy(DB::raw('DATE_FORMAT(absensici.tanggal, "%d")'))
+    //         ->get();
 
-        $days = $data->pluck('day');
-        $totals = $data->pluck('total_keterlambatan');
+    //     $days = $data->pluck('day');
+    //     $totals = $data->pluck('total_keterlambatan');
 
-        return response()->json([
-            'month' => $month,
-            'year' => $year,
-            'days' => $days,
-            'totals' => $totals
-        ]);
-    }
+    //     return response()->json([
+    //         'month' => $month,
+    //         'year' => $year,
+    //         'days' => $days,
+    //         'totals' => $totals
+    //     ]);
+    // }
 
 
 
