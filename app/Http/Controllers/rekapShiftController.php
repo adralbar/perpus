@@ -31,6 +31,9 @@ class rekapShiftController extends Controller
 
     public function getData(Request $request)
     {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
         $data = shift::select([
             'kategorishift.npk',
             'kategorishift.shift1',
@@ -50,6 +53,7 @@ class rekapShiftController extends Controller
             })
             ->distinct()
             ->orderBy('kategorishift.date', 'DESC')
+            ->whereBetween('kategorishift.date', [$startDate, $endDate])
             ->get();
 
         // Mengelompokkan data berdasarkan date dan shift1

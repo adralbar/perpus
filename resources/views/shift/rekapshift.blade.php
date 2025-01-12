@@ -14,6 +14,21 @@
         <div class="p-3">
             <p class="pl-3 pb-3 font-weight-bold h3">Shift Karyawan</p>
             <div class="p-3 ml-3 text-black card">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="startDate" class="form-label">Tanggal Mulai</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="endDate" class="form-label">Tanggal Selesai</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
+                </div>
+                <div class="text-center mb-3">
+                    <button id="loadDataBtn" type="button" class="btn btn-primary btn-sm" style="border-radius: 5px;">
+                        Tampilkan Data
+                    </button>
+                </div>
                 <div class="mb-3">
                     <div class="modal-body">
                         <div class="table-responsive">
@@ -43,12 +58,25 @@
     <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
 
     <script>
+        window.onload = function() {
+            Swal.fire({
+                title: 'Perhatian!',
+                text: 'Silahkan isi Filter tanggal terlebih dahulu!',
+                icon: 'warning',
+                confirmButtonText: 'Ok'
+            });
+        };
         $(document).ready(function() {
-            $('#myTable').DataTable({
+            var table = $('#myTable').DataTable({
                 processing: true,
                 serverSide: false,
                 ajax: {
                     url: "{{ route('rekapshiftdata') }}",
+                    data: function(d) {
+                        // Ambil nilai startDate dan endDate dari input
+                        d.startDate = $('#startDate').val();
+                        d.endDate = $('#endDate').val();
+                    },
                     dataSrc: '', // Data is already in array format
 
                 },
@@ -77,6 +105,10 @@
                 rowCallback: function(row, data, index) {
                     $('td:eq(0)', row).html(index + 1);
                 }
+            });
+            $('#loadDataBtn').click(function() {
+                // Memuat data ulang setelah memilih tanggal
+                table.ajax.reload();
             });
         });
     </script>
