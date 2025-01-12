@@ -61,11 +61,31 @@
                     </div>
                     <div class="modal-body">
                         <form id="shiftForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3 mt-3">
+                                    <div class="mb-3">
+                                        <label for="departmentFilter" class="form-label font-weight-bold">Departemen</label>
+                                        <select class="form-control" id="departmentFilter" name="department_id"
+                                            style="font-weight: 500;">
+                                            <option value="">Pilih Departement</option>
+                                            <!-- Options will be filled via AJAX -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3 mt-3">
+                                    <label for="sectionFilter" class="form-label font-weight-bold">Section</label>
+                                    <select class="form-control" id="sectionFilter" name="section_id"
+                                        style="font-weight: 500;">
+                                        <option value="">Pilih Section</option>
+                                        <!-- Options will be filled via AJAX -->
+                                    </select>
+                                </div>
+                            </div>
                             @csrf
                             <input type="hidden" id="shiftId" name="id">
                             <div class="form-group">
                                 <label for="npk">NPK Api</label>
-                                <select multiple="multiple" size="10" name="npk[]" id="npk"
+                                <select multiple="multiple" size="10" name="selected_npk[]" id="npk"
                                     class="form-control">
                                     @foreach ($userData as $user)
                                         <option value="{{ $user->npk }}">
@@ -112,9 +132,9 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3 mt-3">
                                     <div class="mb-3">
-                                        <label for="departmentFilter"
+                                        <label for="departmentFilter2"
                                             class="form-label font-weight-bold">Departemen</label>
-                                        <select class="form-control" id="departmentFilter" name="department_id"
+                                        <select class="form-control" id="departmentFilter2" name="department_id"
                                             style="font-weight: 500;">
                                             <option value="">Pilih Departement</option>
                                             <!-- Options will be filled via AJAX -->
@@ -122,8 +142,8 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3 mt-3">
-                                    <label for="sectionFilter" class="form-label font-weight-bold">Section</label>
-                                    <select class="form-control" id="sectionFilter" name="section_id"
+                                    <label for="sectionFilter2" class="form-label font-weight-bold">Section</label>
+                                    <select class="form-control" id="sectionFilter2" name="section_id"
                                         style="font-weight: 500;">
                                         <option value="">Pilih Section</option>
                                         <!-- Options will be filled via AJAX -->
@@ -463,15 +483,7 @@
                 });
             }
 
-            var demo1 = $('select[name="npk[]"]').bootstrapDualListbox({
-                selectorMinimalHeight: 200,
-                nonSelectedListLabel: 'NPK Tersedia',
-                selectedListLabel: 'NPK Terpilih',
-                preserveSelectionOnMove: 'moved',
-                moveOnSelect: false,
-                nonSelectedFilter: '',
 
-            });
             var demo2 = $('.demo2').bootstrapDualListbox({
                 selectorMinimalHeight: 200,
                 nonSelectedListLabel: 'Non-selected',
@@ -533,7 +545,16 @@
                 sectionId = $(this).val(); // Update sectionId saat seksi berubah
                 updateDualListbox(); // Memperbarui dual listbox
             });
+            $(document).on('change', '#departmentFilter2', function() {
+                departmentId = $(this).val(); // Update departmentId saat departemen berubah
+                updateDualListbox(); // Memperbarui dual listbox
+            });
 
+            // Event untuk perubahan pada sectionFilter
+            $(document).on('change', '#sectionFilter2', function() {
+                sectionId = $(this).val(); // Update sectionId saat seksi berubah
+                updateDualListbox(); // Memperbarui dual listbox
+            });
 
             $(document).ready(function() {
                 $(document).ready(function() {
@@ -542,16 +563,30 @@
                             url: '{{ route('get.department') }}', // Tetap menggunakan route yang sudah ada
                             method: 'GET',
                             success: function(response) {
-                                const departmentSelect = $('#departmentFilter');
-                                departmentSelect.empty(); // Kosongkan dropdown
-                                departmentSelect.append(
+                                // Menangani departmentFilter pertama
+                                const departmentSelect1 = $('#departmentFilter');
+                                departmentSelect1.empty(); // Kosongkan dropdown
+                                departmentSelect1.append(
                                     '<option value="">Pilih Departemen</option>'); // Opsi default
 
                                 // Isi dropdown dengan departemen yang diterima dari API
                                 response.departments.forEach(function(department) {
-                                    departmentSelect.append(`
-                        <option value="${department.id}">${department.nama}</option>
-                    `);
+                                    departmentSelect1.append(`
+                    <option value="${department.id}">${department.nama}</option>
+                `);
+                                });
+
+                                // Menangani departmentFilter2 kedua
+                                const departmentSelect2 = $('#departmentFilter2');
+                                departmentSelect2.empty(); // Kosongkan dropdown
+                                departmentSelect2.append(
+                                    '<option value="">Pilih Departemen</option>'); // Opsi default
+
+                                // Isi dropdown dengan departemen yang diterima dari API
+                                response.departments.forEach(function(department) {
+                                    departmentSelect2.append(`
+                    <option value="${department.id}">${department.nama}</option>
+                `);
                                 });
                             },
                             error: function() {
@@ -560,28 +595,54 @@
                         });
                     }
 
-                    function loadSections() {
+                    function loadSections(departmentId) {
                         $.ajax({
                             url: '{{ route('get.department') }}', // Tetap menggunakan route yang sudah ada
                             method: 'GET',
+                            data: {
+                                department_id: departmentId // Kirim department_id yang dipilih
+                            },
                             success: function(response) {
-                                const sectionSelect = $('#sectionFilter');
-                                sectionSelect.empty(); // Kosongkan dropdown
-                                sectionSelect.append(
+                                // Menangani sectionFilter pertama
+                                const sectionSelect1 = $('#sectionFilter');
+                                sectionSelect1.empty(); // Kosongkan dropdown
+                                sectionSelect1.append(
                                     '<option value="">Pilih Section</option>'); // Opsi default
 
                                 // Isi dropdown dengan seksi yang diterima dari API
                                 response.sections.forEach(function(section) {
-                                    sectionSelect.append(`
-                        <option value="${section.id}">${section.nama}</option>
-                    `);
+                                    sectionSelect1.append(`
+                    <option value="${section.id}">${section.nama}</option>
+                `);
+                                });
+
+                                // Menangani sectionFilter2 kedua
+                                const sectionSelect2 = $('#sectionFilter2');
+                                sectionSelect2.empty(); // Kosongkan dropdown
+                                sectionSelect2.append(
+                                    '<option value="">Pilih Section</option>'); // Opsi default
+
+                                // Isi dropdown dengan seksi yang diterima dari API
+                                response.sections.forEach(function(section) {
+                                    sectionSelect2.append(`
+                    <option value="${section.id}">${section.nama}</option>
+                `);
                                 });
                             },
                             error: function() {
                                 alert('Gagal memuat data seksi');
                             }
                         });
+
                     }
+
+                    // Event listener untuk memuat seksi setelah departemen dipilih
+                    $('#departmentFilter').on('change', function() {
+                        const departmentId = $(this).val();
+                        loadSections(
+                            departmentId); // Panggil loadSections dengan departmentId yang dipilih
+                    });
+
 
                     // Panggil fungsi untuk memuat data awal
                     loadDepartments();

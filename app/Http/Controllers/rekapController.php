@@ -2052,17 +2052,37 @@ class rekapController extends Controller
         ]);
     }
 
-    public function getDepartments()
+    public function getDepartments(Request $request)
     {
-        // Mengambil semua departemen dan memformat data menjadi ID dan nama
-        $departments = DepartmentModel::all(['id', 'nama']); // Ambil hanya id dan nama
-        $sections = SectionModel::all(['id', 'nama']); // Ambil hanya id dan nama
+        // Ambil data user yang sedang login
+        $user = Auth::user();
+        $departmentId = $user->department_id; // ID departemen user
+        $roleId = $user->role_id; // ID role user
+
+        // Ambil departemen sesuai dengan department_id user atau semua departemen jika role_id 1 atau 6
+        if (in_array($roleId, [1, 6])) {
+            $departments = DepartmentModel::all(['id', 'nama']); // Ambil semua departemen
+        } else {
+            $departments = DepartmentModel::where('id', $departmentId)->get(['id', 'nama']); // Filter berdasarkan department_id
+        }
+
+        // Ambil section hanya jika department_id dipilih
+        $sections = collect();
+
+        if ($request->has('department_id') && $request->department_id != '') {
+            $sections = SectionModel::where('department_id', $request->department_id)->get(['id', 'nama']);
+        } else if ($roleId != 9) {
+            $sections = SectionModel::all(['id', 'nama']); // Ambil semua section untuk role selain 9
+        }
 
         return response()->json([
             'departments' => $departments,
             'sections' => $sections
         ]);
     }
+
+
+
 
     public function getPenyimpangan(Request $request)
     {
