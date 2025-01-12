@@ -14,6 +14,7 @@ use App\Http\Controllers\absensiController;
 use App\Http\Controllers\performaController;
 use App\Http\Controllers\absensiCoController;
 use App\Http\Controllers\dashboardController;
+use App\Http\Controllers\rekapShiftController;
 use App\Http\Controllers\MasterShiftController;
 use App\Http\Controllers\PenyimpanganController;
 
@@ -67,6 +68,9 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('absensiControllerAjax', absensiController::class);
         Route::resource('absensiCoControllerAjax', absensiCoController::class);
         Route::resource('master-shift', MasterShiftController::class);
+        Route::get('/rekap-shift',  [rekapShiftController::class, 'index'])->name('rekapshift');
+        Route::get('/rekap-shift-data',  [rekapShiftController::class, 'getData'])->name('rekapshiftdata');
+        Route::get('/rekap-shift-data-detail',  [rekapShiftController::class, 'detail'])->name('rekapshiftdetail');
 
 
 

@@ -274,6 +274,14 @@
                             </a>
                         </li>
 
+                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
+                            <a href="{{ route('rekapshift') }}"
+                                class="nav-link  {{ Request::routeIs('rekapshift') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-clock"></i>
+                                <p>Rekap Shift</p>
+                            </a>
+                        </li>
+
                         <!-- Shift Karyawan Link -->
                         <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
                             <a href="{{ route('shift.index') }}"
