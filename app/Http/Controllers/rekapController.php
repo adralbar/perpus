@@ -96,9 +96,21 @@ class rekapController extends Controller
 
         $checkoutQueryrange = Absensico::with(['user', 'shift'])
             ->select('npk', 'tanggal', 'waktuco')
-            ->whereBetween('waktuco', ['00:00:00', '10:00:00'])  // Filter waktuco dalam rentang 00:00 - 10:00
-            ->groupBy('npk', 'tanggal', 'waktuco')
-            ->get();
+            ->whereBetween('waktuco', ['00:00:00', '10:00:00']) // Filter waktuco dalam rentang 00:00 - 10:00
+            ->groupBy('npk', 'tanggal', 'waktuco');
+
+        // Filter tanggal
+        if (!empty($startDate) && !empty($endDate)) {
+            $checkoutQueryrange->whereBetween('tanggal', [$startDate, $endDate]);
+        }
+
+        // Filter NPK
+        if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
+            $selectedNPK = $request->selectedNpk;
+            $checkoutQueryrange->whereIn('npk', $selectedNPK);
+        }
+
+        $checkoutQueryrange = $checkoutQueryrange->get();
 
         foreach ($checkinResults as $checkin) {
             $key = "{$checkin->npk}-{$checkin->tanggal}";
@@ -239,7 +251,9 @@ class rekapController extends Controller
         //         }
         //     }
         // }
+        $checkoutNpkList = [];
         foreach ($checkoutResults as $checkout) {
+            $checkoutNpkList[] = $checkout->npk;
             $key = "{$checkout->npk}-{$checkout->tanggal}";
             $role = $checkout->user ? $checkout->user->role : null;
             // Tentukan status default
@@ -260,17 +274,8 @@ class rekapController extends Controller
                 ->where('date', Carbon::parse($checkout->tanggal)->subDay()->toDateString()) // Mengurangi 1 hari dengan Carbon
                 ->latest()
                 ->first();
-            $shiftprevious = $latestShift ? $latestprevShift->shift1 : null;
+            $shiftprevious = $latestprevShift ? $latestprevShift->shift1 : null;
 
-            // Periksa jika ada tanggal minus satu hari untuk waktu checkout
-            foreach ($checkoutQueryrange as $checkoutRange) {
-                $tanggalMinusOneDay = date('Y-m-d', strtotime($checkoutRange->tanggal . ' -1 day'));
-                if (isset($results["{$checkoutRange->npk}-{$tanggalMinusOneDay}"])) {
-                    if ($checkoutRange->npk == $checkout->npk) {
-                        $results["{$checkoutRange->npk}-{$tanggalMinusOneDay}"]['waktuco'] = $checkoutRange->waktuco;
-                    }
-                }
-            }
 
             if (isset($results[$key])) {
                 // Pastikan waktuco tidak null dan menggantikan yang lama
@@ -334,6 +339,40 @@ class rekapController extends Controller
                         'status' => $status,
                     ];
                 }
+            }
+        }
+
+        foreach ($checkoutQueryrange as $checkoutRange) {
+
+
+            $latestprevShift = Shift::where('npk', $checkoutRange->npk)
+                ->where('date', Carbon::parse($checkoutRange->tanggal)->subDay()->toDateString()) // Mengurangi 1 hari dengan Carbon
+                ->latest()
+                ->first();
+            $shiftprevious = $latestprevShift ? $latestprevShift->shift1 : null;
+            $status = 'NO IN';
+
+
+            $tanggalMinusOneDay = date('Y-m-d', strtotime($checkoutRange->tanggal . ' -1 day'));
+            $key = "{$checkoutRange->npk}-{$tanggalMinusOneDay}";
+            if (in_array($checkoutRange->npk, $checkoutNpkList)) {
+                if (isset($results[$key])) {
+                    $results[$key]['waktuco'] = $checkoutRange->waktuco;
+                }
+            }
+            if (!isset($results[$key])) {
+                $results[$key] = [
+                    'nama' => $checkoutRange->user ? $checkoutRange->user->nama : '', // Ambil nama dari checkoutRange
+                    'npk' => $checkoutRange->npk, // Ambil npk dari checkoutRange
+                    'tanggal' => $tanggalMinusOneDay, // Gunakan tanggal H-1
+                    'waktuci' => null, // Tidak ada check-in
+                    'waktuco' => $checkoutRange->waktuco, // Ambil waktuco dari checkoutRange
+                    'shift1' => $shiftprevious, // Ambil shift1 dari checkout jika tersedia
+                    'section_nama' => $checkoutRange->user && $checkoutRange->user->section ? $checkoutRange->user->section->nama : '',
+                    'department_nama' => $checkoutRange->user && $checkoutRange->user->section && $checkoutRange->user->section->department ? $checkoutRange->user->section->department->nama : '',
+                    'division_nama' => $checkoutRange->user && $checkoutRange->user->section && $checkoutRange->user->section->department && $checkoutRange->user->section->department->division ? $checkoutRange->user->section->department->division->nama : '',
+                    'status' => $status, // Gunakan status dari checkout jika tersedia
+                ];
             }
         }
 
