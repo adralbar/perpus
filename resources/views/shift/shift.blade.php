@@ -85,7 +85,7 @@
                             <input type="hidden" id="shiftId" name="id">
                             <div class="form-group">
                                 <label for="npk">NPK Api</label>
-                                <select multiple="multiple" size="10" name="selected_npk[]" id="npk"
+                                <select multiple="multiple" size="10" name="npk[]" id="npk"
                                     class="form-control">
                                     @foreach ($userData as $user)
                                         <option value="{{ $user->npk }}">
@@ -446,6 +446,14 @@
                 moveOnSelect: false,
                 nonSelectedFilter: '',
 
+            });
+            var demo1 = $('select[name="npk[]"]').bootstrapDualListbox({
+                selectorMinimalHeight: 200,
+                nonSelectedListLabel: 'NPK Tersedia',
+                selectedListLabel: 'NPK Terpilih',
+                preserveSelectionOnMove: 'moved',
+                moveOnSelect: false,
+                nonSelectedFilter: '',
             });
 
             function updateDualListbox() {
