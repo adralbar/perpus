@@ -24,7 +24,7 @@ class UsersController extends Controller
 
     public function index()
     {
-       
+
         $userData = User::with('division', 'department', 'section', 'role')->orderBy('created_at', 'DESC')->get();
         $role = RoleModel::all();
         $section = SectionModel::all(); // Ambil semua section
@@ -57,51 +57,57 @@ class UsersController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(
-            [
-                'npk_sistem' => 'required|unique:users,npk_sistem',
-                'npk' => 'required|unique:users,npk',
-                'nama' => 'required',
-                'password' => 'required',
-                'no_telp' => 'required',
-                'section_id' => 'required',
-                'department_id' => 'required',
-                'division_id' => 'required',
-                'role_id' => 'required',
-                'status',
+        try {
+            $request->validate(
+                [
+                    'npk_sistem' => 'required',
+                    'npk' => 'required|unique:users,npk',
+                    'nama' => 'required',
+                    'password' => 'required',
+                    'no_telp' => 'required',
+                    'section_id' => 'required',
+                    'department_id' => 'required',
+                    'division_id' => 'required',
+                    'role_id' => 'required',
+                    'status' => 'nullable',
+                ],
+                [
+                    'npk_sistem.required' => 'NPK Sistem wajib diisi.',
+                    'npk.required' => 'NPK wajib diisi.',
+                    'npk.unique' => 'NPK sudah terdaftar.',
+                    'nama.required' => 'Nama wajib diisi.',
+                    'password.required' => 'Password wajib diisi.',
+                    'no_telp.required' => 'Nomor telepon wajib diisi.',
+                    'section_id.required' => 'Section wajib dipilih.',
+                    'department_id.required' => 'Departemen wajib dipilih.',
+                    'division_id.required' => 'Divisi wajib dipilih.',
+                    'role_id.required' => 'Role wajib dipilih.',
+                ]
+            );
 
-            ],
-            [
-                'npk_sistem' => 'NPK wajib diisi.',
-                'npk.required' => 'NPK wajib diisi.',
-                'npk.unique' => 'NPK sudah terdaftar.',
-                'nama.required' => 'Nama wajib diisi.',
-                'password.required' => 'Password wajib diisi.',
-                'no_telp.required' => 'no_telp wajib diisi.',
-                'section_id.required' => 'Section wajib dipilih.',
-                'department_id.required' => 'Departemen wajib dipilih.',
-                'division_id.required' => 'Division wajib dipilih.',
-                'role_id.required' => 'Role wajib dipilih.',
+            $data = [
+                'npk_sistem' => $request->npk_sistem,
+                'npk' => $request->npk,
+                'nama' => $request->nama,
+                'password' => bcrypt($request->password),
+                'no_telp' => $request->no_telp,
+                'section_id' => $request->section_id,
+                'department_id' => $request->department_id,
+                'division_id' => $request->division_id,
+                'role_id' => $request->role_id,
+                'status' => $request->status,
+            ];
 
-            ]
-        );
-        $data = [
-            'npk_sistem' => $request->npk_sistem,
-            'npk' => $request->npk,
-            'nama' => $request->nama,
-            'password' => bcrypt($request->password),
-            'no_telp' => $request->no_telp,
-            'section_id' => $request->section_id,
-            'department_id' => $request->department_id,
-            'division_id' => $request->division_id,
-            'role_id' => $request->role_id,
-            'status' => $request->status,
-        ];
+            User::create($data);
 
-
-        User::create($data);
-        return redirect('user')->with('success', 'User berhasil ditambahkan.');
+            // Jika berhasil
+            return redirect('user')->with('success', 'User berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            // Jika terjadi error
+            return redirect('user')->with('error', 'Terjadi kesalahan saat menambahkan user: ' . $e->getMessage());
+        }
     }
+
 
     public function detail($npk)
     {

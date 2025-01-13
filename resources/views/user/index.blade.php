@@ -26,13 +26,13 @@
                         @endif
 
                         {{-- SweetAlert untuk error --}}
-                        @if ($errors->any())
+                        @if (session('error'))
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
                                     Swal.fire({
                                         title: 'Gagal!',
-                                        text: '{{ session('danger') }}',
-                                        icon: 'danger',
+                                        text: '{{ session('error') }}',
+                                        icon: 'error',
                                         confirmButtonText: 'OK'
                                     });
                                 });

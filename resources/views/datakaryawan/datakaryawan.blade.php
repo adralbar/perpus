@@ -273,19 +273,5 @@
             $('#shiftLabel').text('Tambah Karyawan');
             $('#saveButton').text('Simpan');
         }
-
-        @if ($errors->any())
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal Mengunggah',
-                html: `
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            `, // Tampilkan semua pesan error dalam bentuk list
-            });
-        @endif
     </script>
 @endsection
