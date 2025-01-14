@@ -5,8 +5,8 @@
 <script src="{{ asset('dist/js/xlsx.full.min.js') }}"></script> <!-- XLSX -->
 
 <script>
-    $(document).ready(function () {
-        window.onload = function () {
+    $(document).ready(function() {
+        window.onload = function() {
             Swal.fire({
                 title: 'Perhatian!',
                 text: 'Silahkan isi Filter tanggal terlebih dahulu!',
@@ -29,7 +29,7 @@
                     ajax: {
                         url: "{{ route('performa.getData') }}",
                         type: 'GET',
-                        data: function (d) {
+                        data: function(d) {
                             d.startDate = startDate;
                             d.endDate = endDate;
                             console.log("Start Date:", startDate);
@@ -37,60 +37,60 @@
                         }
                     },
                     columns: [{
-                        data: null,
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'nama',
-                        name: 'nama'
-                    },
-                    {
-                        data: 'npk',
-                        name: 'npk'
-                    },
-                    {
-                        data: 'division_nama',
-                        name: 'division_nama'
-                    },
-                    {
-                        data: 'department_nama',
-                        name: 'department_nama'
-                    },
-                    {
-                        data: 'section_nama',
-                        name: 'section_nama'
-                    },
-                    {
-                        data: 'station_id',
-                        name: 'station_id'
-                    },
-                    {
-                        data: 'tanggal',
-                        name: 'tanggal'
-                    },
-                    {
-                        data: 'shift1',
-                        name: 'shift1'
-                    },
-                    {
-                        data: 'waktuci_checkin',
-                        name: 'waktuci_checkin'
-                    },
-                    {
-                        data: 'waktu_login_dashboard',
-                        name: 'waktu_login_dashboard'
-                    },
-                    {
-                        data: 'selisih_waktu',
-                        name: 'selisih_waktu',
-                        render: function (data, type, row) {
-                            // Misalkan 'data' adalah selisih waktu dalam menit
-                            return data + ' menit'; // Tambahkan kata 'menit' setelah nilai
+                            data: null,
+                            orderable: false,
+                            searchable: false
+                        },
+                        {
+                            data: 'nama',
+                            name: 'nama'
+                        },
+                        {
+                            data: 'npk',
+                            name: 'npk'
+                        },
+                        {
+                            data: 'division_nama',
+                            name: 'division_nama'
+                        },
+                        {
+                            data: 'department_nama',
+                            name: 'department_nama'
+                        },
+                        {
+                            data: 'section_nama',
+                            name: 'section_nama'
+                        },
+                        {
+                            data: 'station_id',
+                            name: 'station_id'
+                        },
+                        {
+                            data: 'tanggal',
+                            name: 'tanggal'
+                        },
+                        {
+                            data: 'shift1',
+                            name: 'shift1'
+                        },
+                        {
+                            data: 'waktuci_checkin',
+                            name: 'waktuci_checkin'
+                        },
+                        {
+                            data: 'waktu_login_dashboard',
+                            name: 'waktu_login_dashboard'
+                        },
+                        {
+                            data: 'selisih_waktu',
+                            name: 'selisih_waktu',
+                            render: function(data, type, row) {
+                                // Misalkan 'data' adalah selisih waktu dalam menit
+                                return data + ' menit'; // Tambahkan kata 'menit' setelah nilai
+                            }
                         }
-                    }
                     ],
-                    rowCallback: function (row, data, index) {
+                    rowCallback: function(row, data, index) {
                         $('td:eq(0)', row).html(index + 1);
                     }
                 });
@@ -101,7 +101,7 @@
         }
 
         // Memuat data saat halaman pertama kali dimuat jika tanggal sudah dipilih
-        $('#startDate, #endDate').on('change', function () {
+        $('#startDate, #endDate').on('change', function() {
             // Memastikan tanggal dipilih terlebih dahulu sebelum menampilkan data
             if ($('#startDate').val() && $('#endDate').val()) {
                 // Hancurkan DataTable jika sudah ada, agar bisa diinisialisasi ulang
@@ -119,48 +119,48 @@
     });
 
 
-    $('#logForm').on('submit', function (e) {
+    $('#logForm').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
             url: "{{ route('performa.storeLogs') }}",
             method: "POST",
             data: $(this).serialize(),
-            success: function (response) {
+            success: function(response) {
                 console.log(response);
                 $('#logModal').modal('hide');
                 $('#myTable').DataTable().ajax.reload();
             },
-            error: function (xhr) {
+            error: function(xhr) {
                 console.error(xhr.responseText);
             }
         });
     });
 
-    $('#userIdForm').on('submit', function (e) {
+    $('#userIdForm').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
             url: "{{ route('performa.storeUserId') }}",
             method: "POST",
             data: $(this).serialize(),
-            success: function (response) {
+            success: function(response) {
                 console.log(response);
                 $('#userIdModal').modal('hide');
                 $('#myTable').DataTable().ajax.reload();
             },
-            error: function (xhr) {
+            error: function(xhr) {
                 console.error(xhr.responseText);
             }
         });
     });
 
-    $('#exportButton').on('click', function () {
+    $('#exportButton').on('click', function() {
         // Ambil nilai filter bulan dan tahun dari elemen
         var startDate = $('#startDate').val(); // Pastikan ini adalah format yyyy-mm-dd
         var endDate = $('#endDate').val(); // Pastikan ini adalah format yyyy-mm-dd
         var search = $('#dt-search-0').val();
         // Redirect to the export route with query parameters
         window.location.href = "{{ route('performa.export') }}?startDate=" + encodeURIComponent(
-            startDate) +
+                startDate) +
             "&endDate=" + encodeURIComponent(endDate) +
             "&search=" + encodeURIComponent(search);
 
