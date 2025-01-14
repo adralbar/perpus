@@ -287,9 +287,7 @@ class rekapController extends Controller
                     // dd($checkin);
                     $tanggalMinusOneDay = date('Y-m-d', strtotime($checkout->tanggal . ' -1 day'));
                     $waktuci = null;
-                    if (strtoupper($shift1) === 'OFF') {
-                        $status = 'OFF';
-                    }
+
                     // if (isset($checkin->tanggal) && $checkin->tanggal != $tanggalMinusOneDay) {
                     //     $waktuci = null;
                     // } else {
@@ -354,9 +352,7 @@ class rekapController extends Controller
                 ->first();
             $shiftprevious = $latestprevShift ? $latestprevShift->shift1 : null;
             $status = 'NO IN';
-            if (strtoupper($shift1) === 'OFF') {
-                $status = 'OFF';
-            }
+
 
             $tanggalMinusOneDay = date('Y-m-d', strtotime($checkoutRange->tanggal . ' -1 day'));
             $key = "{$checkoutRange->npk}-{$tanggalMinusOneDay}";
