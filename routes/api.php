@@ -47,7 +47,7 @@ Route::get('/getRecapDataApi', [rekapController::class, 'getRecapDataApi'])->nam
 Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
 Route::get('/master-shifts', [MasterShiftApiController::class, 'getMasterShift']);
 
-Route::get('/check-late-and-absen', [apiBroadcastController::class, 'checkLateAndAbsent']);
+Route::get('/check-late-and-absen', [apiBroadcastController::class, 'checkLateAndAbsent'])->name('api.checkLateAndAbsent');
 Route::post('/wagateway', [apiGatewayController::class, 'sendMessage']);
 
 Route::post('/send-message', [apiGatewayController::class, 'sendMessageFromRequest'])->name('api.sendMessage');
