@@ -128,7 +128,7 @@ class rekapController extends Controller
             $shift1 = $latestShift ? $latestShift->shift1 : null;
 
             $role = $checkin->user ? $checkin->user->role : null;
-
+            $status = '';
             // Cek jika role adalah 5 atau 8, maka status langsung 'Tepat Waktu'
             if ($role && in_array($role->id, [5, 8])) {
                 $status = 'Tepat Waktu';
@@ -158,7 +158,7 @@ class rekapController extends Controller
                 'section_nama' => $section ? $section->nama : '',
                 'department_nama' => $department ? $department->nama : '',
                 'division_nama' => $division ? $division->nama : '',
-                'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : $status),
+                'status' => ($role && in_array($role->id, [4, 5, 8])) ? $status : ($shift1 === null ? 'Mangkir' : ($status ?? 'belum terkondisikan')),
             ];
         }
 
@@ -287,28 +287,28 @@ class rekapController extends Controller
                     // dd($checkin);
                     $tanggalMinusOneDay = date('Y-m-d', strtotime($checkout->tanggal . ' -1 day'));
                     $waktuci = null;
-                    if (isset($checkin->tanggal) && $checkin->tanggal != $tanggalMinusOneDay) {
-                        $waktuci = null;
-                    } else {
-                        $checkinStatus = isset($checkin)
-                            ? (isset($results["{$checkin->npk}-{$checkin->tanggal}"]) ? $results["{$checkin->npk}-{$checkin->tanggal}"]['status'] : $status)
-                            : $status;
+                    // if (isset($checkin->tanggal) && $checkin->tanggal != $tanggalMinusOneDay) {
+                    //     $waktuci = null;
+                    // } else {
+                    //     $checkinStatus = isset($checkin)
+                    //         ? (isset($results["{$checkin->npk}-{$checkin->tanggal}"]) ? $results["{$checkin->npk}-{$checkin->tanggal}"]['status'] : $status)
+                    //         : $status;
 
-                        $waktuci = isset($checkin->tanggal) ? $checkin->waktuci : null;
-                    }
-                    $results["{$checkout->npk}-{$tanggalMinusOneDay}"] = [
-                        'nama' => $checkout->user ? $checkout->user->nama : '',
-                        'npk' => $checkout->npk,
-                        'tanggal' => $tanggalMinusOneDay,
-                        'waktuci' => $waktuci, // Tidak ada check-in
-                        'waktuco' => $checkout->waktuco,
-                        'shift1' => $shiftprevious,
-                        'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
-                        'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
-                        'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-                        'status' => $checkinStatus ?? $status,
+                    //     $waktuci = isset($checkin->tanggal) ? $checkin->waktuci : null;
+                    // }
+                    // $results["{$checkout->npk}-{$tanggalMinusOneDay}"] = [
+                    //     'nama' => $checkout->user ? $checkout->user->nama : '',
+                    //     'npk' => $checkout->npk,
+                    //     'tanggal' => $tanggalMinusOneDay,
+                    //     'waktuci' => $waktuci, // Tidak ada check-in
+                    //     'waktuco' => $checkout->waktuco,
+                    //     'shift1' => $shiftprevious,
+                    //     'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
+                    //     'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
+                    //     'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
+                    //     'status' => $checkinStatus ?? $status,
 
-                    ];
+                    // ];
                     if (!isset($results[$key])) {
                         $results["{$checkout->npk}-{$checkout->tanggal}"] = [
                             'nama' => $checkout->user ? $checkout->user->nama : '',
