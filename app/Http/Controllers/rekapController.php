@@ -83,9 +83,28 @@ class rekapController extends Controller
             ->select('npk', 'tanggal', DB::raw('MAX(waktuco) as waktuco'))
             ->groupBy('npk', 'tanggal');
 
-        if (!empty($startDate) && !empty($endDate)) {
-            $checkoutQuery->whereBetween('tanggal', [$startDate, $endDate]);
+        if (!empty($startDate)) {
+            $checkoutQuery->where(function ($query) use ($startDate) {
+                $query->where('tanggal', '!=', $startDate)
+                    ->orWhere(function ($query) use ($startDate) {
+                        $query->where('tanggal', $startDate)
+                            ->where('waktuco', '>', '10:00:00');
+                    });
+            });
         }
+
+        // Filter untuk endDate
+        if (!empty($endDate)) {
+            $nextDay = Carbon::parse($endDate)->addDay()->toDateString();
+            $checkoutQuery->where(function ($query) use ($endDate, $nextDay) {
+                $query->where('tanggal', '<=', $endDate)
+                    ->orWhere(function ($query) use ($nextDay) {
+                        $query->where('tanggal', $nextDay)
+                            ->whereBetween('waktuco', ['00:00:00', '10:00:00']);
+                    });
+            });
+        }
+
         if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
             $selectedNPK = $request->selectedNpk;
             $checkoutQuery->whereIn('npk', $selectedNPK);
@@ -99,11 +118,27 @@ class rekapController extends Controller
             ->whereBetween('waktuco', ['00:00:00', '10:00:00']) // Filter waktuco dalam rentang 00:00 - 10:00
             ->groupBy('npk', 'tanggal', 'waktuco');
 
-        // Filter tanggal
-        if (!empty($startDate) && !empty($endDate)) {
-            $checkoutQueryrange->whereBetween('tanggal', [$startDate, $endDate]);
+        if (!empty($startDate)) {
+            $checkoutQueryrange->where(function ($query) use ($startDate) {
+                $query->where('tanggal', '!=', $startDate)
+                    ->orWhere(function ($query) use ($startDate) {
+                        $query->where('tanggal', $startDate)
+                            ->where('waktuco', '>', '10:00:00');
+                    });
+            });
         }
 
+        // Filter untuk endDate
+        if (!empty($endDate)) {
+            $nextDay = Carbon::parse($endDate)->addDay()->toDateString();
+            $checkoutQueryrange->where(function ($query) use ($endDate, $nextDay) {
+                $query->where('tanggal', '<=', $endDate)
+                    ->orWhere(function ($query) use ($nextDay) {
+                        $query->where('tanggal', $nextDay)
+                            ->whereBetween('waktuco', ['00:00:00', '10:00:00']);
+                    });
+            });
+        }
         // Filter NPK
         if ($request->has('selectedNpk') && !empty($request->selectedNpk)) {
             $selectedNPK = $request->selectedNpk;
@@ -162,95 +197,6 @@ class rekapController extends Controller
             ];
         }
 
-
-        // foreach ($checkoutResults as $checkout) {
-        //     $key = "{$checkout->npk}-{$checkout->tanggal}";
-        //     $role = $checkout->user ? $checkout->user->role : null;
-        //     // Tentukan status default
-        //     $status = 'NO IN';
-
-        //     // Jika user dengan role tertentu (misal 5 atau 8), berikan status "Tepat Waktu" secara default
-        //     if ($role && in_array($role->id, [5, 8])) {
-        //         $status = 'Tepat Waktu';
-        //     }
-
-        //     $latestShift = Shift::where('npk', $checkout->npk)
-        //         ->where('date', $checkout->tanggal)
-        //         ->latest()
-        //         ->first();
-        //     $shift1 = $latestShift ? $latestShift->shift1 : null;
-
-        //     // Cek apakah waktu checkout berada di antara 00:00:00 - 10:00:00
-
-        //     // Periksa jika ada tanggal minus satu hari untuk waktu checkout
-        //     foreach ($checkoutQueryrange as $checkoutRange) {
-        //         $tanggalMinusOneDay = date('Y-m-d', strtotime($checkoutRange->tanggal . ' -1 day'));
-        //         if (isset($results["{$checkoutRange->npk}-{$tanggalMinusOneDay}"])) {
-        //             if ($checkoutRange->npk == $checkout->npk) {
-        //                 $results["{$checkoutRange->npk}-{$tanggalMinusOneDay}"]['waktuco'] = $checkoutRange->waktuco;
-        //             }
-        //         }
-        //     }
-
-        //     if (isset($results[$key])) {
-        //         // Pastikan waktuco tidak null dan menggantikan yang lama
-        //         if ($checkout->waktuco && $results[$key]['waktuco'] != $checkout->waktuco) {
-        //             $results[$key]['waktuco'] = $checkout->waktuco;
-        //         }
-        //     } else {
-        //         if ($checkout->waktuco >= '00:00:00' && $checkout->waktuco <= '10:00:00') {
-        //             // dd($checkin);
-        //             $tanggalMinusOneDay = date('Y-m-d', strtotime($checkout->tanggal . ' -1 day'));
-        //             $waktuci = null;
-        //             if (isset($checkin->tanggal) && $checkin->tanggal != $tanggalMinusOneDay) {
-        //                 $waktuci = null;
-        //             } else {
-        //                 $waktuci = isset($checkin->tanggal) ? $checkin->waktuci : null;
-        //             }
-        //             $results["{$checkout->npk}-{$tanggalMinusOneDay}"] = [
-        //                 'nama' => $checkout->user ? $checkout->user->nama : '',
-        //                 'npk' => $checkout->npk,
-        //                 'tanggal' => $tanggalMinusOneDay,
-        //                 'waktuci' => $waktuci, // Tidak ada check-in
-        //                 'waktuco' => $checkout->waktuco,
-        //                 'shift1' => $shift1,
-        //                 'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
-        //                 'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
-        //                 'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-        //                 'status' => $status,
-        //             ];
-        //             if (!isset($results[$key])) {
-        //                 $results["{$checkout->npk}-{$checkout->tanggal}"] = [
-        //                     'nama' => $checkout->user ? $checkout->user->nama : '',
-        //                     'npk' => $checkout->npk,
-        //                     'tanggal' => $checkout->tanggal,
-        //                     'waktuci' => null, // Tidak ada check-in
-        //                     'waktuco' => null,
-        //                     'shift1' => $shift1,
-        //                     'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
-        //                     'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
-        //                     'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-        //                     'status' => $status,
-        //                 ];
-        //             }
-
-        //             // $results["{$checkout->npk}-{$tanggalMinusOneDay}"]['waktuco'] = $checkout->waktuco;
-        //         } else { // Jika tidak ada data check-in, tetap tambahkan data checkout dengan status "NO IN"
-        //             $results[$key] = [
-        //                 'nama' => $checkout->user ? $checkout->user->nama : '',
-        //                 'npk' => $checkout->npk,
-        //                 'tanggal' => $checkout->tanggal,
-        //                 'waktuci' => null, // Tidak ada check-in
-        //                 'waktuco' => $checkout->waktuco,
-        //                 'shift1' => $shift1,
-        //                 'section_nama' => $checkout->user && $checkout->user->section ? $checkout->user->section->nama : '',
-        //                 'department_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department ? $checkout->user->section->department->nama : '',
-        //                 'division_nama' => $checkout->user && $checkout->user->section && $checkout->user->section->department && $checkout->user->section->department->division ? $checkout->user->section->department->division->nama : '',
-        //                 'status' => $status,
-        //             ];
-        //         }
-        //     }
-        // }
         $checkoutNpkList = [];
         foreach ($checkoutResults as $checkout) {
             $checkoutNpkList[] = $checkout->npk;
@@ -574,13 +520,21 @@ class rekapController extends Controller
                 'npk_sistem' => $npkSistem,
                 'waktuci' => ($row['shift1'] === 'OFF') ? ($row['waktuci'] ?? '----') : ($row['waktuci'] ?? 'NO IN'),
                 'waktuco' => ($row['shift1'] === 'OFF') ? ($row['waktuco'] ?? '----') : ($row['waktuco'] ?? 'NO OUT'),
-                'status' => !empty($kategoriCuti) ? $kategoriCuti : (!empty($kategoriPenyimpangan) ? $kategoriPenyimpangan : $row['status']),
+                'status' => !empty($kategoriCuti) ? $kategoriCuti : (!empty($kategoriPenyimpangan) ? $kategoriPenyimpangan : ($row['shift1'] === 'OFF' ? 'OFF' : $row['status'])),
             ]));
         }
 
         $data = [];
         foreach ($finalResults as $item) {
-            $data[] = $item;
+            // Pastikan tanggal berada di rentang startDate dan endDate
+            if (!empty($startDate) && !empty($endDate)) {
+                if ($item['tanggal'] >= $startDate && $item['tanggal'] <= $endDate) {
+                    $data[] = $item;
+                }
+            } else {
+                // Jika tidak ada filter tanggal, tambahkan semua item
+                $data[] = $item;
+            }
         }
         // dd($data);
         return response()->json([
