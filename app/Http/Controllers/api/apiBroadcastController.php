@@ -320,6 +320,14 @@ class apiBroadcastController extends Controller
     private function sendWarningMessage($users, $sortedResults)
     {
         foreach ($users as $user) {
+
+            $phoneNumber = $user->no_telp;
+            if (str_starts_with($phoneNumber, '08')) {
+                $phoneNumber = '62' . substr($phoneNumber, 1);
+            } elseif (!str_starts_with($phoneNumber, '62')) {
+                $phoneNumber = '62' . $phoneNumber;
+            }
+            
             $userResults = $sortedResults->where('npk', $user->npk);
             foreach ($userResults as $result) {
                 $message = "";
@@ -332,7 +340,7 @@ class apiBroadcastController extends Controller
                 }
                 if ($message) {
                     $data = [
-                        'destination' => $user->no_telp,
+                        'destination' => $phoneNumber,
                         'message' => $message,
                     ];
                     $apiGateway = new apiGatewayController();
