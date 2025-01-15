@@ -26,7 +26,7 @@ class apiGatewayController extends Controller
             $url = 'https://api.wachat-api.com/wachat_api/1.0/message';
             $response = $client->post($url, [
                 'headers' => [
-                    // 'APIKey' => '244E15501D20492BB35C209DDEC4ECFE',
+                    'APIKey' => '244E15501D20492BB35C209DDEC4ECFE',
                 ],
                 'json' => $postData,
             ]);
