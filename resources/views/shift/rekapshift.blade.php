@@ -91,8 +91,8 @@
                         name: 'date'
                     },
                     {
-                        data: 'shift1',
-                        name: 'shift1'
+                        data: 'shift_name',
+                        name: 'shift_name'
                     },
                     {
                         data: 'department_nama',
