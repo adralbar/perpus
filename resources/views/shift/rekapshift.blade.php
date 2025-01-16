@@ -34,13 +34,10 @@
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-hover" id="myTable">
                                 <thead class="table-light">
-                                    <tr>
+                                    <tr id="dynamicHeaders">
                                         <th>No</th>
+                                        <th>Departemen</th>
                                         <th>Tanggal</th>
-                                        <th>Shift</th>
-                                        <th>department</th>
-                                        <th>Jumlah Shift</th>
-                                        <th>Jumlah NPK</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -72,14 +69,31 @@
                 processing: true,
                 serverSide: false,
                 ajax: {
-                    url: "{{ route('rekapshiftdata') }}",
+                    url: "{{ route('rekapshiftdata') }}", // Route untuk mengambil data
                     data: function(d) {
-                        // Ambil nilai startDate dan endDate dari input
-                        d.startDate = $('#startDate').val();
+                        d.startDate = $('#startDate').val(); // Filter tanggal
                         d.endDate = $('#endDate').val();
                     },
-                    dataSrc: '', // Data is already in array format
+                    dataSrc: function(json) {
+                        // Ambil shift_name dari hasil data untuk membuat header dinamis
+                        let shiftNames = [];
+                        json.forEach(row => {
+                            Object.keys(row.shiftcount).forEach(shiftName => {
+                                if (!shiftNames.includes(shiftName)) {
+                                    shiftNames.push(shiftName);
+                                }
+                            });
+                        });
 
+                        // Tambahkan header dinamis ke tabel
+                        var headers = $('#dynamicHeaders');
+                        headers.find('th:gt(2)').remove(); // Hapus header shift lama
+                        shiftNames.forEach(shiftName => {
+                            headers.append('<th>' + shiftName + '</th>');
+                        });
+
+                        return json; // Kembalikan data untuk DataTables
+                    }
                 },
                 columns: [{
                         data: null,
@@ -87,32 +101,29 @@
                         searchable: false
                     },
                     {
-                        data: 'date',
-                        name: 'date'
-                    },
-                    {
-                        data: 'shift_name',
-                        name: 'shift_name'
-                    },
-                    {
                         data: 'department_nama',
                         name: 'department_nama'
-                    },
+                    }, // Departemen
                     {
-                        data: 'shiftcount',
-                        name: 'shiftcount'
-                    },
-                    {
-                        data: 'npkCount',
-                        name: 'npkCount'
-                    },
+                        data: 'date',
+                        name: 'date'
+                    }, // Tanggal
+
                 ],
                 rowCallback: function(row, data, index) {
+                    // Tambahkan nomor urut
                     $('td:eq(0)', row).html(index + 1);
+
+                    // Tambahkan kolom dinamis untuk setiap shift
+                    let shiftCounts = data.shiftcount;
+                    Object.keys(shiftCounts).forEach(shiftName => {
+                        $(row).append('<td>' + shiftCounts[shiftName] + '</td>');
+                    });
                 }
             });
+
+            // Reload data ketika tombol ditekan
             $('#loadDataBtn').click(function() {
-                // Memuat data ulang setelah memilih tanggal
                 table.ajax.reload();
             });
         });
