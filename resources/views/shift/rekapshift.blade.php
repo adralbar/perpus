@@ -40,6 +40,7 @@
                                         <th>Tanggal</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     <!-- Data will be populated here via AJAX -->
                                 </tbody>
@@ -99,26 +100,99 @@
                         data: null,
                         orderable: false,
                         searchable: false
-                    },
+                    }, // Nomor
                     {
                         data: 'department_nama',
-                        name: 'department_nama'
+                        name: 'department_nama',
+                        orderable: false
                     }, // Departemen
                     {
                         data: 'date',
-                        name: 'date'
-                    }, // Tanggal
-
+                        name: 'date',
+                        orderable: false
+                    } // Tanggal
                 ],
+                columnDefs: [{
+                    targets: '_all', // Menargetkan semua kolom
+                    className: 'text-left' // Mengatur kolom agar rata kiri
+                }],
                 rowCallback: function(row, data, index) {
                     // Tambahkan nomor urut
                     $('td:eq(0)', row).html(index + 1);
 
+                    // Ambil header shift dinamis
+                    let shiftNames = $('#dynamicHeaders th:gt(2)').map(function() {
+                        return $(this).text();
+                    }).get();
+
                     // Tambahkan kolom dinamis untuk setiap shift
                     let shiftCounts = data.shiftcount;
-                    Object.keys(shiftCounts).forEach(shiftName => {
-                        $(row).append('<td>' + shiftCounts[shiftName] + '</td>');
+                    shiftNames.forEach(shiftName => {
+                        let value = shiftCounts[shiftName] ||
+                            0; // Isi dengan 0 jika tidak ada data
+                        $(row).append('<td>' + value + '</td>');
                     });
+                },
+                drawCallback: function(settings) {
+                    // Hitung total untuk setiap tanggal
+                    var api = this.api();
+                    var rows = api.rows({
+                        page: 'current'
+                    }).data();
+                    var shiftTotals = {};
+                    var currentTotals = {};
+                    var currentDate = null;
+
+                    var tbody = $('#myTable tbody');
+                    tbody.find('tr.total-row').remove(); // Hapus total sebelumnya
+
+                    rows.each(function(row, index) {
+                        if (currentDate !== row.date) {
+                            if (currentDate !== null) {
+                                // Tambahkan baris total untuk tanggal sebelumnya
+                                appendTotalRow(currentDate, currentTotals, tbody);
+                            }
+                            currentDate = row.date;
+                            currentTotals = {}; // Reset total untuk tanggal baru
+                        }
+
+                        // Hitung total untuk tanggal saat ini
+                        Object.keys(row.shiftcount).forEach(shiftName => {
+                            if (!currentTotals[shiftName]) {
+                                currentTotals[shiftName] = 0;
+                            }
+                            currentTotals[shiftName] += row.shiftcount[shiftName];
+                        });
+
+                        // Hitung total keseluruhan
+                        Object.keys(row.shiftcount).forEach(shiftName => {
+                            if (!shiftTotals[shiftName]) {
+                                shiftTotals[shiftName] = 0;
+                            }
+                            shiftTotals[shiftName] += row.shiftcount[shiftName];
+                        });
+                    });
+
+                    // Tambahkan total untuk tanggal terakhir
+                    if (currentDate !== null) {
+                        appendTotalRow(currentDate, currentTotals, tbody);
+                    }
+
+                    // Fungsi untuk menambahkan baris total
+                    function appendTotalRow(date, totals, tbody) {
+                        var totalRow = '<tr class="total-row"><td colspan="3"><strong>TOTAL ' + date +
+                            '</strong></td>';
+                        let shiftNames = $('#dynamicHeaders th:gt(2)').map(function() {
+                            return $(this).text();
+                        }).get();
+                        shiftNames.forEach(shiftName => {
+                            let value = totals[shiftName] ||
+                                0; // Isi dengan 0 jika tidak ada data
+                            totalRow += '<td><strong>' + value + '</strong></td>';
+                        });
+                        totalRow += '</tr>';
+                        tbody.append(totalRow);
+                    }
                 }
             });
 
