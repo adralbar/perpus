@@ -38,6 +38,7 @@
                                         <th>No</th>
                                         <th>Tanggal</th>
                                         <th>Shift</th>
+                                        <th>department</th>
                                         <th>Jumlah Shift</th>
                                         <th>Jumlah NPK</th>
                                     </tr>
@@ -92,6 +93,10 @@
                     {
                         data: 'shift1',
                         name: 'shift1'
+                    },
+                    {
+                        data: 'department_nama',
+                        name: 'department_nama'
                     },
                     {
                         data: 'shiftcount',

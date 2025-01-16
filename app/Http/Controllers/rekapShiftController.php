@@ -40,6 +40,7 @@ class rekapShiftController extends Controller
             'kategorishift.date',
             'latest_shift.latest_created_at'
         ])
+            ->with(['user.department']) // Eager loading relasi user dan department
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             // Subquery untuk mendapatkan shift terbaru berdasarkan npk, date, dan created_at
             ->join(DB::raw('(
@@ -56,9 +57,9 @@ class rekapShiftController extends Controller
             ->whereBetween('kategorishift.date', [$startDate, $endDate])
             ->get();
 
-        // Mengelompokkan data berdasarkan date dan shift1
+        // Mengelompokkan data berdasarkan date, shift1, dan department_nama
         $groupedData = $data->groupBy(function ($item) {
-            return $item->date . '-' . $item->shift1;
+            return $item->date . '-' . $item->shift1 . '-' . $item->user->department->nama;
         });
 
         // Menghitung jumlah untuk setiap grup
@@ -66,6 +67,7 @@ class rekapShiftController extends Controller
             return [
                 'date' => $group->first()->date,
                 'shift1' => $group->first()->shift1,
+                'department_nama' => $group->first()->user->department->nama, // Ambil nama departemen
                 'shiftcount' => $group->count(),
                 'npkCount' => $group->pluck('npk')->unique()->count(),
             ];
@@ -74,6 +76,8 @@ class rekapShiftController extends Controller
         // Mengembalikan data yang sudah dikelompokkan dan dihitung
         return response()->json($result->values());
     }
+
+
     public function detail()
     {
         $data = shift::select([
