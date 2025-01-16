@@ -116,6 +116,9 @@
                     targets: '_all', // Menargetkan semua kolom
                     className: 'text-left' // Mengatur kolom agar rata kiri
                 }],
+                paging: false, // Matikan paging
+                lengthChange: false, // Matikan pengaturan entries per page
+                info: false, // Matikan info
                 rowCallback: function(row, data, index) {
                     // Tambahkan nomor urut
                     $('td:eq(0)', row).html(index + 1);
