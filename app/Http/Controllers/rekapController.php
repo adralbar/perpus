@@ -82,21 +82,21 @@ class rekapController extends Controller
         $checkoutQuery = Absensico::with(['user', 'shift'])
             ->select('npk', 'tanggal', DB::raw('MAX(waktuco) as waktuco'))
             ->where(function ($query) use ($startDate, $endDate) {
-                // Kondisi untuk waktu dalam rentang 00:00 - 10:00
-                $query->whereBetween('waktuco', ['00:00:00', '10:00:00']);
-
-                // Kondisi untuk tanggal dalam range
+                // Kondisi untuk tanggal dalam range startDate hingga endDate
                 if (!empty($startDate) && !empty($endDate)) {
-                    $query->where(function ($subQuery) use ($startDate, $endDate) {
-                        // Kondisi untuk tanggal start hingga endDate
-                        $subQuery->whereBetween('tanggal', [$startDate, $endDate])
-                            ->orWhere(function ($orQuery) use ($endDate) {
-                                // Tambahkan kondisi untuk endDate + 1 hari
-                                $orQuery->whereDate('tanggal', '=', \Carbon\Carbon::parse($endDate)->addDay()->toDateString());
-                            });
+                    $query->whereBetween('tanggal', [$startDate, $endDate]);
+                }
+
+                // Kondisi untuk tanggal endDate + 1 hari dengan waktu antara 00:00 - 10:00
+                if (!empty($endDate)) {
+                    $query->orWhere(function ($subQuery) use ($endDate) {
+                        $nextDay = \Carbon\Carbon::parse($endDate)->addDay()->toDateString();
+                        $subQuery->whereDate('tanggal', '=', $nextDay)
+                            ->whereBetween('waktuco', ['00:00:00', '10:00:00']);
                     });
                 }
             })
+
             ->groupBy('npk', 'tanggal');
 
 
