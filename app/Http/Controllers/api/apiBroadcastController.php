@@ -327,17 +327,18 @@ class apiBroadcastController extends Controller
             } elseif (!str_starts_with($phoneNumber, '62')) {
                 $phoneNumber = '62' . $phoneNumber;
             }
-            
+
             $userResults = $sortedResults->where('npk', $user->npk);
             foreach ($userResults as $result) {
                 $message = "";
                 $tanggal = $result['tanggal'] ?? 'Tidak diketahui';
                 if ($result['status'] === 'Terlambat') {
                     $waktuTerlambat = $result['waktuci'] ?? 'Tidak diketahui';
-                    $message = "Anda terlambat pada tanggal {$tanggal} pukul {$waktuTerlambat}. Mohon perbaiki absensi Anda.";
+                    $message = "Salam aku Prima!\n\nAnda terlambat pada tanggal {$tanggal} pukul {$waktuTerlambat}. Mohon perbaiki absensi Anda.\n\nHC & GA PT Autoplastik Indonesia";
                 } elseif ($result['status'] === 'Mangkir') {
-                    $message = "Anda tidak hadir pada tanggal {$tanggal}. Mohon perbaiki absensi Anda.";
+                    $message = "Salam aku Prima!\n\nAnda tidak hadir / Mangkir pada tanggal {$tanggal}. Mohon perbaiki absensi Anda.\n\nHC & GA PT Autoplastik Indonesia";
                 }
+
                 if ($message) {
                     $data = [
                         'destination' => $phoneNumber,
