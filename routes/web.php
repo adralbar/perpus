@@ -72,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rekap-shift-data',  [rekapShiftController::class, 'getData'])->name('rekapshiftdata');
         Route::get('/rekap-shift-data-detail',  [rekapShiftController::class, 'detail'])->name('rekapshiftdetail');
 
+        Route::get('/rekap-shift-data-persection',  [rekapShiftController::class, 'getDataPerSection'])->name('rekapshiftdata.persection');
 
 
         Route::get('/users/export',  [UsersController::class, 'export'])->name('exportUsers');

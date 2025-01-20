@@ -85,6 +85,61 @@ class rekapShiftController extends Controller
     }
 
 
+    public function getDataPerSection(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        // Query data seperti yang sudah Anda buat
+        $data = shift::select([
+            'kategorishift.npk',
+            'kategorishift.shift1',
+            'kategorishift.date',
+            'latest_shift.latest_created_at',
+            'master_shift.shift_name' // Menambahkan shift_name dari master_shift
+        ])
+            ->with(['user.section'])
+            ->join('users', 'kategorishift.npk', '=', 'users.npk')
+            ->join(DB::raw('(
+            SELECT npk, date, MAX(created_at) as latest_created_at
+            FROM kategorishift
+            GROUP BY npk, date
+        ) AS latest_shift'), function ($join) {
+                $join->on('kategorishift.npk', '=', 'latest_shift.npk')
+                    ->on('kategorishift.date', '=', 'latest_shift.date')
+                    ->on('kategorishift.created_at', '=', 'latest_shift.latest_created_at');
+            })
+            ->join('master_shift', 'kategorishift.shift1', '=', 'master_shift.waktu')
+            ->distinct()
+            ->orderBy('kategorishift.date', 'DESC')
+            ->whereBetween('kategorishift.date', [$startDate, $endDate])
+            ->get();
+
+        // Mengelompokkan data berdasarkan date dan department_id
+        $groupedData = $data->groupBy(function ($item) {
+            return $item->date . '-' . $item->user->section->id;
+        });
+
+        // Mengubah data menjadi format yang sesuai untuk DataTables
+        $result = $groupedData->map(function ($group) {
+            $row = [
+                'date' => $group->first()->date,
+                'section_nama' => $group->first()->user->section->nama,
+                'shiftcount' => [], // Array untuk jumlah shift per shift_name
+            ];
+
+            // Menyusun jumlah shift berdasarkan shift_name
+            foreach ($group as $item) {
+                $row['shiftcount'][$item->shift_name] = isset($row['shiftcount'][$item->shift_name]) ? $row['shiftcount'][$item->shift_name] + 1 : 1;
+            }
+
+            return $row;
+        });
+
+        // Mengembalikan data yang sudah dikelompokkan dan dihitung
+        return response()->json($result->values());
+    }
+
     public function detail()
     {
         $data = shift::select([

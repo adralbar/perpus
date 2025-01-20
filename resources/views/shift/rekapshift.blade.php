@@ -28,6 +28,10 @@
                     <button id="loadDataBtn" type="button" class="btn btn-primary btn-sm" style="border-radius: 5px;">
                         Tampilkan Data
                     </button>
+                    <button id="loadDataBtnSection" type="button" class="btn btn-primary btn-sm"
+                        style="border-radius: 5px;">
+                        Tampilkan Data Persection
+                    </button>
                 </div>
                 <div class="mb-3">
                     <div class="modal-body">
@@ -36,7 +40,7 @@
                                 <thead class="table-light">
                                     <tr id="dynamicHeaders">
                                         <th>No</th>
-                                        <th>Departemen</th>
+                                        <th>Department</th>
                                         <th>Tanggal</th>
                                     </tr>
                                 </thead>
@@ -66,6 +70,15 @@
             });
         };
         $(document).ready(function() {
+            let columnData = 'department_nama'; // Default data source untuk kolom kedua
+
+            $('#loadDataBtnSection').click(function() {
+                columnData = 'section_nama';
+                $('#dynamicHeaders th:nth-child(2)').text('Section');
+                table.ajax.url("{{ route('rekapshiftdata.persection') }}")
+                    .load(); // Ubah URL AJAX dan reload data
+            });
+
             var table = $('#myTable').DataTable({
                 processing: true,
                 serverSide: false,
@@ -102,10 +115,14 @@
                         searchable: false
                     }, // Nomor
                     {
-                        data: 'department_nama',
-                        name: 'department_nama',
+                        data: function(row) {
+                            return row[
+                                columnData
+                            ]; // Gunakan variabel `columnData` untuk menentukan sumber data
+                        },
+                        name: columnData,
                         orderable: false
-                    }, // Departemen
+                    },
                     {
                         data: 'date',
                         name: 'date',
@@ -201,8 +218,12 @@
 
             // Reload data ketika tombol ditekan
             $('#loadDataBtn').click(function() {
-                table.ajax.reload();
+                $('#dynamicHeaders th:nth-child(2)').text('Department');
+                table.ajax.url("{{ route('rekapshiftdata') }}").load(); // Set URL untuk data departemen
+                columnData = 'department_nama';
             });
+
+
         });
     </script>
 @endsection
