@@ -49,6 +49,27 @@
                                     <!-- Data will be populated here via AJAX -->
                                 </tbody>
                             </table>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover" id="myTable2">
+                                <thead class="table-light">
+                                    <tr id="dynamicHeaders1">
+                                        <th>No</th>
+                                        <th>Department</th>
+                                        <th>Section</th>
+                                        <th>Tanggal</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <!-- Data will be populated here via AJAX -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -61,6 +82,7 @@
     <script src="{{ asset('dist/js/sweetalert.js') }}"></script>
 
     <script>
+        $('#myTable2').hide();
         window.onload = function() {
             Swal.fire({
                 title: 'Perhatian!',
@@ -70,16 +92,7 @@
             });
         };
         $(document).ready(function() {
-            let columnData = 'department_nama'; // Default data source untuk kolom kedua
-
-            $('#loadDataBtnSection').click(function() {
-                columnData = 'section_nama';
-                $('#dynamicHeaders th:nth-child(2)').text('Section');
-                table.ajax.url("{{ route('rekapshiftdata.persection') }}")
-                    .load(); // Ubah URL AJAX dan reload data
-            });
-
-            var table = $('#myTable').DataTable({
+            var table1 = $('#myTable').DataTable({
                 processing: true,
                 serverSide: false,
                 ajax: {
@@ -115,12 +128,8 @@
                         searchable: false
                     }, // Nomor
                     {
-                        data: function(row) {
-                            return row[
-                                columnData
-                            ]; // Gunakan variabel `columnData` untuk menentukan sumber data
-                        },
-                        name: columnData,
+                        data: 'department_nama',
+                        name: 'department_nama',
                         orderable: false
                     },
                     {
@@ -136,6 +145,7 @@
                 paging: false, // Matikan paging
                 lengthChange: false, // Matikan pengaturan entries per page
                 info: false, // Matikan info
+                searching: false,
                 rowCallback: function(row, data, index) {
                     // Tambahkan nomor urut
                     $('td:eq(0)', row).html(index + 1);
@@ -216,14 +226,158 @@
                 }
             });
 
-            // Reload data ketika tombol ditekan
-            $('#loadDataBtn').click(function() {
-                $('#dynamicHeaders th:nth-child(2)').text('Department');
-                table.ajax.url("{{ route('rekapshiftdata') }}").load(); // Set URL untuk data departemen
-                columnData = 'department_nama';
+            var table2 = $('#myTable2').DataTable({
+                processing: true,
+                serverSide: false,
+                ajax: {
+                    url: "{{ route('rekapshiftdata.persection') }}", // Route untuk mengambil data
+                    data: function(d) {
+                        d.startDate = $('#startDate').val(); // Filter tanggal
+                        d.endDate = $('#endDate').val();
+                    },
+                    dataSrc: function(json) {
+                        // Ambil shift_name dari hasil data untuk membuat header dinamis
+                        let shiftNames = [];
+                        json.forEach(row => {
+                            Object.keys(row.shiftcount).forEach(shiftName => {
+                                if (!shiftNames.includes(shiftName)) {
+                                    shiftNames.push(shiftName);
+                                }
+                            });
+                        });
+
+                        // Tambahkan header dinamis ke tabel
+                        var headers = $('#dynamicHeaders1');
+                        headers.find('th:gt(3)').remove(); // Hapus header shift lama
+                        shiftNames.forEach(shiftName => {
+                            headers.append('<th>' + shiftName + '</th>');
+                        });
+
+                        return json; // Kembalikan data untuk DataTables
+                    }
+                },
+                columns: [{
+                        data: null,
+                        orderable: false,
+                        searchable: false
+                    }, // Nomor
+                    {
+                        data: 'department_nama',
+                        name: 'department_nama',
+                        orderable: false
+                    },
+                    {
+                        data: 'section_nama',
+                        name: 'section_nama',
+                        orderable: false
+                    },
+                    {
+                        data: 'date',
+                        name: 'date',
+                        orderable: false
+                    } // Tanggal
+                ],
+                columnDefs: [{
+                    targets: '_all', // Menargetkan semua kolom
+                    className: 'text-left' // Mengatur kolom agar rata kiri
+                }],
+                paging: false, // Matikan paging
+                lengthChange: false, // Matikan pengaturan entries per page
+                info: false, // Matikan info
+                searching: false,
+                rowCallback: function(row, data, index) {
+                    // Tambahkan nomor urut
+                    $('td:eq(0)', row).html(index + 1);
+
+                    // Ambil header shift dinamis
+                    let shiftNames = $('#dynamicHeaders1 th:gt(3)').map(function() {
+                        return $(this).text();
+                    }).get();
+
+                    // Tambahkan kolom dinamis untuk setiap shift
+                    let shiftCounts = data.shiftcount;
+                    shiftNames.forEach(shiftName => {
+                        let value = shiftCounts[shiftName] ||
+                            0; // Isi dengan 0 jika tidak ada data
+                        $(row).append('<td>' + value + '</td>');
+                    });
+                },
+                drawCallback: function(settings) {
+                    // Hitung total untuk setiap tanggal
+                    var api = this.api();
+                    var rows = api.rows({
+                        page: 'current'
+                    }).data();
+                    var shiftTotals = {};
+                    var currentTotals = {};
+                    var currentDate = null;
+
+                    var tbody = $('#myTable2  tbody');
+                    tbody.find('tr.total-row').remove(); // Hapus total sebelumnya
+
+                    rows.each(function(row, index) {
+                        if (currentDate !== row.date) {
+                            if (currentDate !== null) {
+                                // Tambahkan baris total untuk tanggal sebelumnya
+                                appendTotalRow(currentDate, currentTotals, tbody);
+                            }
+                            currentDate = row.date;
+                            currentTotals = {}; // Reset total untuk tanggal baru
+                        }
+
+                        // Hitung total untuk tanggal saat ini
+                        Object.keys(row.shiftcount).forEach(shiftName => {
+                            if (!currentTotals[shiftName]) {
+                                currentTotals[shiftName] = 0;
+                            }
+                            currentTotals[shiftName] += row.shiftcount[shiftName];
+                        });
+
+                        // Hitung total keseluruhan
+                        Object.keys(row.shiftcount).forEach(shiftName => {
+                            if (!shiftTotals[shiftName]) {
+                                shiftTotals[shiftName] = 0;
+                            }
+                            shiftTotals[shiftName] += row.shiftcount[shiftName];
+                        });
+                    });
+
+                    // Tambahkan total untuk tanggal terakhir
+                    if (currentDate !== null) {
+                        appendTotalRow(currentDate, currentTotals, tbody);
+                    }
+
+                    // Fungsi untuk menambahkan baris total
+                    function appendTotalRow(date, totals, tbody) {
+                        var totalRow = '<tr class="total-row"><td colspan="3"><strong>TOTAL ' + date +
+                            '</strong></td>';
+                        let shiftNames = $('#dynamicHeaders1 th:gt(2)').map(function() {
+                            return $(this).text();
+                        }).get();
+                        shiftNames.forEach(shiftName => {
+                            let value = totals[shiftName] ||
+                                0; // Isi dengan 0 jika tidak ada data
+                            totalRow += '<td><strong>' + value + '</strong></td>';
+                        });
+                        totalRow += '</tr>';
+                        tbody.append(totalRow);
+                    }
+                }
             });
 
+            // Fungsi untuk memuat ulang tabel pertama
+            $('#loadDataBtn').click(function() {
+                table1.ajax.reload(); // Reload data for table1
+                $('#myTable2').hide(); // Hide table2
+                $('#myTable').show(); // Show table1 (if hidden previously)
+            });
 
+            // Reload data for table2 and hide table1 when #loadDataBtnSection is clicked
+            $('#loadDataBtnSection').click(function() {
+                table2.ajax.reload(); // Reload data for table2
+                $('#myTable').hide(); // Hide table1
+                $('#myTable2').show(); // Show table2 (if hidden previously)
+            });
         });
     </script>
 @endsection

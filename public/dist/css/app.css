@@ -83,6 +83,10 @@
     box-shadow: none; /* Menghapus bayangan jika ada */
 }
 
+#myTable2 tbody td {
+ 
+    white-space: nowrap;
+}
 
 
 

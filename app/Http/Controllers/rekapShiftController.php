@@ -99,6 +99,7 @@ class rekapShiftController extends Controller
             'master_shift.shift_name' // Menambahkan shift_name dari master_shift
         ])
             ->with(['user.section'])
+            ->with(['user.department'])
             ->join('users', 'kategorishift.npk', '=', 'users.npk')
             ->join(DB::raw('(
             SELECT npk, date, MAX(created_at) as latest_created_at
@@ -124,6 +125,7 @@ class rekapShiftController extends Controller
         $result = $groupedData->map(function ($group) {
             $row = [
                 'date' => $group->first()->date,
+                'department_nama' => $group->first()->user->department->nama,
                 'section_nama' => $group->first()->user->section->nama,
                 'shiftcount' => [], // Array untuk jumlah shift per shift_name
             ];
