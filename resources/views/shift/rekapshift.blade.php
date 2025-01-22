@@ -36,7 +36,7 @@
                 <div class="mb-3">
                     <div class="modal-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-hover" id="myTable">
+                            <table class="table table-striped table-hover" id="myTable">
                                 <thead class="table-light">
                                     <tr id="dynamicHeaders">
                                         <th>No</th>
@@ -56,7 +56,7 @@
                 <div class="mb-3">
                     <div class="modal-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-hover" id="myTable2">
+                            <table class="table table-striped table-hover" id="myTable2">
                                 <thead class="table-light">
                                     <tr id="dynamicHeaders1">
                                         <th>No</th>
@@ -301,6 +301,13 @@
                             0; // Isi dengan 0 jika tidak ada data
                         $(row).append('<td>' + value + '</td>');
                     });
+                    if (index > 0) {
+                        let prevRow = table2.row(index - 1).data();
+                        if (prevRow.department_nama === data.department_nama && prevRow.date === data
+                            .date) {
+                            $('td:eq(1)', row).html('');
+                        }
+                    }
                 },
                 drawCallback: function(settings) {
                     // Hitung total untuk setiap tanggal
@@ -365,18 +372,16 @@
                 }
             });
 
-            // Fungsi untuk memuat ulang tabel pertama
             $('#loadDataBtn').click(function() {
-                table1.ajax.reload(); // Reload data for table1
-                $('#myTable2').hide(); // Hide table2
-                $('#myTable').show(); // Show table1 (if hidden previously)
+                table1.ajax.reload();
+                $('#myTable2').hide();
+                $('#myTable').show();
             });
 
-            // Reload data for table2 and hide table1 when #loadDataBtnSection is clicked
             $('#loadDataBtnSection').click(function() {
-                table2.ajax.reload(); // Reload data for table2
-                $('#myTable').hide(); // Hide table1
-                $('#myTable2').show(); // Show table2 (if hidden previously)
+                table2.ajax.reload();
+                $('#myTable').hide();
+                $('#myTable2').show();
             });
         });
     </script>
