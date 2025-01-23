@@ -147,41 +147,57 @@ class UsersController extends Controller
 
     public function update(Request $request, $npk)
     {
-        $request->validate([
-            'nama' => 'required',
-            'password' => 'nullable|min:6',
-            'no_telp' => 'required',
-            'division_id' => 'required',
-            'department_id' => 'required',
-            'section_id' => 'required',
-            'role_id' => 'required',
-            'status' => 'nullable',
-        ], [
-            'nama.required' => 'Nama wajib diisi.',
-            'no_telp.required' => 'no_telp wajib diisi.',
-            'password.min' => 'Password minimal 6 karakter.',
-            'Division_id.required' => 'Division wajib dipilih.',
-            'department_id.required' => 'Departemen wajib dipilih.',
-            'Section_id.required' => 'Section wajib dipilih.',
-            'role_id.required' => 'Role wajib dipilih.',
-        ]);
-        $user = User::where('npk', $npk)->firstOrFail();
-        $user->nama = $request->nama;
-        $user->no_telp = $request->no_telp;
-        $user->division_id = $request->division_id;
-        $user->department_id = $request->department_id;
-        $user->section_id = $request->section_id;
-        $user->role_id = $request->role_id;
-        $user->status = $request->status;
+        try {
+            $request->validate([
+                'npk_sistem' => 'required',
+                'npk' => 'required',
+                'nama' => 'required',
+                'password' => 'required',
+                'no_telp' => 'required',
+                'division_id' => 'required',
+                'department_id' => 'required',
+                'section_id' => 'required',
+                'role_id' => 'required',
+                'status' => 'nullable',
+            ], [
+                'nama.required' => 'Nama wajib diisi.',
+                'no_telp.required' => 'Nomor telepon wajib diisi.',
+                'password.required' => 'Password minimal 6 karakter.',
+                'division_id.required' => 'Divisi wajib dipilih.',
+                'department_id.required' => 'Departemen wajib dipilih.',
+                'section_id.required' => 'Section wajib dipilih.',
+                'role_id.required' => 'Role wajib dipilih.',
+            ]);
 
-        if ($request->filled('password')) {
-            $user->password = bcrypt($request->password);
+            // Cari user berdasarkan NPK
+            $user = User::where('npk', $npk)->firstOrFail();
+
+            $user->npk_sistem = $request->npk_sistem;
+            $user->npk = $request->npk;
+            $user->nama = $request->nama;
+            $user->no_telp = $request->no_telp;
+            $user->division_id = $request->division_id;
+            $user->department_id = $request->department_id;
+            $user->section_id = $request->section_id;
+            $user->role_id = $request->role_id;
+            $user->status = $request->status;
+
+            // Update password jika disediakan
+            if ($request->filled('password')) {
+                $user->password = bcrypt($request->password);
+            }
+
+            // Simpan perubahan
+            $user->save();
+
+            // Redirect dengan pesan sukses
+            return redirect('/user')->with('success', 'Data User berhasil diperbarui.');
+        } catch (\Exception $e) {
+            // Redirect dengan pesan error jika terjadi kesalahan
+            return redirect('/user')->with('error', 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage());
         }
-
-        $user->save();
-
-        return redirect('/user')->with('success', 'Data User berhasil diperbarui.');
     }
+
 
     public function destroy($npk)
     {

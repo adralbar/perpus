@@ -59,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/user', [UsersController::class, 'store']);
         Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
         Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
-        Route::put('/user/update/{npk}', [UsersController::class, 'update']);
+        Route::put('/user/update/{npk}', [UsersController::class, 'update'])->name('user.update');
         Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
         Route::get('section-data', [UsersController::class, 'getDepartmentAndDivision'])->name('section.data');
         Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');

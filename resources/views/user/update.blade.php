@@ -10,7 +10,7 @@
                         <p class="pl-3 pb-3 font-weight-bold h3">Update Data Karyawan</p>
                         <div class="card">
                             <div class="card-body">
-                                <form action="{{ url('user/update/' . $user->npk) }}" method="POST">
+                                <form action="{{ route('user.update', $user->npk) }}" method="POST">
                                     @csrf
                                     @method('PUT')
                                     <div class="row">
