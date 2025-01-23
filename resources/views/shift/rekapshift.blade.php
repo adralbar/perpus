@@ -277,6 +277,10 @@
                         orderable: false
                     } // Tanggal
                 ],
+                order: [
+                    [3, 'desc'],
+                    [1, 'asc']
+                ],
                 columnDefs: [{
                     targets: '_all', // Menargetkan semua kolom
                     className: 'text-left' // Mengatur kolom agar rata kiri
@@ -289,7 +293,7 @@
                     // Tambahkan nomor urut
                     $('td:eq(0)', row).html(index + 1);
 
-                    // Ambil header shift dinamis
+                    // Ambil shift header dinamis
                     let shiftNames = $('#dynamicHeaders1 th:gt(3)').map(function() {
                         return $(this).text();
                     }).get();
@@ -297,14 +301,19 @@
                     // Tambahkan kolom dinamis untuk setiap shift
                     let shiftCounts = data.shiftcount;
                     shiftNames.forEach(shiftName => {
-                        let value = shiftCounts[shiftName] ||
-                            0; // Isi dengan 0 jika tidak ada data
+                        let value = shiftCounts[shiftName] || 0;
                         $(row).append('<td>' + value + '</td>');
                     });
+
+                    // Sembunyikan nama departemen jika sama dengan sebelumnya
+                    let api = this.api();
+                    let rows = api.rows({
+                        page: 'current'
+                    }).data();
+
                     if (index > 0) {
-                        let prevRow = table2.row(index - 1).data();
-                        if (prevRow.department_nama === data.department_nama && prevRow.date === data
-                            .date) {
+                        let prevRow = rows[index - 1];
+                        if (prevRow.department_nama === data.department_nama) {
                             $('td:eq(1)', row).html('');
                         }
                     }
