@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>API REGIST</title>
+    <title>PERPUS REGIST</title>
 
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -25,8 +25,6 @@
                 <a href="/login" class="h1"><b>REGISTER</b></a>
             </div>
             <div class="card-body">
-                <img src="dist/img/LogoApi.png" alt="Api Logo" class="logo-api rounded img-fluid w-50"
-                    style="display: block; margin: 0 auto;"></img>
                 <form action="{{ route('register') }}" method="post">
                     @csrf
 
@@ -39,10 +37,19 @@
                             </ul>
                         </div>
                     @endif
+                    <div class="input-group mb-3">
+                        <input type="text" name="nama" class="form-control" placeholder="Nama"
+                            value="{{ old('nama') }}">
+                        <div class="input-group-append">
+                            <div class="input-group-text">
+                                <span class="bi bi-person-fill"></span>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="input-group mb-3">
-                        <input type="text" name="username" class="form-control" placeholder="Username"
-                            value="{{ old('username') }}">
+                        <input type="text" name="email" class="form-control" placeholder="Email"
+                            value="{{ old('email') }}">
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="bi bi-person-fill"></span>
@@ -77,6 +84,8 @@
                         </div>
                     </div>
                 </form>
+                <a href="/login" style="display: block; text-align: center; font-size: 15px;">Sudah Punya Akun?</a>
+
             </div>
 
         </div>

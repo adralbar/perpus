@@ -20,14 +20,16 @@ class registController extends Controller
     {
         // Validasi input
         $validator = Validator::make($request->all(), [
-            'username' => 'required|string|unique:users',
-            'password' => 'required|string|confirmed|min:8',
+            'nama' => 'required|string',
+            'email' => 'required|string|unique:users',
+            'password' => 'required|string|confirmed|min:4',
         ], [
-            'username.required' => 'Username wajib diisi',
-            'username.unique' => 'Username sudah terdaftar',
+            'email.required' => 'email wajib diisi',
+            'email.required' => 'email wajib diisi',
+            'email.unique' => 'email sudah terdaftar',
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak cocok',
-            'password.min' => 'Password harus memiliki minimal 8 karakter',
+            'password.min' => 'Password harus memiliki minimal 4 karakter',
         ]);
 
         if ($validator->fails()) {
@@ -36,8 +38,10 @@ class registController extends Controller
 
         // Buat pengguna baru
         User::create([
-            'username' => $request->username,
+            'nama' => $request->nama,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role_id' => '2',
         ]);
 
         return redirect()->route('login')->with('success', 'Registrasi berhasil, silakan login.');

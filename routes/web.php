@@ -2,6 +2,7 @@
 
 use Database\Seeders\users;
 use Illuminate\Http\Request;
+use App\Http\Controllers\readlist;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\mainController;
 use App\Http\Controllers\loginController;
@@ -11,129 +12,51 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\registController;
 use App\Http\Controllers\uploadController;
 use App\Http\Controllers\absensiController;
+use App\Http\Controllers\katalogController;
 use App\Http\Controllers\performaController;
 use App\Http\Controllers\absensiCoController;
 use App\Http\Controllers\dashboardController;
 use App\Http\Controllers\rekapShiftController;
 use App\Http\Controllers\MasterShiftController;
+use App\Http\Controllers\daftarpinjamcontroller;
 use App\Http\Controllers\PenyimpanganController;
 
-
+Route::get('/', function () {
+    return redirect('/login');
+});
 Route::get('/login', [loginController::class, 'loginForm'])->name('login');
 Route::post('/login', [loginController::class, 'authenticate']);
+Route::get('/regist', [registController::class, 'showRegistrationForm'])->name('register.form');
+Route::post('/regist', [registController::class, 'register'])->name('register');
 
 Route::middleware(['auth'])->group(function () {
     //route dashboard
-    Route::middleware(['userAksesMenu:6,1'])->group(function () {
-        Route::get('/', [dashboardController::class, 'index'])->name('dashboard.index');
-        Route::get('/data-table1', [dashboardController::class, 'getTable1Data'])->name('data.table1');
-        Route::get('/data-table2', [dashboardController::class, 'getTable2Data'])->name('data.table2');
-        Route::get('/data-table1/details', [dashboardController::class, 'getTable1Details'])->name('data.table1.details');
-        Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard');
-        Route::get('/data/chart', [dashboardController::class, 'getChartData'])->name('data.chart'); //gakepake
-        Route::get('/data/chart/hari', [dashboardController::class, 'getDataPerTanggal'])->name('data.perTanggal'); //gakepake
-        Route::get('data/table1', [dashboardController::class, 'getTable1bData'])->name('data.table1b');
+    Route::middleware(['userAksesMenu:1,2'])->group(function () {
+        Route::get('/dashboard', [dashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/katalog', [katalogController::class, 'index'])->name('katalog.index');
+        Route::get('/katalog-data-dashboard', [katalogController::class, 'getBukuDashboard'])->name('katalog.getBuku-dashboard');
+        Route::get('/katalog-data', [katalogController::class, 'getBuku'])->name('katalog.getBuku');
+        Route::post('/katalog/store', [katalogController::class, 'storeDaftarBuku'])->name('storeDaftarBuku');
+        Route::get('/buku/detail/{id}', [katalogController::class, 'showDetail'])->name('buku.detail');
 
-        //route rekap
-        Route::get('/rekap', [rekapController::class, 'index'])->name('rekap.index');
-        Route::get('/get-data', [rekapController::class, 'getData'])->name('rekap.getData');
-        Route::post('/rekap/checkin', [rekapController::class, 'storeCheckin'])->name('rekap.storeCheckin');
-        Route::post('/rekap/checkout', [rekapController::class, 'storeCheckout'])->name('rekap.storeCheckout');
-        Route::get('/rekap/export', [RekapController::class, 'exportAbsensi'])->name('rekap.exportFilteredData');
-        Route::post('/upload', [rekapController::class, 'upload'])->name('upload');
-        Route::get('/get-attendance', [rekapController::class, 'getallattendance'])->name('rekap.attendance');
-        Route::post('/update-data/{npk}/{tanggal}', [rekapController::class, 'updateData'])->name('edit.data');
-        Route::post('/delete-absen', [rekapController::class, 'delete'])->name('hapus.absen');
+        Route::delete('buku/{id}', [katalogController::class, 'destroy'])->name('buku.destroy');
+        Route::post('buku/update/{id}', [katalogController::class, 'storeDaftarBuku'])->name('editDaftarBuku');
+        Route::get('/buku/detail2/{id}', [katalogController::class, 'showDetail2'])->name('buku.detail');
+        Route::get('/daftarpinjam/getbuku', [daftarpinjamcontroller::class, 'getBuku'])->name('daftarpinjam.getbuku');
+        Route::get('/daftarpinjam', [daftarpinjamcontroller::class, 'index'])->name('daftarpinjam.index');
+        Route::put('buku/update/{id}', [katalogController::class, 'updateDaftarBuku']);
 
-        //route performa
-        Route::get('/performa', [performaController::class, 'index'])->name('performa.index');
-        Route::get('/performa/get-data', [performaController::class, 'getData'])->name('performa.getData');
-        Route::post('/performa/storelog', [performaController::class, 'storeLogs'])->name('performa.storeLogs');
-        Route::post('/performa/storeuserid', [performaController::class, 'storeUserId'])->name('performa.storeUserId');
-        Route::get('/performa/export', [performaController::class, 'performaExport'])->name('performa.export');
-        Route::get('/get-penyimpangan', [rekapController::class, 'getPenyimpangan'])->name('getPenyimpangan');
-        Route::get('/get-cuti', [rekapController::class, 'getCuti'])->name('getCuti');
-
-
-        Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
-        Route::post('/user', [UsersController::class, 'store']);
-        Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
-        Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
-        Route::put('/user/update/{npk}', [UsersController::class, 'update'])->name('user.update');
-        Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
-        Route::get('section-data', [UsersController::class, 'getDepartmentAndDivision'])->name('section.data');
-        Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
-
-        //trash
-        Route::resource('absensiControllerAjax', absensiController::class);
-        Route::resource('absensiCoControllerAjax', absensiCoController::class);
-        Route::resource('master-shift', MasterShiftController::class);
-        Route::get('/rekap-shift',  [rekapShiftController::class, 'index'])->name('rekapshift');
-        Route::get('/rekap-shift-data',  [rekapShiftController::class, 'getData'])->name('rekapshiftdata');
-        Route::get('/rekap-shift-data-detail',  [rekapShiftController::class, 'detail'])->name('rekapshiftdetail');
-
-        Route::get('/rekap-shift-data-persection',  [rekapShiftController::class, 'getDataPerSection'])->name('rekapshiftdata.persection');
-
-
-        Route::get('/users/export',  [UsersController::class, 'export'])->name('exportUsers');
+        Route::put('/daftarpinjam/update/{id}', [DaftarPinjamController::class, 'updateStatus']);
     });
+    Route::middleware(['userAksesMenu:2'])->group(function () {
+        Route::get('/readlist', [readlist::class, 'index'])->name('readlist.index');
+        Route::get('readlist/getbuku', [readlist::class, 'getBuku'])->name('readlist.getbuku');
+        Route::post('/add-to-readlist', [katalogController::class, 'tambahKeReadlist'])->name('addToReadlist');
+        Route::get('/check-readlist', [katalogController::class, 'checkReadlist'])->name('check-readlist');
 
-    Route::middleware(['userAksesMenu:6,1,2,9'])->group(function () {
-
-        //route shift
-        Route::get('/shift', [ShiftController::class, 'index'])->name('shift.index');
-        Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
-        Route::get('/shift-history', [ShiftController::class, 'getShiftHistory'])->name('shift.history');
-        Route::post('/store', [shiftController::class, 'store'])->name('shift.store');
-        Route::post('/store2', [shiftController::class, 'store2'])->name('shift.store2');
-        Route::get('/shift-data/{id}', [shiftController::class, 'edit'])->name('shift.edit');
-        Route::put('/update/{id}', [shiftController::class, 'update'])->name('shift.update');
-        Route::delete('/destroy/{id}', [shiftController::class, 'destroy'])->name('shift.destroy');
-        Route::post('/fileupload', [shiftController::class, 'importProcess'])->name('shift.import');
-        Route::post('/shift/update', [ShiftController::class, 'update'])->name('shift.update');
-        Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
-        Route::get('/shiftapi', [shiftController::class, 'shiftApi'])->name('shiftapi');
-        Route::get('/export-data', [shiftController::class, 'exportData'])->name('exportData');
-        Route::get('/exporttemplate', [shiftController::class, 'templateExport'])->name('exportTemplate');
-        Route::get('/getKaryawan', [rekapController::class, 'getKaryawan'])->name('get.karyawan');
-        Route::get('/getDepartments', [rekapController::class, 'getDepartments'])->name('get.department');
-
-
-        //route data karyawan
-
+        Route::post('/add-to-pinjam', [katalogController::class, 'tambahKePinjam'])->name('addTopinjam');
+        Route::get('/check-pinjam', [katalogController::class, 'checkpinjam'])->name('check-pinjam');
     });
 });
 
-// Route::middleware(['auth', 'userAksesMenu:2'])->group(function () {
-//     Route::get('/shift', [ShiftController::class, 'index'])->name('shift.index');
-//     Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
-//     Route::get('/shift-history', [ShiftController::class, 'getShiftHistory']);
-//     Route::post('/store', [shiftController::class, 'store'])->name('shift.store');
-//     Route::post('/store2', [shiftController::class, 'store2'])->name('shift.store2');
-//     Route::get('/shift-data/{id}', [shiftController::class, 'edit'])->name('shift.edit');
-//     Route::put('/update/{id}', [shiftController::class, 'update'])->name('shift.update');
-//     Route::delete('/destroy/{id}', [shiftController::class, 'destroy'])->name('shift.destroy');
-//     Route::post('/fileupload', [shiftController::class, 'importProcess'])->name('shift.import');
-//     Route::post('/shift/update', [ShiftController::class, 'update'])->name('shift.update');
-//     Route::get('shift-data', [shiftController::class, 'getData'])->name('shift.data');
-//     Route::get('/shift-history', [ShiftController::class, 'getShiftHistory']);
-
-
-//     //route data karyawan
-//     Route::get('/user', [UsersController::class, 'index'])->name('karyawan.index');
-//     Route::post('/user', [UsersController::class, 'store']);
-//     Route::get('/user/detail/{npk}', [UsersController::class, 'detail']);
-//     Route::get('/user/edit/{npk}', [UsersController::class, 'edit']);
-//     Route::put('/user/update/{npk}', [UsersController::class, 'update']);
-//     Route::delete('/user/delete/{npk}', [UsersController::class, 'destroy']);
-//     Route::get('/karyawandata', [UsersController::class, 'karyawandata'])->name('karyawandata');
-//     Route::get('/departments/{divisionId}', [UsersController::class, 'getDepartments']);
-//     Route::get('/sections/{departmentId}', [UsersController::class, 'getSections']);
-// });
-
-Route::get('/registerperformaapi123', [registController::class, 'showRegistrationForm'])->name('register.form');
-Route::post('/registerperformaapi123', [registController::class, 'register'])->name('register');
-// Route::get('/sanctum/csrf-cookie', function (Request $request) {
-//     return response()->json(['csrfToken' => csrf_token()]);
-// });
 Route::post('/logout', [loginController::class, 'logout'])->name('logout');

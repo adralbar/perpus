@@ -5,8 +5,13 @@
     @yield('style')
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- PWA  -->
+    <meta name="theme-color" content="#6777ef" />
+    <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+    <link rel="manifest" href="{{ asset('/manifest.json') }}">
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Performa Api</title>
+    <title>Perpus</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet"
@@ -55,28 +60,20 @@
             </div> --}}
 
         <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-light">
+        <nav class="main-header navbar navbar-expand navbar-light" style="background-color: #e0a800;">
             <!-- Left navbar links -->
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i
                             class="fas fa-bars"></i></a>
                 </li>
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="index3.html" class="nav-link">Home</a>
-                </li>
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="#" class="nav-link">Contact</a>
-                </li>
+
             </ul>
 
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
                 <!-- Navbar Search -->
                 <li class="nav-item">
-                    <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-                        <i class="fas fa-search"></i>
-                    </a>
                     <div class="navbar-search-block">
                         <form class="form-inline">
                             <div class="input-group input-group-sm">
@@ -206,11 +203,19 @@
         <!-- /.navbar -->
 
         <!-- Main Sidebar Container -->
-        <aside class="main-sidebar sidebar-light-primary elevation-4">
+        <aside class="main-sidebar sidebar-light-primary elevation-4" style="background-color: #4b0082;">
+
             <div class="text-center">
-                <img src="dist/img/LogoApi.png" alt="Api Logo" class="logo-api rounded img-fluid" width="80%"
-                    style="margin: 20px auto;">
+                <div class="logo-api rounded img-fluid"
+                    style="display: flex; align-items: center; justify-content: center; margin: 20px auto; font-size: 24px; font-weight: bold; text-align: center; color: white;">
+                    <img src="{{ asset('isti.jpg') }}" alt="Logo"
+                        style="width: 40px; height: auto; margin-right: 10px;">
+                    <span>Perpus</span>
+                </div>
             </div>
+
+
+
 
 
             <!-- Sidebar -->
@@ -236,74 +241,44 @@
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                         data-accordion="false">
                         <!-- Dashboard Link -->
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
+                        <li class="nav-item menu-open"
+                            style="margin-bottom: 2px; margin-top: 2px; background-color: #4b0082;">
                             <a href="{{ route('dashboard.index') }}"
-                                class="nav-link {{ Request::routeIs('dashboard.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
-                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
+                                class="nav-link {{ Request::routeIs('dashboard.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 2]) ? 'disabled' : '' }} {{ $roleId == 10 ? 'onclick=event.preventDefault()' : '' }}"
+                                style="color: white;">
                                 <i class="nav-icon fas fa-users"></i>
                                 <p>Dashboard</p>
                             </a>
                         </li>
-
-
-                        <!-- Absensi Karyawan Link -->
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ route('rekap.index') }}"
-                                class="nav-link {{ Request::routeIs('rekap.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
-                                {{ !in_array($roleId, [1, 6]) ? 'onclick=event.preventDefault()' : '' }}>
-                                <i class="nav-icon fas fa-user-check"></i>
-                                <p>Absensi Karyawan</p>
-                            </a>
-                        </li>
-
-                        <!-- Performa Karyawan Link -->
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ route('performa.index') }}"
-                                class="nav-link {{ Request::routeIs('performa.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
-                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
-                                <i class="nav-icon fas fa-chart-line"></i>
-                                <p>Performa Karyawan</p>
-                            </a>
-                        </li>
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ route('master-shift.index') }}"
-                                class="nav-link {{ Request::routeIs('master-shift.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 6]) ? 'disabled' : '' }}"
-                                {{ $roleId == 2 ? 'onclick=event.preventDefault()' : '' }}>
-                                <i class="nav-icon fas fa-clock"></i>
-                                <p>Master Shift</p>
-                            </a>
-                        </li>
-
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ route('rekapshift') }}"
-                                class="nav-link  {{ Request::routeIs('rekapshift') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-clock"></i>
-                                <p>Rekap Shift</p>
-                            </a>
-                        </li>
-
-                        <!-- Shift Karyawan Link -->
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ route('shift.index') }}"
-                                class="nav-link  {{ Request::routeIs('shift.index') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-clock"></i>
-                                <p>Shift Karyawan</p>
-                            </a>
-                        </li>
-
-                        <!-- Data Karyawan Link -->
-                        <li class="nav-item menu-open" style="margin-bottom: 2px; margin-top: 2px">
-                            <a href="{{ route('karyawan.index') }}"
-                                class="nav-link {{ Request::routeIs('karyawan.index') ? 'active' : '' }} {{ !in_array(auth()->user()->role_id, [1, 6]) ? 'disabled' : '' }}"
-                                {{ !in_array(auth()->user()->role_id, [1, 6]) ? 'aria-disabled=true tabindex=-1' : '' }}>
+                        <li class="nav-item menu-open"
+                            style="margin-bottom: 2px; margin-top: 2px; background-color: #4b0082;">
+                            <a href="{{ route('katalog.index') }}"
+                                class="nav-link {{ Request::routeIs('katalog.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 2]) ? 'disabled' : '' }} {{ $roleId == 10 ? 'onclick=event.preventDefault()' : '' }}"
+                                style="color: white;">
                                 <i class="nav-icon fas fa-users"></i>
-                                <p>Data Karyawan</p>
+                                <p>Katalog Perpustakaan</p>
                             </a>
                         </li>
-
-
-
+                        <li class="nav-item menu-open {{ $roleId == 1 ? 'd-none' : '' }}"
+                            style="margin-bottom: 2px; margin-top: 2px; background-color: #4b0082;">
+                            <a href="{{ route('readlist.index') }}"
+                                class="nav-link {{ Request::routeIs('readlist.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 2]) ? 'disabled' : '' }} {{ $roleId == 10 ? 'onclick=event.preventDefault()' : '' }}"
+                                style="color: white;">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Daftar Readlist</p>
+                            </a>
+                        </li>
+                        <li class="nav-item menu-open"
+                            style="margin-bottom: 2px; margin-top: 2px; background-color: #4b0082;">
+                            <a href="{{ route('daftarpinjam.index') }}"
+                                class="nav-link {{ Request::routeIs('daftarpinjam.index') ? 'active' : '' }} {{ !in_array($roleId, [1, 2]) ? 'disabled' : '' }} {{ $roleId == 10 ? 'onclick=event.preventDefault()' : '' }}"
+                                style="color: white;">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Daftar Pinjam</p>
+                            </a>
+                        </li>
                     </ul>
+
                 </nav>
             </div>
             <!-- /.sidebar -->
@@ -314,11 +289,7 @@
         @yield('content')
         <!-- /.content-wrapper -->
         <footer class="main-footer">
-            <strong>Copyright &copy;<a> Digitalisasi</a></strong>
 
-            <div class="float-right d-none d-sm-inline-block">
-                <b>Version</b> BETA 1.0
-            </div>
         </footer>
 
         <!-- Control Sidebar -->
@@ -365,7 +336,23 @@
     <script src="https://cdn.datatables.net/2.1.3/js/dataTables.js"></script>
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     <script src="{{ asset('/dist/js/pages/dashboard3.js') }}"></script>
-
+    <script src="{{ asset('/sw.js') }}"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            // Register a service worker hosted at the root of the
+            // site using the default scope.
+            navigator.serviceWorker.register("/sw.js").then(
+                (registration) => {
+                    console.log("Service worker registration succeeded:", registration);
+                },
+                (error) => {
+                    console.error(`Service worker registration failed: ${error}`);
+                },
+            );
+        } else {
+            console.error("Service workers are not supported.");
+        }
+    </script>
 
 </body>
 

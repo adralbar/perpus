@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>API LOGIN</title>
+    <title>PERPUS LOGIN</title>
 
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -20,8 +20,7 @@
                 <a href="/login" class="h1"><b>LOGIN</b></a>
             </div>
             <div class="card-body">
-                <img src="{{ asset('dist/img/LogoApi.png') }}" alt="API Logo"
-                    class="logo-api rounded img-fluid w-50 mb-4" style="display: block; margin: 0 auto;">
+
                 <form action="{{ route('login') }}" method="post">
                     @csrf
 
@@ -36,8 +35,8 @@
                     @endif
 
                     <div class="input-group mb-3">
-                        <input type="text" name="npk" class="form-control" placeholder="NPK"
-                            value="{{ old('npk') }}" required>
+                        <input type="text" name="email" class="form-control" placeholder="Email"
+                            value="{{ old('email') }}" required>
                         <div class="input-group-append">
                             <div class="input-group-text">
                                 <span class="fas fa-envelope"></span>
@@ -67,6 +66,7 @@
                             <button type="submit" class="btn btn-primary btn-block">Sign In</button>
                         </div>
                     </div>
+                    <a href="/regist" style="display: block; text-align: center; font-size: 15px;">Tidak Punya Akun?</a>
                 </form>
             </div>
         </div>

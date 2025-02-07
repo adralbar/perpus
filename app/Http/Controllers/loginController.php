@@ -19,10 +19,10 @@ class loginController extends Controller
     {
         Session::flash('username', $request->username);
         $credentials = $request->validate([
-            'npk' => 'required|string',
+            'email' => 'required|string',
             'password' => 'required|string',
         ], [
-            'npk.required' => 'Username wajib diisi',
+            'email.required' => 'Username wajib diisi',
             'password.required' => 'Password wajib diisi',
         ]);
 
@@ -35,21 +35,15 @@ class loginController extends Controller
             $request->session()->put('role_id', $roleId);
 
             if (in_array($roleId, [2, 9])) {
-                return redirect()->intended('/shift');
+                return redirect()->intended('/katalog');
             } elseif (in_array($roleId, [1, 6])) {
-                return redirect()->intended('/rekap');
+                return redirect()->intended('/katalog');
             }
 
             if (!$user) {
                 // If NPK is not found, return back with an error
-                return redirect()->back()->withErrors('NPK tidak terdaftar')->withInput();
+                return redirect()->back()->withErrors('Email tidak terdaftar')->withInput();
             }
-
-            // Check if the user's status is active
-            if ($user->status == 0) {
-                return redirect()->back()->withErrors('NPK tidak aktif')->withInput();
-            }
-
             return redirect()->route('login')->withErrors([
                 'login' => 'Anda tidak diizinkan untuk mengakses halaman ini.',
             ]);
